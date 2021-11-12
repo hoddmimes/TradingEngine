@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Messages mongoSupport="false">
+   <Imports>
+       <Import path="com.hoddmimes.te.messages.*"/>
+   </Imports>
+
+    <Message name="User" rootMessage="false">
+        <Attribute name="username" type="String" mandatory="true" />
+        <Attribute name="password" type="String" mandatory="true"/>
+        <Attribute name="enabled" type="boolean" mandatory="true"/>
+    </Message>
+
+
+    <!--
+        Request messages sent from Modum Client to Matching Engine
+    -->
+    <Message name="LogonRequest" rootMessage="true">
+        <Attribute name="username" type="String" mandatory="true" />
+        <Attribute name="password" type="String" mandatory="true"/>
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="InternalPriceLevelRequest" implements="EngineMsgInterface" rootMessage="true">
+        <Attribute name="symbol" type="String" mandatory="true"/>
+        <Attribute name="levels" type="int" mandatory="true"/>
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+
+
+    <!-- ******************************************************************************
+        Response related messages
+      ********************************************************************************* -->
+
+    <Message name="LogonResponse" rootMessage="true">
+        <Attribute name="isOk" type="boolean"/>
+        <Attribute name="ref" type="String"/>
+        <Attribute name="statusMessage" type="String"/>
+        <Attribute name="sessionAuthId" type="String"/>
+        <Attribute name="exceptionMessage" type="String"/>
+    </Message>
+
+    <Message name="InternalPriceLevelResponse" rootMessage="true">
+        <Attribute name="bdxPriceLevel" type="BdxPriceLevel"/>
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+
+    <Message name="StatusMessage" rootMessage="true">
+        <Attribute name="isOk" type="boolean"/>
+        <Attribute name="ref" type="String"/>
+        <Attribute name="statusMessage" type="String"/>
+        <Attribute name="exceptionMessage" type="String"/>
+    </Message>
+
+
+</Messages>
