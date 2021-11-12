@@ -1,0 +1,20 @@
+
+ {
+   "$schema": "http://json-schema.org/draft-06/schema#",
+   "title": "LogonResponse",
+   "type": "object",
+     "properties" : { 
+     "LogonResponse" : {
+       "type" : "object",
+       "properties" : { 
+          "isOk" : { "type" : "boolean" },
+          "ref" : { "type" : "string" },
+          "statusMessage" : { "type" : "string" },
+          "sessionAuthId" : { "type" : "string" },
+          "exceptionMessage" : { "type" : "string" }
+     }
+    }
+   },
+   "required" : ["LogonResponse"]
+}
+                

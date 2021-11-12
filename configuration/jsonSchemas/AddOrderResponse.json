@@ -1,0 +1,19 @@
+
+ {
+   "$schema": "http://json-schema.org/draft-06/schema#",
+   "title": "AddOrderResponse",
+   "type": "object",
+     "properties" : { 
+     "AddOrderResponse" : {
+       "type" : "object",
+       "properties" : { 
+          "ref" : { "type" : "string" },
+          "orderId" : { "type" : "string" },
+          "inserted" : { "type" : "boolean" },
+          "matched" : { "type" : "integer" }
+     }
+    }
+   },
+   "required" : ["AddOrderResponse"]
+}
+                

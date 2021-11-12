@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+}
+
+version = 1.0
+
+group 'com.hoddmimes'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+
+
+task(generateEngineMessages, type: JavaExec ) {
+    mainClass = 'JsonTransform'
+    classpath = files('../libs/pojojson-generate-1.1.jar')
+    args  '-xml', './definitions/MatcherMessagesFileSet.xml'
+    doLast {
+        println "Generated Matcher Messages"
+    }
+}
+
+task deleteGeneratedFiles(type: Delete) {
+    delete fileTree('src/main/java/com/hoddmimes/te/messages/generated') {
+        include '*.java'
+    }
+    doLast {
+        println "Cleaned Generated Matcher Messages"
+    }
+}
+
+
+compileJava.dependsOn( [deleteGeneratedFiles, generateEngineMessages] )
+clean.dependsOn(deleteGeneratedFiles)
+
+
+dependencies {
+    implementation group: 'com.github.erosb', name: 'everit-json-schema-jdk6', version: '1.9.2'
+}
+
+test {
+    useJUnitPlatform()
+}

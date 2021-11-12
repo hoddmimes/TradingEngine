@@ -1,0 +1,18 @@
+
+ {
+   "$schema": "http://json-schema.org/draft-06/schema#",
+   "title": "DeleteOrderResponse",
+   "type": "object",
+     "properties" : { 
+     "DeleteOrderResponse" : {
+       "type" : "object",
+       "properties" : { 
+          "ref" : { "type" : "string" },
+          "remaining" : { "type" : "integer" },
+          "orderId" : { "type" : "string" }
+     }
+    }
+   },
+   "required" : ["DeleteOrderResponse"]
+}
+                

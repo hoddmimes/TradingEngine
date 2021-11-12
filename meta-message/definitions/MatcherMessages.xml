@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Messages mongoSupport="false">
+   <Imports>
+       <Import path="com.hoddmimes.te.messages.*"/>
+   </Imports>
+
+    <!--
+        Request messages sent from Modum Client to Matching Engine
+    -->
+    <Message name="AddOrderRequest" implements="EngineMsgInterface" rootMessage="true">
+        <Attribute name="symbol" type="String" mandatory="true" />
+        <Attribute name="price" type="double" mandatory="true"/>
+        <Attribute name="volume" type = "int" mandatory="true"/>
+        <Attribute name="ref" type = "String" mandatory="true"/>
+        <Attribute name="side" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="AddOrderResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="orderId" type="String"/>
+        <Attribute name="inserted" type = "boolean"/>
+        <Attribute name="matched" type = "int"/>
+    </Message>
+
+    <Message name="DeleteOrderRequest" implements="EngineMsgInterface" rootMessage="true" >
+        <Attribute name="symbol" type="String" mandatory="true" />
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="orderId" type="String"/>
+    </Message>
+
+
+    <Message name="DeleteOrderResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="remaining" type="int"/>
+        <Attribute name="orderId" type="String"/>
+    </Message>
+
+    <!-- Market Data Query -->
+    <Message name="QueryPriceLevelsRequest" rootMessage="true" >
+        <Attribute name="ref" type = "String"/>
+    </Message>
+
+    <Message name="PriceLevelSymbol">
+        <Attribute name="symbol" type="String"/>
+        <Attribute name="buySide" type = "PriceLevel" list="array" />
+        <Attribute name="sellSide" type = "PriceLevel" list="array" />
+    </Message>
+
+    <Message name="QueryPriceLevelsResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="orderbooks" type = "PriceLevelSymbol" list="array" />
+    </Message>
+
+
+    <!-- ******************************************************************************
+        Broadcast related  messages
+      ********************************************************************************* -->
+    <Message name="Order">
+        <Attribute name="price" type="double"/>
+        <Attribute name="volume" type = "int"/>
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="orderId" type = "String"/>
+        <Attribute name="side" type="String"/>
+    </Message>
+
+    <!-- Public -->
+    <Message name="BdxOrderbookChange" implements="EngineBdxInterface" rootMessage="true">
+        <Attribute name="orderId" type = "String"/>
+        <Attribute name="symbol" type = "String"/>
+        <Attribute name="action" type = "String"/> <!-- ADD, REMOVE, MODIFY -->
+        <Attribute name="price" type = "double"/>
+        <Attribute name="volume" type = "int"/>
+        <Attribute name="side" type = "String"/>
+        <Attribute name="obSeqNo" type = "long"/>
+    </Message>
+
+    <!-- Private -->
+    <Message name="BdxOwnTrade" implements="EngineBdxInterface"  rootMessage="true">
+        <Attribute name="orderId" type = "String"/>
+        <Attribute name="symbol" type = "String"/>
+        <Attribute name="price" type = "double"/>
+        <Attribute name="volume" type = "int"/>
+        <Attribute name="tradeId" type = "String"/>
+        <Attribute name="ref" type = "String"/>
+    </Message>
+
+    <!-- Private -->
+    <Message name="BdxOwnOrderbookChange" implements="EngineBdxInterface" rootMessage="true">
+        <Attribute name="orderId" type = "String"/>
+        <Attribute name="symbol" type = "String"/>
+        <Attribute name="action" type = "String"/> <!-- ADD, REMOVE, MODIFY -->
+        <Attribute name="price" type = "double"/>
+        <Attribute name="volume" type = "int"/>
+        <Attribute name="side" type = "String"/>
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="obSeqNo" type = "long"/>
+    </Message>
+
+
+    <!-- Public -->
+    <Message name="BdxTrade" implements="EngineBdxInterface"  rootMessage="true">
+        <Attribute name="orderId" type = "String"/>
+        <Attribute name="symbol" type = "String"/>
+        <Attribute name="price" type = "double"/>
+        <Attribute name="volume" type = "int"/>
+        <Attribute name="tradeId" type = "String"/>
+    </Message>
+
+    <Message name="PriceLevel">
+        <Attribute name="price" type="double"/>
+        <Attribute name="volume" type = "int"/>
+
+        <code>
+            public boolean same( PriceLevel pl ) {
+              if ((this.mVolume != pl.mVolume) || (this.mPrice != pl.mPrice)) {
+                return false;
+              }
+              return true;
+            }
+        </code>
+    </Message>
+
+    <!-- Public -->
+    <Message name="BdxPriceLevel" implements="EngineBdxInterface"  rootMessage="true">
+        <Imports>
+            <Import path="java.util.Iterator"/>
+        </Imports>
+        <Attribute name="symbol" type = "String"/>
+        <Attribute name="levels" type = "int"/>
+        <Attribute name="buySide" type = "PriceLevel" list="array" />
+        <Attribute name="sellSide" type = "PriceLevel" list="array" />
+        <code>
+           public boolean same( BdxPriceLevel plm ) {
+              if ((this.mBuySide.size() != plm.mBuySide.size()) || (this.mSellSide.size() != plm.mSellSide.size())) {
+                 return false;
+              }
+              Iterator&lt;PriceLevel&gt; tItr1 = this.mBuySide.iterator();
+              Iterator&lt;PriceLevel&gt; tItr2 = plm.mBuySide.iterator();
+              while( tItr1.hasNext() ) {
+                    if (!tItr1.next().same( tItr2.next())) {
+                       return false;
+                    }
+              }
+
+            tItr1 = this.mSellSide.iterator();
+            tItr2 = plm.mSellSide.iterator();
+            while( tItr1.hasNext() ) {
+                if (!tItr1.next().same( tItr2.next())) {
+                    return false;
+                }
+            }
+
+            return true;
+          }
+        </code>
+    </Message>
+
+
+</Messages>

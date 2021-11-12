@@ -1,0 +1,19 @@
+
+ {
+   "$schema": "http://json-schema.org/draft-06/schema#",
+   "title": "InternalPriceLevelResponse",
+   "type": "object",
+     "properties" : { 
+     "InternalPriceLevelResponse" : {
+       "type" : "object",
+       "properties" : { 
+          "bdxPriceLevel" : { "$ref" : "file:./configuration/jsonSchemas/BdxPriceLevel.json" },
+          "ref" : { "type" : "string" }
+     },
+     "required": ["ref"]
+    
+    }
+   },
+   "required" : ["InternalPriceLevelResponse"]
+}
+                

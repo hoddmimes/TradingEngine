@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<MessageFiles>
+    <MessageFactory outPath="src/main/java/com/hoddmimes/te/messages/generated/" package="com.hoddmimes.te.messages.generated"/>
+    <MessageFile file="./definitions/MatcherMessages.xml" outPath="src/main/java/com/hoddmimes/te/messages/generated/" package="com.hoddmimes.te.messages.generated"/>
+    <MessageFile file="./definitions/TeMessages.xml" outPath="src/main/java/com/hoddmimes/te/messages/generated/" package="com.hoddmimes.te.messages.generated"/>
+    <SchemaFactory outPath="../configuration/jsonSchemas/" schemaDir="./configuration/jsonSchemas/"/>
+</MessageFiles>

@@ -1,0 +1,16 @@
+
+ {
+   "$schema": "http://json-schema.org/draft-06/schema#",
+   "title": "QueryPriceLevelsRequest",
+   "type": "object",
+     "properties" : { 
+     "QueryPriceLevelsRequest" : {
+       "type" : "object",
+       "properties" : { 
+          "ref" : { "type" : "string" }
+     }
+    }
+   },
+   "required" : ["QueryPriceLevelsRequest"]
+}
+                

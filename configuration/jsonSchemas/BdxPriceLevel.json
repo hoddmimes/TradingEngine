@@ -1,0 +1,19 @@
+
+ {
+   "$schema": "http://json-schema.org/draft-06/schema#",
+   "title": "BdxPriceLevel",
+   "type": "object",
+     "properties" : { 
+     "BdxPriceLevel" : {
+       "type" : "object",
+       "properties" : { 
+          "symbol" : { "type" : "string" },
+          "levels" : { "type" : "integer" },
+          "buySide" : { "$ref" : "file:./configuration/jsonSchemas/PriceLevel.json" },
+          "sellSide" : { "$ref" : "file:./configuration/jsonSchemas/PriceLevel.json" }
+     }
+    }
+   },
+   "required" : ["BdxPriceLevel"]
+}
+                

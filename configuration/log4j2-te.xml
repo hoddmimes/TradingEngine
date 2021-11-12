@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+  <Appenders>
+    <File name="TeFile"  fileName="./logs/TradingEngine.log">
+	   <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %c{1}  %msg%n"/>
+  	</File>
+  	
+    <Console name="TeTracing">
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %c{1}  %msg%n"/>
+      <Filters>
+        <ThresholdFilter level="trace" onMatch="DENY"   onMismatch="NEUTRAL"/>
+      </Filters>
+    </Console>
+
+    <Console name="TeConsole" target="SYSTEM_OUT">
+      <!-- PatternLayout pattern="%d{HH:mm:ss.SSS} &lt;%C{1}.%M %L&gt;  %-5level  %msg%n"/ -->
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %c{1}  %msg%n"/>
+    </Console>
+  </Appenders>
+  <Loggers>
+
+
+
+    <Logger name="com.hoddmimes.te" level="info">
+      <AppenderRef ref="TeConsole"/>
+      <AppenderRef ref="TeFile"/>
+    </Logger>
+
+    <Logger name="com.hoddmimes.te.connector.rest.TeFilter" level="trace">
+      <AppenderRef ref="TeTracing"/>
+      <AppenderRef ref="TeFile"/>
+    </Logger>
+
+    <!--
+      <Logger name="com.hoddmimes.modum.craft.scripting.Executor" level="trace">
+        <AppenderRef ref="Tracing"/>
+      </Logger>
+
+
+      <Logger name="PriceSimulator" level="trace">
+        <AppenderRef ref="Tracing"/>
+      </Logger>
+          -->
+    <Root level="error">
+    </Root>
+  </Loggers>
+</Configuration>

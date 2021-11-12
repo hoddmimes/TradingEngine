@@ -1,0 +1,14 @@
+
+ {
+   "$schema": "http://json-schema.org/draft-06/schema#",
+   "title": "User",
+   "type": "object",
+     "properties" : { 
+          "username" : { "type" : "string" },
+          "password" : { "type" : "string" },
+          "enabled" : { "type" : "boolean" }
+     },
+     "required": ["username", "password", "enabled"]
+    
+}
+                

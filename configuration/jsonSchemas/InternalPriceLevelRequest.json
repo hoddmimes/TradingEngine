@@ -1,0 +1,20 @@
+
+ {
+   "$schema": "http://json-schema.org/draft-06/schema#",
+   "title": "InternalPriceLevelRequest",
+   "type": "object",
+     "properties" : { 
+     "InternalPriceLevelRequest" : {
+       "type" : "object",
+       "properties" : { 
+          "symbol" : { "type" : "string" },
+          "levels" : { "type" : "integer" },
+          "ref" : { "type" : "string" }
+     },
+     "required": ["symbol", "levels", "ref"]
+    
+    }
+   },
+   "required" : ["InternalPriceLevelRequest"]
+}
+                

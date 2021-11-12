@@ -1,0 +1,22 @@
+
+ {
+   "$schema": "http://json-schema.org/draft-06/schema#",
+   "title": "BdxOrderbookChange",
+   "type": "object",
+     "properties" : { 
+     "BdxOrderbookChange" : {
+       "type" : "object",
+       "properties" : { 
+          "orderId" : { "type" : "string" },
+          "symbol" : { "type" : "string" },
+          "action" : { "type" : "string" },
+          "price" : { "type" : "number" },
+          "volume" : { "type" : "integer" },
+          "side" : { "type" : "string" },
+          "obSeqNo" : { "type" : "integer" }
+     }
+    }
+   },
+   "required" : ["BdxOrderbookChange"]
+}
+                

@@ -1,0 +1,43 @@
+{
+  "TeConfiguration": {
+    "sessionControllerConfiguration": {
+      "autheticator": {
+        "implementation": "com.hoddmimes.te.sessionctl.Authenticator",
+        "dataStore": "configuration/UsersDefinitions.json"
+      },
+      "schemaDefinitions" : "configuration/jsonSchemas"
+    },
+    "matchingEngineConfiguration" : {
+    },
+    "matchingEngineFrontendConfiguration" : {
+      "executionQueues":4,
+      "requestCacheSize":100,
+      "maxExecutionQueueLength":80
+    },
+    "instrumentContainerConfiguration" : {
+      "dataStore" : "configuration/InstrumentDefinitions.json"
+    },
+    "connectorConfiguration": {
+      "implementaion": "com.hoddmimes.te.connector.rest.RestConnector",
+      "configuration": {
+        "appConfiguration" : "configuration/RestConnector.properties",
+        "inactivityTimer" : 600
+      }
+    },
+    "marketDataConfiguration": {
+      "implementation": "com.hoddmimes.te.marketdata.TcpIpMarketDataConnector",
+      "enablePriceLevels" : true,
+      "enableOrdebookChanges" : true,
+      "enablePrivateFlow" : true,
+      "priceLevels" : 5,
+      "priceLevelUpdateInterval" : 500,
+
+      "connectorConfiguration": {
+        "inactivityTimer":600
+      }
+    },
+    "matchinEngine": {
+
+    }
+  }
+}
