@@ -8,6 +8,6 @@ public interface MarketDataInterface
 {
 	public void queueBdxPrivate( SessionCntxInterface pSessionCntx, EngineBdxInterface pBdx );
 	public void queueBdxPublic( EngineBdxInterface pBdx );
-	public MessageInterface queryPriceLevels(QueryPriceLevelsRequest pQryPLRqst);
+	public MessageInterface queryPriceLevels(QueryPriceLevelsRequest pQryPLRqst, RequestContextInterface pRequestContext);
 	public void orderbookChanged( String pSymbol );
 }

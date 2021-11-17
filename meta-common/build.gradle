@@ -15,6 +15,9 @@ dependencies {
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
     implementation project(':meta-message')
 }
+configurations {
+    implementation.exclude module: 'spring-boot-starter-logging'
+}
 
 test {
     useJUnitPlatform()

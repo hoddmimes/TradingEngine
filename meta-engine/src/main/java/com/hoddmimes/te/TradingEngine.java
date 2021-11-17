@@ -6,9 +6,9 @@ import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.engine.MatchingEngine;
 import com.hoddmimes.te.engine.MatchingEngineFrontend;
-import com.hoddmimes.te.engine.MeRqstCntx;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.sessionctl.SessionController;
+import com.hoddmimes.te.trades.TradeContainer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -31,7 +31,9 @@ public class TradingEngine
 	private MatchingEngine              mMatchingEngine;
 	private MatchingEngineFrontend      mMatchingEngineFrontend;
 	private InstrumentContainer         mInstrumentContainer;
+	private TradeContainer              mTradeContainer;
 	private JsonObject                  mConfiguration;
+
 
 
 	public static void main(String[] args) {
@@ -53,13 +55,13 @@ public class TradingEngine
 		mInstrumentContainer = new InstrumentContainer( mConfiguration );
 		mLog.info("successfully loaded InstrumentContainer");
 
-		//Instansiate Matching Engine
-		mMatchingEngine = new MatchingEngine( mConfiguration, mInstrumentContainer );
-		mLog.info("successfully loaded MatchingEngine");
-
 		//Instansiate Matching Engine Frontend
 		mMatchingEngineFrontend = new MatchingEngineFrontend( mConfiguration, mMatchingEngine);
 		mLog.info("successfully loaded MatchingEngineFrontend");
+
+		// Instansiate Trade container
+		mTradeContainer = new TradeContainer( mConfiguration );
+		mLog.info("successfully loaded TradeContainer");
 
 		// Instansiate Session Control
 		try {
@@ -73,6 +75,13 @@ public class TradingEngine
 		// Instansiate Controller
 		initConnector();
 
+		//Instansiate Matching Engine
+		mMatchingEngine = new MatchingEngine( mConfiguration, mInstrumentContainer, TeAppCntx.getInstance().getMarketDataDistributor() );
+		mLog.info("successfully loaded MatchingEngine");
+
+		//Instansiate Matching Engine Frontend
+		mMatchingEngineFrontend = new MatchingEngineFrontend( mConfiguration, mMatchingEngine);
+		mLog.info("successfully loaded MatchingEngineFrontend");
 	}
 
 	private void initConnector() {
@@ -137,10 +146,5 @@ public class TradingEngine
 		}
 	}
 
-
-	public void execute(MeRqstCntx pRequestCntx ) {
-		pRequestCntx.setResponse( mMatchingEngine.execute( pRequestCntx ));
-		// ToDo: publish response + broadcast
-	}
 
 }

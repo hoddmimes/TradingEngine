@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 public class AuxJson
 {
 	private static Pattern REF_PATTERN = Pattern.compile("\"ref\"\\s*:\\s*\"([^\"]+)\"");
+	private static Pattern MSG_NAME_PATTERN = Pattern.compile("^\\s*\\{\\s*\"([^\"]+)");
 
 	public static List<JsonElement> loadAndParseFile( String pFilename) throws IOException
 	{
@@ -56,6 +57,17 @@ public class AuxJson
 	}
 	public static JsonObject navigateObject( JsonObject pObject, String pPath ) {
 		return navigateObject( pObject, pPath, null);
+	}
+
+	public static String getMessageName( String pJsonString ) {
+		return getMessageName(pJsonString, null);
+	}
+	public static String getMessageName( String pJsonString, String pDefault ) {
+		Matcher m = MSG_NAME_PATTERN.matcher( pJsonString );
+		if (m.find()) {
+			return m.group(1);
+		}
+		return pDefault;
 	}
 
 	public static int navigateInt( JsonObject pObject, String pPath, Integer pDefaultValue ) {

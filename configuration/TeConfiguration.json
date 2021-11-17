@@ -5,14 +5,24 @@
         "implementation": "com.hoddmimes.te.sessionctl.Authenticator",
         "dataStore": "configuration/UsersDefinitions.json"
       },
-      "schemaDefinitions" : "configuration/jsonSchemas"
+      "schemaDefinitions" : "configuration/jsonSchemas",
+      "traceExecutionTimeLimitUsec":0,
+      "traceExecutionTimeVerbose":false,
+      "messageLoggerEnabled" : true,
+      "messageLoggerFlushMode" : "NONE",
+      "messageLoggerFlushIntervalMs" : 15000,
+      "messageLoggerFile" : "logs/TeMessageLog-%datetime%.json"
     },
     "matchingEngineConfiguration" : {
     },
+    "tradeContainer" : {
+      "configuration" : {
+        "txlogName" : "trades-%date%",
+        "txlogDir" : " ./logs"
+      }
+    },
     "matchingEngineFrontendConfiguration" : {
-      "executionQueues":4,
-      "requestCacheSize":100,
-      "maxExecutionQueueLength":80
+      "requestCacheSize":100
     },
     "instrumentContainerConfiguration" : {
       "dataStore" : "configuration/InstrumentDefinitions.json"
@@ -29,6 +39,7 @@
       "enablePriceLevels" : true,
       "enableOrdebookChanges" : true,
       "enablePrivateFlow" : true,
+      "enableTradeFlow" : true,
       "priceLevels" : 5,
       "priceLevelUpdateInterval" : 500,
 

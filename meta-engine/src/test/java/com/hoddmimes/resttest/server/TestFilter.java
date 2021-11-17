@@ -99,7 +99,7 @@ public class TestFilter implements Filter
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		HttpSession tSession = pRqst.getSession();
 		SessionCntxInterface tSessCntx = (SessionCntxInterface) tSession.getAttribute( TE_SESS_CNTX );
-		String tUsername = (tSessCntx != null) ? tSessCntx.getUserId() : "null";
+		String tUsername = (tSessCntx != null) ? tSessCntx.getAccount() : "null";
 
 		/*
 		String tRqstData = null;

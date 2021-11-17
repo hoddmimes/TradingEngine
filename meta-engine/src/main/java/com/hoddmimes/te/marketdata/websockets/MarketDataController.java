@@ -26,11 +26,13 @@ public class MarketDataController extends MarketDataBase implements WebSocketCon
 
     WebSocketHandler mWebSocketHandler;
     private BlockingQueue<BdxQueueItem> mBdxQueue;
-
+    Thread mTransmitter;
 
     public  MarketDataController() {
         super(TeAppCntx.getInstance().getTeConfiguration());
         mBdxQueue = new LinkedBlockingQueue<>();
+        mTransmitter = new Thread( this );
+        mTransmitter.start();
     }
 
 
@@ -82,6 +84,7 @@ public class MarketDataController extends MarketDataBase implements WebSocketCon
 
     @Override
     public void run() {
+        mTransmitter.setName("Market Data BDX Publisher");
         List<BdxQueueItem> tBdxList = new ArrayList<>(30);
         BdxQueueItem tBdxQueItm = null;
 

@@ -1,7 +1,7 @@
 package com.hoddmimes.te.common.interfaces;
 
 public interface SessionCntxInterface {
-	public String getUserId();
+	public String getAccount();
 	public String getSessionId();
 	public String getSessionStartTime();
 	public long getSessionStartTimeBin();

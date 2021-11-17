@@ -16,7 +16,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 @ClientEndpoint
-public class TeWebsocketClient extends Endpoint {
+public class TeWebsocketClient extends Endpoint implements MessageHandler.Whole<String> {
 	private Session mSession;
 	private Endpoint mCallback;
 
@@ -31,8 +31,9 @@ public class TeWebsocketClient extends Endpoint {
 			ClientEndpointConfig clientEndpointConfig = ClientEndpointConfig.Builder.create().configurator(configurator).build();
 			clientEndpointConfig.getUserProperties().put("org.apache.tomcat.websocket.SSL_CONTEXT", createSSLContext());
 
-
 			Session session = webSocketContainer.connectToServer( this, clientEndpointConfig, new URI(endpointURI + "?authid=" + pAuthId));
+			session.addMessageHandler( this );
+
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -48,14 +49,20 @@ public class TeWebsocketClient extends Endpoint {
 		mCallback.onOpen( session, config);
 	}
 
+	@Override
 	public void onClose(Session session, CloseReason closeReason) {
 		mCallback.onClose( session, closeReason );
 	}
 
+	@Override
 	public void onError(Session session, Throwable throwable) {
 		mCallback.onError( session, throwable );
 	}
 
+	@Override
+	public void onMessage(String message) {
+		System.out.println("bdx: " + message );
+	}
 
 	private SSLContext createSSLContext() {
 		SSLContext tSSLContext = null;

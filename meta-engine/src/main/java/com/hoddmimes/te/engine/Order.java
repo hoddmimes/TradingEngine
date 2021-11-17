@@ -4,6 +4,7 @@ import com.hoddmimes.te.common.TXIDFactory;
 import com.hoddmimes.te.messages.generated.AddOrderRequest;
 import com.hoddmimes.te.messages.generated.BdxOrderbookChange;
 import com.hoddmimes.te.messages.generated.BdxOwnOrderbookChange;
+import com.hoddmimes.te.messages.generated.OwnOrder;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -14,18 +15,59 @@ import java.util.Locale;
 
 public class Order implements Comparable<Order>
 {
+	public String getSymbol() {
+		return mSymbol;
+	}
+
+	public double getPrice() {
+		return mPrice;
+	}
+
+	public Side getSide() {
+		return mSide;
+	}
+
+	public int getVolume() {
+		return mVolume;
+	}
+
+	public long getCreationTime() {
+		return mCreationTime;
+	}
+
+	public String getUserRef() {
+		return mUserRef;
+	}
+
+	public long getOrderId() {
+		return mOrderId;
+	}
+
+	public String getAccountId() {
+		return mAccountId;
+	}
+
+	public void setVolume( int pVolume ) {
+		mVolume = pVolume;
+	}
+
+	public void setPrice(double pPrice ) {
+		mPrice = pPrice;
+	}
+
+
 	public enum Side {BUY,SELL};
 	public enum ChangeAction {ADD,REMOVE,MODIFY };
 	private static SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-	String     mSymbol;
-	double     mPrice;
-	Side       mSide;
-	int        mVolume;
-	long       mCreationTime;
-	String     mUserRef;
-	long       mOrderId;
-	String     mUserId;
+	private String     mSymbol;
+	private double     mPrice;
+	private Side       mSide;
+	private int        mVolume;
+	private long       mCreationTime;
+	private String     mUserRef;
+	private long       mOrderId;
+	private String     mAccountId;
 
 	@Override
 	public int compareTo(Order pOrder) {
@@ -61,12 +103,13 @@ public class Order implements Comparable<Order>
 		return false;
 	}
 
+
+
 	public com.hoddmimes.te.messages.generated.Order toMsgOrder() {
 		com.hoddmimes.te.messages.generated.Order o = new com.hoddmimes.te.messages.generated.Order();
 		o.setSide( this.mSide.toString());
 		o.setOrderId( Long.toHexString(this.mOrderId));
 		o.setPrice( this.mPrice );
-		o.setRef( this.mUserRef );
 		o.setVolume( this.mVolume );
 		return o;
 	}
@@ -80,6 +123,17 @@ public class Order implements Comparable<Order>
 		tBdx.setPrice(this.mPrice);
 		tBdx.setVolume(this.mVolume);
 		return tBdx;
+	}
+
+	public OwnOrder toOwnOrder() {
+		OwnOrder oo = new OwnOrder();
+		oo.setOrderId(Long.toHexString(this.mOrderId));
+		oo.setPrice( this.mPrice );
+		oo.setSide( this.mSide.name());
+		oo.setRef( this.mUserRef );
+		oo.setVolume( this.mVolume );
+		oo.setSymbol( this.mSymbol );
+		return oo;
 	}
 
 	public BdxOwnOrderbookChange toOwnOrderBookChg(ChangeAction pAction, long pObSeqNo ) {
@@ -103,7 +157,7 @@ public class Order implements Comparable<Order>
 		mUserRef = pAddOrderRequest.getRef().orElse(null);
 		mCreationTime = System.currentTimeMillis();
 		mOrderId = TXIDFactory.getId();
-		mUserId = pUserId;
+		mAccountId = pUserId;
 	}
 
 	private Order( String pUserId,  String pSymbol, double pPrice, int pVolume, Side pSide, String pRef, String pCreationTime  ) {
@@ -113,7 +167,7 @@ public class Order implements Comparable<Order>
 		this.mSide = pSide;
 		this.mUserRef = pRef;
 		mOrderId = TXIDFactory.getId();
-		this.mUserId = pUserId;
+		this.mAccountId = pUserId;
 		try {
 			this.mCreationTime = SDF.parse( pCreationTime ).getTime();
 		}
@@ -126,7 +180,7 @@ public class Order implements Comparable<Order>
 	public String toString() {
 
 		return "Symbol: " + mSymbol + " " + mVolume + "@" + fmtprice(mPrice)  + " " + mSide.toString() +
-				" ref: " + mUserRef + " time: " + SDF.format( mCreationTime ) + " user: " + mUserId +
+				" ref: " + mUserRef + " time: " + SDF.format( mCreationTime ) + " user: " + mAccountId +
 				" ordid: " + Long.toHexString( mOrderId );
 	}
 

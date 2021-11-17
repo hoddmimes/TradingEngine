@@ -25,7 +25,11 @@ hs_err_pid*
 
 build/**
 .idea/**
-gradle/**
+.gradle/**
+gradle/
 meta-common/build/**
-meta-messages/build/**
+meta-message/build/**
 meta-engine/build/**
+configuration/jsonSchemas/**
+**/generated/**
+logs/**

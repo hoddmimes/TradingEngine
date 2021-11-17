@@ -41,7 +41,6 @@ import com.google.gson.GsonBuilder;
             
                     private Double mPrice;
                     private Integer mVolume;
-                    private String mRef;
                     private String mOrderId;
                     private String mSide;
                public Order()
@@ -69,14 +68,6 @@ import com.google.gson.GsonBuilder;
             }
             public Optional<Integer> getVolume() {
               return  Optional.ofNullable(mVolume);
-            }
-        
-            public Order setRef( String pRef ) {
-            mRef = pRef;
-            return this;
-            }
-            public Optional<String> getRef() {
-              return  Optional.ofNullable(mRef);
             }
         
             public Order setOrderId( String pOrderId ) {
@@ -118,9 +109,6 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mVolume Type: int List: false
             tEncoder.add( "volume", mVolume );
         
-            //Encode Attribute: mRef Type: String List: false
-            tEncoder.add( "ref", mRef );
-        
             //Encode Attribute: mOrderId Type: String List: false
             tEncoder.add( "orderId", mOrderId );
         
@@ -140,9 +128,6 @@ import com.google.gson.GsonBuilder;
         
             //Decode Attribute: mVolume Type:int List: false
             mVolume = tDecoder.readInteger("volume");
-        
-            //Decode Attribute: mRef Type:String List: false
-            mRef = tDecoder.readString("ref");
         
             //Decode Attribute: mOrderId Type:String List: false
             mOrderId = tDecoder.readString("orderId");
@@ -181,11 +166,6 @@ import com.google.gson.GsonBuilder;
                 
                         public Builder setVolume( Integer pValue ) {
                         mInstance.setVolume( pValue );
-                        return this;
-                    }
-                
-                        public Builder setRef( String pValue ) {
-                        mInstance.setRef( pValue );
                         return this;
                     }
                 

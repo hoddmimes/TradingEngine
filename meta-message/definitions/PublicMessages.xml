@@ -6,7 +6,7 @@
    </Imports>
 
     <!--
-        Request messages sent from Modum Client to Matching Engine
+        Request/Response messages sent from Modum Client to/from Matching Engine
     -->
     <Message name="AddOrderRequest" implements="EngineMsgInterface" rootMessage="true">
         <Attribute name="symbol" type="String" mandatory="true" />
@@ -23,10 +23,27 @@
         <Attribute name="matched" type = "int"/>
     </Message>
 
-    <Message name="DeleteOrderRequest" implements="EngineMsgInterface" rootMessage="true" >
+    <Message name="AmendOrderRequest" implements="EngineMsgInterface" rootMessage="true">
         <Attribute name="symbol" type="String" mandatory="true" />
+        <Attribute name="orderId" type="String" mandatory="true"/>
+        <Attribute name="price" type="double"/>
+        <Attribute name="deltaVolume" type = "int"/>
+        <Attribute name="ref" type = "String" mandatory="true"/>
+        <Attribute name="side" type="String" />
+    </Message>
+
+    <Message name="AmendOrderResponse"  rootMessage="true">
         <Attribute name="ref" type = "String"/>
         <Attribute name="orderId" type="String"/>
+        <Attribute name="inserted" type = "boolean"/>
+        <Attribute name="matched" type = "int"/>
+    </Message>
+
+
+    <Message name="DeleteOrderRequest" implements="EngineMsgInterface" rootMessage="true" >
+        <Attribute name="symbol" type="String" mandatory="true" />
+        <Attribute name="ref" type = "String" mandatory="true" />
+        <Attribute name="orderId" type="String" mandatory="true" />
     </Message>
 
 
@@ -36,9 +53,16 @@
         <Attribute name="orderId" type="String"/>
     </Message>
 
-    <!-- Market Data Query -->
-    <Message name="QueryPriceLevelsRequest" rootMessage="true" >
+
+    <Message name="DeleteOrdersRequest" implements="EngineMsgInterface" rootMessage="true" >
         <Attribute name="ref" type = "String"/>
+        <Attribute name="symbol" type = "String"/>
+    </Message>
+
+
+    <!-- Market Data Query -->
+    <Message name="QueryPriceLevelsRequest" implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String" mandatory="true" />
     </Message>
 
     <Message name="PriceLevelSymbol">
@@ -53,13 +77,91 @@
     </Message>
 
 
+    <Message name="QueryOrderbookRequest" implements="EngineMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String" mandatory="true" />
+        <Attribute name="symbol" type="String" mandatory="true" />
+    </Message>
+
+    <Message name="QueryOrderbookResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="symbol" type="String"/>
+        <Attribute name="obSeqNo" type = "long"/>
+        <Attribute name="buyOrders" type = "Order" list="array" />
+        <Attribute name="sellOrders" type = "Order" list="array" />
+    </Message>
+
+    <Message name="QueryTradePriceRequest" implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="symbol" type="String"/>
+        <Attribute name="ref" type = "String" mandatory="true" />
+    </Message>
+
+    <Message name="QueryTradePricesRequest" implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String" mandatory="true" />
+    </Message>
+
+
+    <Message name="TradePrice">
+        <Attribute name="symbol" type = "String"/>
+        <Attribute name="quantity" type="int" />
+        <Attribute name="time" type="String" />
+        <Attribute name="last" type="double" />
+        <Attribute name="open" type="double" />
+        <Attribute name="low" type="double" />
+        <Attribute name="high" type="double" />
+
+    </Message>
+
+    <Message name="TradePriceCompact">
+        <Attribute name="s" type = "String"/>
+        <Attribute name="q" type="int" />
+        <Attribute name="t" type="String" />
+        <Attribute name="l" type="double" />
+        <Attribute name="lo" type="double" />
+        <Attribute name="hi" type="double" />
+    </Message>
+
+    <Message name="QueryTradePriceResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String"  />
+        <Attribute name="prices" type="TradePrice"/>
+    </Message>
+
+    <Message name="QueryTradePricesCompactResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String"  />
+        <Attribute name="prices" type="TradePriceCompact" list="array"/>
+    </Message>
+
+    <Message name="QueryOwnTradesRequest" implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String"  />
+    </Message>
+
+    <Message name="QueryOwnTradesResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String"  />
+        <Attribute name="trades" type="OwnTrade" list="array"/>
+    </Message>
+
+    <Message name="QueryOwnOrdersRequest"  implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String"  />
+    </Message>
+
+    <Message name="QueryOwnOrdersResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String"  />
+        <Attribute name="orders" type="OwnOrder" list="array"/>
+    </Message>
+
+
+    <Message name="StatusMessage" rootMessage="true">
+        <Attribute name="isOk" type="boolean"/>
+        <Attribute name="ref" type="String"/>
+        <Attribute name="statusMessage" type="String"/>
+        <Attribute name="exceptionMessage" type="String"/>
+    </Message>
+
     <!-- ******************************************************************************
         Broadcast related  messages
       ********************************************************************************* -->
     <Message name="Order">
         <Attribute name="price" type="double"/>
         <Attribute name="volume" type = "int"/>
-        <Attribute name="ref" type = "String"/>
         <Attribute name="orderId" type = "String"/>
         <Attribute name="side" type="String"/>
     </Message>
@@ -76,6 +178,17 @@
     </Message>
 
     <!-- Private -->
+    <Message name="OwnTrade" rootMessage="true">
+        <Attribute name="orderId" type = "String"/>
+        <Attribute name="symbol" type = "String"/>
+        <Attribute name="price" type = "double"/>
+        <Attribute name="volume" type = "int"/>
+        <Attribute name="tradeId" type = "String"/>
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="side" type = "String"/>
+    </Message>
+
+
     <Message name="BdxOwnTrade" implements="EngineBdxInterface"  rootMessage="true">
         <Attribute name="orderId" type = "String"/>
         <Attribute name="symbol" type = "String"/>
@@ -83,9 +196,19 @@
         <Attribute name="volume" type = "int"/>
         <Attribute name="tradeId" type = "String"/>
         <Attribute name="ref" type = "String"/>
+        <Attribute name="side" type = "String"/>
     </Message>
 
     <!-- Private -->
+    <Message name="OwnOrder">
+        <Attribute name="orderId" type = "String"/>
+        <Attribute name="symbol" type = "String"/>
+        <Attribute name="price" type = "double"/>
+        <Attribute name="volume" type = "int"/>
+        <Attribute name="side" type = "String"/>
+        <Attribute name="ref" type = "String"/>
+    </Message>
+
     <Message name="BdxOwnOrderbookChange" implements="EngineBdxInterface" rootMessage="true">
         <Attribute name="orderId" type = "String"/>
         <Attribute name="symbol" type = "String"/>
@@ -100,7 +223,8 @@
 
     <!-- Public -->
     <Message name="BdxTrade" implements="EngineBdxInterface"  rootMessage="true">
-        <Attribute name="orderId" type = "String"/>
+        <Attribute name="sellOrderId" type = "String"/>
+        <Attribute name="buyOrderId" type = "String"/>
         <Attribute name="symbol" type = "String"/>
         <Attribute name="price" type = "double"/>
         <Attribute name="volume" type = "int"/>

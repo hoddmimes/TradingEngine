@@ -34,7 +34,7 @@ import com.google.gson.GsonBuilder;
             import com.hoddmimes.te.messages.*;
 
             @SuppressWarnings({"WeakerAccess","unused","unchecked"})
-            public class LogonRequest implements MessageInterface 
+            public class LogonRequest implements MessageInterface , RequestMsgInterface
             {
                 public static String NAME = "LogonRequest";
 

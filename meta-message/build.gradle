@@ -16,7 +16,7 @@ repositories {
 task(generateEngineMessages, type: JavaExec ) {
     mainClass = 'JsonTransform'
     classpath = files('../libs/pojojson-generate-1.1.jar')
-    args  '-xml', './definitions/MatcherMessagesFileSet.xml'
+    args  '-xml', './definitions/TradingEngineFileSet.xml'
     doLast {
         println "Generated Matcher Messages"
     }

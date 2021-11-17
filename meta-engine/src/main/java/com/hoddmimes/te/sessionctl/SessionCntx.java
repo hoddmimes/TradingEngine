@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SessionCntx implements SessionCntxInterface
 {
@@ -13,14 +12,14 @@ public class SessionCntx implements SessionCntxInterface
 	private static SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private String mSessionId; // Interactive session id
 	private long   mSignInTime;            // Sign on time
-	private String mUserId;                // User id
+	private String mAccount;                // User id
 	private String mApiAuthId; // Unique API session id (should not be the same as the mSessionId)
 	private String mMarketDataSessionId;
 
 
-	public SessionCntx( String pUserId, String pSessionId ) {
+	public SessionCntx( String pAccount, String pSessionId ) {
 		mSessionId = pSessionId;
-		mUserId = pUserId;
+		mAccount = pAccount;
 		mSignInTime = System.currentTimeMillis();
 		mApiAuthId = generateApiAuthId();
 		mMarketDataSessionId = null;
@@ -30,7 +29,7 @@ public class SessionCntx implements SessionCntxInterface
 		String tAuthId = null;
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
-			String tInStr = mUserId + mSessionId + String.valueOf(Runtime.getRuntime().freeMemory());
+			String tInStr = mAccount + mSessionId + String.valueOf(Runtime.getRuntime().freeMemory());
 			md.update( tInStr.getBytes(StandardCharsets.UTF_8));
 			byte[] bytes = md.digest();
 			StringBuilder sb = new StringBuilder();
@@ -62,8 +61,8 @@ public class SessionCntx implements SessionCntxInterface
 	}
 
 	@Override
-	public String getUserId() {
-		return mUserId;
+	public String getAccount() {
+		return mAccount;
 	}
 
 	@Override
@@ -81,4 +80,8 @@ public class SessionCntx implements SessionCntxInterface
 		return mSignInTime;
 	}
 
+	@Override
+	public String toString() {
+		return " [sessid: " + mSessionId + " account: " + mAccount + "]";
+	}
 }

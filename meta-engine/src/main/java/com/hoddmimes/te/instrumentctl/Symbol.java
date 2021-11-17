@@ -1,5 +1,7 @@
 package com.hoddmimes.te.instrumentctl;
 
+import java.math.BigDecimal;
+
 public class Symbol
 {
 	private String mId;
@@ -30,15 +32,16 @@ public class Symbol
 	}
 
 	private boolean isTickSizeAligned( double pPrice ) {
-		int y = 0;
-		int x = ((int) pPrice / 1);
-		double  r = pPrice - (double) x;
+		if (mTickSize == 0) {
+			return true;
+		}
+		BigDecimal tPrice = new BigDecimal( Double.toString( pPrice));
+		double  r = tPrice.subtract(tPrice.divideToIntegralValue(new BigDecimal("1.0"))).doubleValue();
 
-		x = (int) (r * 1000.0d);
-		y = (int) (mTickSize * 1000.0d);
+		int x = (int) (r * 1000.0d);
+		int y = (int) (mTickSize * 1000.0d);
 
 		return ((x % y) == 0);
-
 	}
 
 	public void validate( double pPrice, double pLastKnownTradingPrice ) throws Exception {

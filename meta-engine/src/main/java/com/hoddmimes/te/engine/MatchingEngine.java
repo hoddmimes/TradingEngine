@@ -5,40 +5,50 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
+import com.hoddmimes.te.common.interfaces.MarketDataInterface;
+import com.hoddmimes.te.common.interfaces.RequestContextInterface;
+import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.instrumentctl.Symbol;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
-import com.hoddmimes.te.messages.generated.AddOrderRequest;
-import com.hoddmimes.te.messages.generated.BdxPriceLevel;
-import com.hoddmimes.te.messages.generated.InternalPriceLevelRequest;
-import com.hoddmimes.te.messages.generated.InternalPriceLevelResponse;
+import com.hoddmimes.te.messages.generated.*;
+import com.hoddmimes.te.sessionctl.RequestContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
-public class MatchingEngine implements EngineInterface
+public class MatchingEngine implements MatchingEngineCallback
 {
+	private static SimpleDateFormat SDT_TIME = new SimpleDateFormat("HH:mm:ss.SSS");
+
 	private Logger mLog = LogManager.getLogger( MatchingEngine.class);
 	private InstrumentContainer         mInstrumentContainer;
 	private JsonObject                  mConfiguration;
+	private MarketDataInterface         mMarketDataDistributor;
 	private HashMap<String,Orderbook>   mOrderbooks;
 
-	private boolean mIsEnablePrivateFlow, mIsEnablePriceLevelFlow, mIsEnableOrderbookChangeFlow;
 
-	public MatchingEngine(JsonObject pTeConfiguration, InstrumentContainer pInstrumentContainer) {
+	private boolean mIsEnabledPrivateFlow, mIsEnabledPriceLevelFlow, mIsEnabledTradeflow, mIsEnabledOrderbookChangeFlow;
+
+	public MatchingEngine(JsonObject pTeConfiguration, InstrumentContainer pInstrumentContainer, MarketDataInterface pMarketDataInterface) {
 		mInstrumentContainer = pInstrumentContainer;
+		mMarketDataDistributor = pMarketDataInterface;
 		mConfiguration = AuxJson.navigateObject(pTeConfiguration, "TeConfiguration/matchingEngineConfiguration");
-		TeAppCntx.getInstance().setMatchingEngine( this );
 		initializeOrderbooks();
 		configureDataDistribution(AuxJson.navigateObject(pTeConfiguration, "TeConfiguration/marketDataConfiguration"));
 	}
 
 
 	private void configureDataDistribution( JsonObject pMarketDataConfiguration ) {
-		mIsEnableOrderbookChangeFlow = AuxJson.navigateBoolean(pMarketDataConfiguration,"enableOrdebookChanges");
-		mIsEnablePriceLevelFlow =  AuxJson.navigateBoolean(pMarketDataConfiguration,"enablePriceLevels");
-		mIsEnablePrivateFlow =  AuxJson.navigateBoolean(pMarketDataConfiguration,"enablePrivateFlow");
+		mIsEnabledOrderbookChangeFlow = AuxJson.navigateBoolean(pMarketDataConfiguration,"enableOrdebookChanges");
+		mIsEnabledPriceLevelFlow =  AuxJson.navigateBoolean(pMarketDataConfiguration,"enablePriceLevels");
+		mIsEnabledPrivateFlow =  AuxJson.navigateBoolean(pMarketDataConfiguration,"enablePrivateFlow");
+		mIsEnabledTradeflow =  AuxJson.navigateBoolean(pMarketDataConfiguration,"enableTradeFlow");
 	}
 
 
@@ -47,90 +57,205 @@ public class MatchingEngine implements EngineInterface
 		mInstrumentContainer.getSymbols().stream().forEach( s -> { mOrderbooks.put( s.getId(), new Orderbook(s, mLog, this)); } );
 	}
 
+	MessageInterface processAddOrder(AddOrderRequest pAddOrderRequest, RequestContextInterface pRequestContext ) {
+		Orderbook tOrderbook = mOrderbooks.get(pAddOrderRequest.getSymbol().get());
+		if (tOrderbook == null) {
+			mLog.warn("orderbook \"" + pAddOrderRequest.getSymbol().get() + "\" does not exists " + pRequestContext);
+			return  StatusMessageBuilder.error("orderbook \"" + pAddOrderRequest.getSymbol().get() + "\" does not exists", pAddOrderRequest.getRef().get());
+		}
+		synchronized (tOrderbook) {
+			Order tOrder = new Order(pRequestContext.getAccountId(), pAddOrderRequest);
 
-	public MessageInterface execute(MeRqstCntx pRqstCntx ) {
-		pRqstCntx.timestamp("ME start processing");
+			MessageInterface tMsg = tOrderbook.addOrder(tOrder, pRequestContext);
+			return tMsg;
+		}
+	}
 
-		Symbol tSymbol = mInstrumentContainer.getSymbol( pRqstCntx.mRequest.getSymbol().get());
-		if (tSymbol == null) {
-			return StatusMessageBuilder.error("unknown symbol \"" + pRqstCntx.mRequest.getSymbol().get() + "\"", null );
+	MessageInterface processAmendOrder( AmendOrderRequest pAmendOrderRequest, RequestContextInterface pRequestContext) {
+		long tOrderId;
+
+		Orderbook tOrderbook = mOrderbooks.get(pAmendOrderRequest.getSymbol().get());
+		if (tOrderbook == null) {
+			mLog.warn("orderbook \"" + pAmendOrderRequest.getSymbol().get() + "\" does not exists " + pRequestContext);
+			return StatusMessageBuilder.error("orderbook \"" + pAmendOrderRequest.getSymbol().get() + "\" does not exists", pAmendOrderRequest.getRef().get());
 		}
 
+		synchronized (tOrderbook) {
+			try {
+				tOrderId = Long.parseLong(pAmendOrderRequest.getOrderId().get(), 16);
+			} catch (NumberFormatException e) {
+				mLog.warn("amend order, invalid order id " + pRequestContext);
+				return StatusMessageBuilder.error("invalid order id", pAmendOrderRequest.getRef().get());
+			}
 
-		if (pRqstCntx.mRequest instanceof AddOrderRequest) {
-			return executeAddOrder( (AddOrderRequest) pRqstCntx.mRequest, pRqstCntx );
+			MessageInterface tRspMsg = tOrderbook.amendOrder(tOrderId, pAmendOrderRequest, pRequestContext);
+			return tRspMsg;
+		}
+	}
+
+	MessageInterface processDeleteOrder( DeleteOrderRequest pDeleteOrderRequest, RequestContextInterface pRequestContext) {
+		long tOrderId;
+
+		Orderbook tOrderbook = mOrderbooks.get( pDeleteOrderRequest.getSymbol().get());
+		if (tOrderbook == null) {
+			mLog.warn("orderbook \"" + pDeleteOrderRequest.getSymbol().get() + "\" does not exists " + pRequestContext );
+			return StatusMessageBuilder.error("orderbook \"" + pDeleteOrderRequest.getSymbol().get() + "\" does not exists", pDeleteOrderRequest.getRef().get());
 		}
 
-		if (pRqstCntx.mRequest instanceof InternalPriceLevelRequest) {
-			return executePriceLevelRequest( (InternalPriceLevelRequest) pRqstCntx.mRequest, pRqstCntx );
+		synchronized( tOrderbook ) {
+			try {
+				tOrderId = Long.parseLong(pDeleteOrderRequest.getOrderId().get(), 16);
+			} catch (NumberFormatException e) {
+				mLog.warn("delete order, invalid order id " + pRequestContext);
+				return StatusMessageBuilder.error("invalid order id", pDeleteOrderRequest.getRef().get());
+			}
+
+			MessageInterface tMsg = tOrderbook.deleteOrder(tOrderId, pDeleteOrderRequest.getRef().get(), pRequestContext);
+			return tMsg;
+		}
+	}
+
+	MessageInterface processDeleteOrders(  DeleteOrdersRequest pDeleteOrdersRequest, RequestContextInterface pRequestContext) {
+		Orderbook tOrderbook = mOrderbooks.get( pDeleteOrdersRequest.getSymbol().get());
+		if (tOrderbook == null) {
+			mLog.warn("orderbook \"" + pDeleteOrdersRequest.getSymbol().get() + "\" does not exists " + pRequestContext );
+			return StatusMessageBuilder.error("orderbook \"" + pDeleteOrdersRequest.getSymbol().get() + "\" does not exists", pDeleteOrdersRequest.getRef().get());
 		}
 
+		synchronized( tOrderbook ) {
+			MessageInterface tMsg = tOrderbook.deleteOrders(pDeleteOrdersRequest.getRef().get(), pRequestContext);
+			return tMsg;
+		}
+	}
+
+
+	 MessageInterface processQueryOrderbook( QueryOrderbookRequest pQueryOrderbookRequest, RequestContextInterface  pRequestContext) {
+		Orderbook tOrderbook = mOrderbooks.get( pQueryOrderbookRequest.getSymbol().get());
+		if (tOrderbook == null) {
+			mLog.warn("orderbook \"" + pQueryOrderbookRequest.getSymbol().get() + "\" does not exists " + pRequestContext );
+			return StatusMessageBuilder.error("orderbook \"" + pQueryOrderbookRequest.getSymbol().get() + "\" does not exists", pQueryOrderbookRequest.getRef().get());
+		}
+
+		synchronized ( tOrderbook ) {
+			 return tOrderbook.orderbookSnapshot(pQueryOrderbookRequest);
+		 }
+	}
+
+	MessageInterface processQueryOwnOrders( InternalOwnOrdersRequest pInternalOwnOrdersRequest, RequestContextInterface pRequestContext) {
+		Orderbook tOrderbook = mOrderbooks.get( pInternalOwnOrdersRequest.getSymbol().get());
+		if (tOrderbook == null) {
+			mLog.warn("orderbook \"" + pInternalOwnOrdersRequest.getSymbol().get() + "\" does not exists " + pRequestContext );
+			return StatusMessageBuilder.error("orderbook \"" + pInternalOwnOrdersRequest.getSymbol().get() + "\" does not exists", pInternalOwnOrdersRequest.getRef().get());
+		}
+
+		synchronized( tOrderbook ) {
+			MessageInterface tMsg = tOrderbook.queryOwnOrders(pInternalOwnOrdersRequest.getRef().get(), pRequestContext);
+			return tMsg;
+		}
+	}
+
+	 MessageInterface processPriceLevel(InternalPriceLevelRequest pInternalPriceLevelRequest, RequestContextInterface pRequestContext) {
+		Orderbook tOrderbook = mOrderbooks.get( pInternalPriceLevelRequest.getSymbol().get());
+
+		if (tOrderbook == null) {
+			mLog.warn("orderbook \"" + pInternalPriceLevelRequest.getSymbol().get() + "\" does not exists " + pRequestContext );
+			return StatusMessageBuilder.error("orderbook \"" + pInternalPriceLevelRequest.getSymbol().get() + "\" does not exists", pInternalPriceLevelRequest.getRef().get());
+		}
+
+		synchronized (tOrderbook) {
+			BdxPriceLevel tBdxPriceLevel = tOrderbook.buildPriceLevelBdx(pInternalPriceLevelRequest.getLevels().get());
+			InternalPriceLevelResponse tResponse = new InternalPriceLevelResponse();
+			tResponse.setRef(pInternalPriceLevelRequest.getRef().get());
+			tResponse.setBdxPriceLevel(tBdxPriceLevel);
+			return tResponse;
+		}
+	}
+
+
+
+
+	private MessageInterface executeDeleteOrders( DeleteOrdersRequest pDeleteOrderRequest, RequestContext pRequestContext) {
 		return null;
 	}
 
-	private MessageInterface executePriceLevelRequest( InternalPriceLevelRequest pRequest, MeRqstCntx  pRqstCntx) {
-		Orderbook tOrderbook = mOrderbooks.get( pRequest.getSymbol().get());
 
-		if (tOrderbook == null) {
-			mLog.warn("orderbook \"" + pRequest.getSymbol().get() + "\" does not exists " + pRqstCntx.getSessionInfo() );
-			return StatusMessageBuilder.error("orderbook \"" + pRequest.getSymbol().get() + "\" does not exists", pRequest.getRef().get());
+
+	public List<String> getOrderbookSymbols() {
+		ArrayList<String> tList = new ArrayList<>();
+		Iterator<Orderbook> tItr = mOrderbooks.values().iterator();
+		while( tItr.hasNext()) {
+			tList.add( tItr.next().getSymbolName());
 		}
-
-		BdxPriceLevel tBdxPriceLevel = tOrderbook.buildPriceLevelBdx( pRequest.getLevels().get());
-		InternalPriceLevelResponse tResponse = new InternalPriceLevelResponse();
-		tResponse.setRef( pRequest.getRef().get());
-		tResponse.setBdxPriceLevel(tBdxPriceLevel);
-		pRqstCntx.addPublicBdx( tBdxPriceLevel );
-		return  tResponse;
+		return tList;
 	}
 
-	private MessageInterface executeAddOrder( AddOrderRequest pAddOrderRequest, MeRqstCntx  pRqstCntx)
-	{
-		Orderbook tOrderbook = mOrderbooks.get( pAddOrderRequest.getSymbol().get());
-		if (tOrderbook == null) {
-			mLog.warn("orderbook \"" + pAddOrderRequest.getSymbol().get() + "\" does not exists " + pRqstCntx.getSessionInfo() );
-			return StatusMessageBuilder.error("orderbook \"" + pAddOrderRequest.getSymbol().get() + "\" does not exists", pAddOrderRequest.getRef().get());
-		}
-		Order tOrder = new Order(pRqstCntx.getUserId(), pAddOrderRequest);
 
-		MessageInterface tMsg =  tOrderbook.addOrder( tOrder, pRqstCntx);
-		return tMsg;
-	}
 
 	@Override
-	public void orderAdded(Order pOrder, MeRqstCntx pRqstCntx, long pOrderbookSeqNo) {
+	public void orderAdded(Order pOrder, SessionCntxInterface pSessionCntx, long pOrderbookSeqNo) {
 		// will trigger a public and private orderbook change
-		mLog.info("order Added");
-		pRqstCntx.addPrivateBdx( pOrder.toOwnOrderBookChg(Order.ChangeAction.ADD, pOrderbookSeqNo));
-
-		pRqstCntx.addPublicBdx( pOrder.toOrderBookChg(Order.ChangeAction.ADD, pOrderbookSeqNo));
+		if (mIsEnabledPrivateFlow) {
+			mMarketDataDistributor.queueBdxPrivate( pSessionCntx, pOrder.toOwnOrderBookChg(Order.ChangeAction.ADD, pOrderbookSeqNo));
+		}
+		if (mIsEnabledOrderbookChangeFlow) {
+			mMarketDataDistributor.queueBdxPublic(pOrder.toOrderBookChg(Order.ChangeAction.ADD, pOrderbookSeqNo));
+		}
 	}
 
 	@Override
-	public void orderRemoved(Order pOrder, MeRqstCntx RqstCntx, long pOrderbookSeqNo) {
-		mLog.info("order removed");
+	public void orderRemoved(Order pOrder, SessionCntxInterface pSessionCntx, long pOrderbookSeqNo) {
+		if (mIsEnabledPrivateFlow) {
+			mMarketDataDistributor.queueBdxPrivate(pSessionCntx, pOrder.toOwnOrderBookChg(Order.ChangeAction.REMOVE, pOrderbookSeqNo));
+		}
+		if (mIsEnabledOrderbookChangeFlow) {
+			mMarketDataDistributor.queueBdxPublic(pOrder.toOrderBookChg(Order.ChangeAction.REMOVE, pOrderbookSeqNo));
+		}
 	}
 
 	@Override
-	public void orderModified(Order pOrder, MeRqstCntx RqstCntx, long pOrderbookSeqNo) {
-		mLog.info("order modified");
+	public void orderModified(Order pOrder, SessionCntxInterface pSessionCntx, long pOrderbookSeqNo) {
+		if (mIsEnabledPrivateFlow) {
+			mMarketDataDistributor.queueBdxPrivate(pSessionCntx, pOrder.toOwnOrderBookChg(Order.ChangeAction.MODIFY, pOrderbookSeqNo));
+		}
+		if (mIsEnabledOrderbookChangeFlow) {
+			mMarketDataDistributor.queueBdxPublic(pOrder.toOrderBookChg(Order.ChangeAction.MODIFY, pOrderbookSeqNo));
+		}
 	}
 
 	@Override
-	public void trade(Trade pTrade, MeRqstCntx RqstCntx) {
-		mLog.info("new Trade");
+	public void trade(InternalTrade pTrade, SessionCntxInterface pSessionCntx) {
+		String tSymbol =  pTrade.getSymbol();
+
+		TeAppCntx.getInstance().getTradeContainer().addTrade( pTrade );
+
+
+		if (mIsEnabledTradeflow) {
+			mMarketDataDistributor.queueBdxPublic(pTrade.toBdxTrade());
+		}
+
+		if (mIsEnabledPrivateFlow) {
+			if (pTrade.isOnBuySide( pSessionCntx.getAccount())) {
+				mMarketDataDistributor.queueBdxPrivate( pSessionCntx, pTrade.toOwnBdxTrade(Order.Side.BUY));
+			}
+			if (pTrade.isOnSellSide(pSessionCntx.getAccount())) {
+				mMarketDataDistributor.queueBdxPrivate(pSessionCntx, pTrade.toOwnBdxTrade(Order.Side.SELL));
+			}
+		}
 	}
 
 	@Override
-	public void newOrderMatched(Order pOrder, MeRqstCntx RqstCntx, long pOrderbookSeqNo) {
-		mLog.info("new OrderMatched");
+	public void newOrderMatched(Order pOrder, SessionCntxInterface pSessionCntx, long pOrderbookSeqNo) {
+		// New order completly matched and not in the book
+		if (mIsEnabledPrivateFlow) {
+			mMarketDataDistributor.queueBdxPrivate( pSessionCntx, pOrder.toOwnOrderBookChg(Order.ChangeAction.ADD, pOrderbookSeqNo));
+		}
 	}
 
 	@Override
-	public void orderbookChanged(String mSymbol) {
-		if (mIsEnableOrderbookChangeFlow) {
-			mLog.info("price level orderbookChanged");
-			TeAppCntx.getInstance().getMarketDataDistributor().orderbookChanged(mSymbol);
+	public void orderbookChanged(String pSymbol) {
+		// Trigger price level update
+		if (mIsEnabledOrderbookChangeFlow) {
+			mMarketDataDistributor.orderbookChanged( pSymbol );
 		}
 	}
 }

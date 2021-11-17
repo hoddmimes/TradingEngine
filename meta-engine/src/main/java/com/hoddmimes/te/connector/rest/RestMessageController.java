@@ -62,26 +62,68 @@ public class RestMessageController
 		return buildResponse( tResponseMessage );
 	}
 
-	@PostMapping( path = "/queryLevels" )
-	ResponseEntity<?> queryPriceLevels(HttpSession pSession, @RequestBody String pJsonRqstString ) {
-		String jRqstMsgString  = AuxJson.tagMessageBody(QueryPriceLevelsRequest.NAME, pJsonRqstString);
-		String tRef = AuxJson.getMessageRef(jRqstMsgString);
-
-		QueryPriceLevelsRequest tQryPLRqst = null;
-		try {
-			tQryPLRqst = (QueryPriceLevelsRequest) mCallback.validateMessage(jRqstMsgString);
-		}
-		catch( Exception e) {
-			mLog.error("invalid " + QueryPriceLevelsRequest.NAME + " request, reason: " + e.getMessage(), e);
-			StatusMessage tStsMsg = StatusMessageBuilder.error("invalid "  + QueryPriceLevelsRequest.NAME, tRef, e );
-			return buildResponse( tStsMsg );
-		}
-
-		MessageInterface tResponseMessage = null;
-		TeAppCntx.getInstance().getMarketDataDistributor().queryPriceLevels( tQryPLRqst );
+	@PostMapping( path = "/amendOrder" )
+	ResponseEntity<?> amendOrder(HttpSession pSession, @RequestBody String pJsonRqstString ) {
+		String jRqstMsgString  = AuxJson.tagMessageBody(AmendOrderRequest.NAME, pJsonRqstString);
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), jRqstMsgString );
 		return buildResponse( tResponseMessage );
 	}
 
+	@PostMapping( path = "/deleteOrder" )
+	ResponseEntity<?> deleteOrder(HttpSession pSession, @RequestBody String pJsonRqstString ) {
+		String jRqstMsgString  = AuxJson.tagMessageBody(DeleteOrderRequest.NAME, pJsonRqstString);
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), jRqstMsgString );
+		return buildResponse( tResponseMessage );
+	}
+
+	@PostMapping( path = "/deleteOrders" )
+	ResponseEntity<?> deleteOrders(HttpSession pSession, @RequestBody String pJsonRqstString ) {
+		String jRqstMsgString  = AuxJson.tagMessageBody(DeleteOrdersRequest.NAME, pJsonRqstString);
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), jRqstMsgString );
+		return buildResponse( tResponseMessage );
+	}
+
+	@PostMapping( path = "/queryTradePrices" )
+	ResponseEntity<?> queryTradePrices(HttpSession pSession, @RequestBody String pJsonRqstString ) {
+		String jRqstMsgString  = AuxJson.tagMessageBody(QueryTradePricesRequest.NAME, pJsonRqstString);
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), jRqstMsgString );
+		return buildResponse( tResponseMessage );
+	}
+
+	@PostMapping( path = "/queryTradePrice" )
+	ResponseEntity<?> queryTradePrice(HttpSession pSession, @RequestBody String pJsonRqstString ) {
+		String jRqstMsgString  = AuxJson.tagMessageBody(QueryTradePriceRequest.NAME, pJsonRqstString);
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), jRqstMsgString );
+		return buildResponse( tResponseMessage );
+	}
+
+	@PostMapping( path = "/queryOrderbook" )
+	ResponseEntity<?> queryOrderbook(HttpSession pSession, @RequestBody String pJsonRqstString ) {
+		String jRqstMsgString  = AuxJson.tagMessageBody(QueryOrderbookRequest.NAME, pJsonRqstString);
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), jRqstMsgString );
+		return buildResponse( tResponseMessage );
+	}
+
+	@PostMapping( path = "/queryLevels" )
+	ResponseEntity<?> queryPriceLevels(HttpSession pSession, @RequestBody String pJsonRqstString ) {
+		String jRqstMsgString = AuxJson.tagMessageBody(QueryPriceLevelsRequest.NAME, pJsonRqstString);
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), jRqstMsgString);
+		return buildResponse(tResponseMessage);
+	}
+
+	@PostMapping( path = "/queryOwnTrades" )
+	ResponseEntity<?> QueryOwnTrades(HttpSession pSession, @RequestBody String pJsonRqstString ) {
+		String jRqstMsgString = AuxJson.tagMessageBody(QueryOwnTradesRequest.NAME, pJsonRqstString);
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), jRqstMsgString);
+		return buildResponse(tResponseMessage);
+	}
+
+	@PostMapping( path = "/queryOwnOrders" )
+	ResponseEntity<?> QueryOwnOrders(HttpSession pSession, @RequestBody String pJsonRqstString ) {
+		String jRqstMsgString = AuxJson.tagMessageBody(QueryOwnOrdersRequest.NAME, pJsonRqstString);
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), jRqstMsgString);
+		return buildResponse(tResponseMessage);
+	}
 
 	private ResponseEntity<?> buildStatusMessageResponse( StatusMessage pStsMsg ) {
 		if (pStsMsg.getIsOk().get()) {

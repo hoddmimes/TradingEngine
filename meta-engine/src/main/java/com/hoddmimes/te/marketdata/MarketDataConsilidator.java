@@ -2,9 +2,8 @@ package com.hoddmimes.te.marketdata;
 
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
-import com.hoddmimes.te.engine.MatchingEngineFrontend;
-import com.hoddmimes.te.engine.MeRqstCntx;
 import com.hoddmimes.te.messages.generated.*;
+import com.hoddmimes.te.sessionctl.SessionController;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -47,7 +46,7 @@ public class MarketDataConsilidator extends Thread {
 		Iterator<BdxPriceLevel> tItr = mSymolPriceLevels.values().iterator();
 		while( tItr.hasNext() ) {
 			BdxPriceLevel tBdx = tItr.next();
-			PriceLevelSymbol pls = new PriceLevelSymbol( tBdx.getSymbol().get());
+			PriceLevelSymbol pls = new PriceLevelSymbol().setSymbol( tBdx.getSymbol().get());
 			pls.setBuySide( tBdx.getBuySide().get());
 			pls.setSellSide( tBdx.getSellSide().get());
 			tRsp.addOrderbooks( pls );
@@ -65,7 +64,8 @@ public class MarketDataConsilidator extends Thread {
 			}
 
 			if (mSymolTouchedRef.get().size() > 0) {
-				MatchingEngineFrontend tMeFrontEnd = TeAppCntx.getInstance().getMatchingEngineFrontend();
+				SessionController tSessionController = TeAppCntx.getInstance().getSessionController();
+
 				ConcurrentHashMap<String, String> tNewSymbolMap = new ConcurrentHashMap<>();
 				ConcurrentHashMap<String, String> tOldSymbolMap = mSymolTouchedRef.getAndSet(tNewSymbolMap);
 
@@ -74,13 +74,12 @@ public class MarketDataConsilidator extends Thread {
 					tRqst.setRef("X");
 					tRqst.setSymbol(tSymbol);
 					tRqst.setLevels(mLevels);
-					MeRqstCntx tMeRqstCntx = tMeFrontEnd.queue(TeAppCntx.getInstance().getIntenalSessionContext(), tRqst);
-					tMeRqstCntx.waitForCompleation();
 
-					MessageInterface tRspMsg = tMeRqstCntx.mResponse;
+					MessageInterface tRspMsg = tSessionController.connectorMessage( SessionController.INTERNAL_SESSION_ID, tRqst.toString() );
+
 					if (tRspMsg instanceof StatusMessage) {
 						StatusMessage tSts = (StatusMessage) tRspMsg;
-						mLog.error("InternalPriceLevelRequest failed \"" + tSymbol + "\" reason: " + tSts.getExceptionMessage().orElse("unknown"));
+						mLog.error("InternalPriceLevelRequest failed \"" + tSymbol + "\" reason: " + tSts.getStatusMessage().orElse("unknown"));
 					} else if (tRspMsg instanceof InternalPriceLevelResponse) {
 						update((InternalPriceLevelResponse) tRspMsg, tSymbol);
 					}

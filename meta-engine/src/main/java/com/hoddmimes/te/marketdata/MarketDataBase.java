@@ -2,9 +2,11 @@ package com.hoddmimes.te.marketdata;
 
 import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
+import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.common.interfaces.MarketDataInterface;
+import com.hoddmimes.te.common.interfaces.RequestContextInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
 import com.hoddmimes.te.messages.EngineBdxInterface;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
@@ -17,6 +19,7 @@ public abstract class MarketDataBase implements MarketDataInterface {
 
 
 	protected MarketDataBase(JsonObject pTEConfiguration) {
+		TeAppCntx.getInstance().setMarketDataDistributor( this );
 		mConfiguration = AuxJson.navigateObject(pTEConfiguration, "TeConfiguration/marketDataConfiguration/connectorConfiguration").getAsJsonObject();
 		initialize(AuxJson.navigateObject(pTEConfiguration, "TeConfiguration/marketDataConfiguration").getAsJsonObject());
 	}
@@ -40,7 +43,7 @@ public abstract class MarketDataBase implements MarketDataInterface {
 		}
 	}
 
-	public MessageInterface queryPriceLevels(QueryPriceLevelsRequest pQryRqst )
+	public MessageInterface queryPriceLevels(QueryPriceLevelsRequest pQryRqst, RequestContextInterface pRequestContext)
 	{
 	  	if (mConsilidator == null) {
 		    return StatusMessageBuilder.error("price level data is not configured", pQryRqst.getRef().get());

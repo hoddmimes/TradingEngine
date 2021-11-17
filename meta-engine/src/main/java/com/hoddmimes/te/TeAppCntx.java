@@ -4,13 +4,12 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.common.interfaces.MarketDataInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
-import com.hoddmimes.te.engine.MatchingEngine;
-import com.hoddmimes.te.engine.MatchingEngineFrontend;
+import com.hoddmimes.te.engine.MatchingEngineInterface;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.sessionctl.SessionController;
+import com.hoddmimes.te.trades.TradeContainer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.spi.LoggerContext;
 
 
 public class TeAppCntx {
@@ -19,19 +18,21 @@ public class TeAppCntx {
 	private ConnectorInterface  mConnector;
 	private SessionController mSessionController;
 	private InstrumentContainer mInstrumentContainer;
-	private MatchingEngine mMatchingEngine;
 	private MarketDataInterface mMarketDataDistributor;
-	private MatchingEngineFrontend mMatchingEngineFrontend;
+	private MatchingEngineInterface mMatchingEngine;
+	private TradeContainer mTradeContainer;
 	private JsonObject mTeConfiguration;
+	private Object mMarketDataDistributorMutex;
 
 	private TeAppCntx() {
+		mMarketDataDistributorMutex = new Object();
 		setConnector(null);
 		setSessionController(null);
 		setInstrumentContainer(null);
 		setMatchingEngine(null);
-		setMatchingEngineFrontend(null);
 		setTeConfiguration(null);
 		setMarketDataDistributor(null);
+		setTradeContainer(null);
 	}
 
 	public static TeAppCntx getInstance() {
@@ -83,7 +84,7 @@ public class TeAppCntx {
 		mInstrumentContainer = pInstrumentContainer;
 	}
 
-	public MatchingEngine getMatchingEngine() {
+	public MatchingEngineInterface getMatchingEngine() {
 		if (mMatchingEngine == null) {
 			mLog.fatal("try to retrieve MatchingEngine implementation before setting it ", new Exception("MatchingEngine is null"));
 			System.exit(-1);
@@ -91,22 +92,9 @@ public class TeAppCntx {
 		return mMatchingEngine;
 	}
 
-	public void setMatchingEngine(MatchingEngine pMatchingEngine) {
+	public void setMatchingEngine(MatchingEngineInterface pMatchingEngine) {
 		mMatchingEngine = pMatchingEngine;
 	}
-
-	public MatchingEngineFrontend getMatchingEngineFrontend() {
-		if (mMatchingEngineFrontend == null) {
-			mLog.fatal("try to retrieve MatchingEngineFrontend implementation before setting it ", new Exception("MatchingEngineFrontend is null"));
-			System.exit(-1);
-		}
-		return mMatchingEngineFrontend;
-	}
-
-	public void setMatchingEngineFrontend(MatchingEngineFrontend pMatchingEngineFrontend) {
-		mMatchingEngineFrontend = pMatchingEngineFrontend;
-	}
-
 
 	public void setTeConfiguration( JsonObject pTeConfiguration ) {
 		mTeConfiguration = pTeConfiguration;
@@ -121,6 +109,15 @@ public class TeAppCntx {
 	}
 
 	public MarketDataInterface getMarketDataDistributor() {
+		synchronized (mMarketDataDistributorMutex) {
+			if (mMarketDataDistributor != null) {
+				return mMarketDataDistributor;
+			}
+			try {
+				mMarketDataDistributorMutex.wait(5000L);
+			} catch (InterruptedException e) {
+			}
+		}
 		if (mMarketDataDistributor == null) {
 			mLog.fatal("try to retrieve MarketData implementation before setting it ", new Exception("MarketData is null"));
 			System.exit(-1);
@@ -129,6 +126,21 @@ public class TeAppCntx {
 	}
 
 	public void setMarketDataDistributor(MarketDataInterface pMarketDataDistributor) {
-		mMarketDataDistributor = pMarketDataDistributor;
+		synchronized (mMarketDataDistributorMutex) {
+			mMarketDataDistributor = pMarketDataDistributor;
+			mMarketDataDistributorMutex.notifyAll();
+		}
+	}
+
+	public TradeContainer getTradeContainer() {
+		if (mTradeContainer == null) {
+			mLog.fatal("try to retrieve Trade Container implementation before setting it ", new Exception("TradeContainer is null"));
+			System.exit(-1);
+		}
+		return mTradeContainer;
+	}
+
+	public void setTradeContainer(TradeContainer pTradeContainer) {
+		mTradeContainer = pTradeContainer;
 	}
 }

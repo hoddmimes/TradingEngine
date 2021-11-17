@@ -39,7 +39,8 @@ import com.google.gson.GsonBuilder;
                 public static String NAME = "BdxTrade";
 
             
-                    private String mOrderId;
+                    private String mSellOrderId;
+                    private String mBuyOrderId;
                     private String mSymbol;
                     private Double mPrice;
                     private Integer mVolume;
@@ -55,12 +56,20 @@ import com.google.gson.GsonBuilder;
                     this.decode( tDecoder );
                }
     
-            public BdxTrade setOrderId( String pOrderId ) {
-            mOrderId = pOrderId;
+            public BdxTrade setSellOrderId( String pSellOrderId ) {
+            mSellOrderId = pSellOrderId;
             return this;
             }
-            public Optional<String> getOrderId() {
-              return  Optional.ofNullable(mOrderId);
+            public Optional<String> getSellOrderId() {
+              return  Optional.ofNullable(mSellOrderId);
+            }
+        
+            public BdxTrade setBuyOrderId( String pBuyOrderId ) {
+            mBuyOrderId = pBuyOrderId;
+            return this;
+            }
+            public Optional<String> getBuyOrderId() {
+              return  Optional.ofNullable(mBuyOrderId);
             }
         
             public BdxTrade setSymbol( String pSymbol ) {
@@ -113,8 +122,11 @@ import com.google.gson.GsonBuilder;
         
             JsonEncoder tEncoder = new JsonEncoder();
             pEncoder.add("BdxTrade", tEncoder.toJson() );
-            //Encode Attribute: mOrderId Type: String List: false
-            tEncoder.add( "orderId", mOrderId );
+            //Encode Attribute: mSellOrderId Type: String List: false
+            tEncoder.add( "sellOrderId", mSellOrderId );
+        
+            //Encode Attribute: mBuyOrderId Type: String List: false
+            tEncoder.add( "buyOrderId", mBuyOrderId );
         
             //Encode Attribute: mSymbol Type: String List: false
             tEncoder.add( "symbol", mSymbol );
@@ -136,8 +148,11 @@ import com.google.gson.GsonBuilder;
         
             JsonDecoder tDecoder = pDecoder.get("BdxTrade");
         
-            //Decode Attribute: mOrderId Type:String List: false
-            mOrderId = tDecoder.readString("orderId");
+            //Decode Attribute: mSellOrderId Type:String List: false
+            mSellOrderId = tDecoder.readString("sellOrderId");
+        
+            //Decode Attribute: mBuyOrderId Type:String List: false
+            mBuyOrderId = tDecoder.readString("buyOrderId");
         
             //Decode Attribute: mSymbol Type:String List: false
             mSymbol = tDecoder.readString("symbol");
@@ -175,8 +190,13 @@ import com.google.gson.GsonBuilder;
           }
 
         
-                        public Builder setOrderId( String pValue ) {
-                        mInstance.setOrderId( pValue );
+                        public Builder setSellOrderId( String pValue ) {
+                        mInstance.setSellOrderId( pValue );
+                        return this;
+                    }
+                
+                        public Builder setBuyOrderId( String pValue ) {
+                        mInstance.setBuyOrderId( pValue );
                         return this;
                     }
                 

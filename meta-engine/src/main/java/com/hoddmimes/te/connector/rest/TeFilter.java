@@ -11,11 +11,8 @@ import org.apache.logging.log4j.core.util.IOUtils;
 
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -107,7 +104,7 @@ public class TeFilter implements Filter
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		HttpSession tSession = pRqst.getSession();
 		SessionCntxInterface tSessCntx = (SessionCntxInterface) tSession.getAttribute( TE_SESS_CNTX );
-		String tUsername = (tSessCntx != null) ? tSessCntx.getUserId() : "null";
+		String tUsername = (tSessCntx != null) ? tSessCntx.getAccount() : "null";
 
 		/*
 		String tRqstData = null;

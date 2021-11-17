@@ -38,7 +38,7 @@ public class RestConnectorSessionListner implements javax.servlet.http.HttpSessi
 	{
 		SessionCntxInterface  tSessCntx = TeAppCntx.getInstance().getSessionController().connectorDisconnectSession(se.getSession().getId());
 		if (tSessCntx != null) {
-			mLog.info("Session terminated for user: " + tSessCntx.getUserId() + " session id: " + tSessCntx.getSessionId() + " create time: " + tSessCntx.getSessionStartTime());
+			mLog.info("Session terminated for user: " + tSessCntx.getAccount() + " session id: " + tSessCntx.getSessionId() + " create time: " + tSessCntx.getSessionStartTime());
 		}
 	}
 }

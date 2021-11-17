@@ -52,6 +52,20 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
+            case "AmendOrderRequest":
+            {
+            	AmendOrderRequest tMessage = new AmendOrderRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "AmendOrderResponse":
+            {
+            	AmendOrderResponse tMessage = new AmendOrderResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
             case "DeleteOrderRequest":
             {
             	DeleteOrderRequest tMessage = new DeleteOrderRequest();
@@ -62,6 +76,13 @@ public class MessageFactory implements MessageFactoryInterface
             case "DeleteOrderResponse":
             {
             	DeleteOrderResponse tMessage = new DeleteOrderResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "DeleteOrdersRequest":
+            {
+            	DeleteOrdersRequest tMessage = new DeleteOrdersRequest();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }
@@ -80,9 +101,93 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
+            case "QueryOrderbookRequest":
+            {
+            	QueryOrderbookRequest tMessage = new QueryOrderbookRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryOrderbookResponse":
+            {
+            	QueryOrderbookResponse tMessage = new QueryOrderbookResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryTradePriceRequest":
+            {
+            	QueryTradePriceRequest tMessage = new QueryTradePriceRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryTradePricesRequest":
+            {
+            	QueryTradePricesRequest tMessage = new QueryTradePricesRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryTradePriceResponse":
+            {
+            	QueryTradePriceResponse tMessage = new QueryTradePriceResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryTradePricesCompactResponse":
+            {
+            	QueryTradePricesCompactResponse tMessage = new QueryTradePricesCompactResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryOwnTradesRequest":
+            {
+            	QueryOwnTradesRequest tMessage = new QueryOwnTradesRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryOwnTradesResponse":
+            {
+            	QueryOwnTradesResponse tMessage = new QueryOwnTradesResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryOwnOrdersRequest":
+            {
+            	QueryOwnOrdersRequest tMessage = new QueryOwnOrdersRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryOwnOrdersResponse":
+            {
+            	QueryOwnOrdersResponse tMessage = new QueryOwnOrdersResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "StatusMessage":
+            {
+            	StatusMessage tMessage = new StatusMessage();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
             case "BdxOrderbookChange":
             {
             	BdxOrderbookChange tMessage = new BdxOrderbookChange();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "OwnTrade":
+            {
+            	OwnTrade tMessage = new OwnTrade();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }
@@ -129,6 +234,20 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
+            case "InternalOwnOrdersRequest":
+            {
+            	InternalOwnOrdersRequest tMessage = new InternalOwnOrdersRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "InternalOwnOrdersResponse":
+            {
+            	InternalOwnOrdersResponse tMessage = new InternalOwnOrdersResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
             case "LogonResponse":
             {
             	LogonResponse tMessage = new LogonResponse();
@@ -143,9 +262,9 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
-            case "StatusMessage":
+            case "ContainerTrade":
             {
-            	StatusMessage tMessage = new StatusMessage();
+            	ContainerTrade tMessage = new ContainerTrade();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }

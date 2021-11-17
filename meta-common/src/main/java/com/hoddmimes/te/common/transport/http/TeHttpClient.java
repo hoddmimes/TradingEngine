@@ -2,6 +2,7 @@
 package com.hoddmimes.te.common.transport.http;
 
 
+import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.google.gson.*;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
@@ -26,21 +27,27 @@ import java.io.InputStreamReader;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 
 public class TeHttpClient
 {
+	private static SimpleDateFormat SDF = new SimpleDateFormat("HH:mm:ss.SSS");
 	private static boolean VERBOSE = false;
-	private Logger mLog;
+
+
 	private String  mBaseUrl;
 	private CloseableHttpClient mHttpclient;
 	private Gson mGsonPrinter;
 
 
 	public TeHttpClient(String pBaseUrl, boolean pVerboseMode ) {
-		mLog = LogManager.getLogger(TeHttpClient.class);
 		mBaseUrl = pBaseUrl;
 		VERBOSE = pVerboseMode;
 		mGsonPrinter = new GsonBuilder().setPrettyPrinting().create();
+
+		System.setProperty("org.apache.http", "org.apache.commons.logging.impl.NoOpLog");
+		System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
+
 		try {
 			mHttpclient = createAcceptSelfSignedCertificateClient();
 			//mHttpclient =  HttpClients.createDefault();
@@ -50,7 +57,7 @@ public class TeHttpClient
 
 	private void log( String pMessage ) {
 		if (VERBOSE) {
-			mLog.info( pMessage );
+			System.out.println(SDF.format(System.currentTimeMillis()) + " " + pMessage );
 		}
 	}
 

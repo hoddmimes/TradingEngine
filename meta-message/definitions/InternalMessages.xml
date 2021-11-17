@@ -15,7 +15,7 @@
     <!--
         Request messages sent from Modum Client to Matching Engine
     -->
-    <Message name="LogonRequest" rootMessage="true">
+    <Message name="LogonRequest" implements="RequestMsgInterface" rootMessage="true">
         <Attribute name="username" type="String" mandatory="true" />
         <Attribute name="password" type="String" mandatory="true"/>
         <Attribute name="ref" type="String" mandatory="true"/>
@@ -25,6 +25,15 @@
         <Attribute name="symbol" type="String" mandatory="true"/>
         <Attribute name="levels" type="int" mandatory="true"/>
         <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="InternalOwnOrdersRequest" implements="EngineMsgInterface" rootMessage="true">
+        <Attribute name="symbol" type="String" mandatory="true"/>
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="InternalOwnOrdersResponse" rootMessage="true">
+        <Attribute name="orders" type="OwnOrder" list="array" />
     </Message>
 
 
@@ -47,12 +56,16 @@
     </Message>
 
 
-    <Message name="StatusMessage" rootMessage="true">
-        <Attribute name="isOk" type="boolean"/>
-        <Attribute name="ref" type="String"/>
-        <Attribute name="statusMessage" type="String"/>
-        <Attribute name="exceptionMessage" type="String"/>
+    <Message name="ContainerTrade" rootMessage="true">
+        <Attribute name="symbol" type="String"/>
+        <Attribute name="buyer" type="String"/>
+        <Attribute name="seller" type="String"/>
+        <Attribute name="buyerOrderId" type="long"/>
+        <Attribute name="sellerOrderId" type="long"/>
+        <Attribute name="price" type="double"/>
+        <Attribute name="quantity" type="int"/>
+        <Attribute name="tradeId" type="long"/>
+        <Attribute name="tradeTime" type="long"/>
     </Message>
-
 
 </Messages>

@@ -1,26 +1,19 @@
 package com.hoddmimes.te.marketdata.websockets;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
 import com.hoddmimes.te.messages.EngineBdxInterface;
-import generated.TestMessage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketExtension;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 public class WebSocketHandler extends TextWebSocketHandler  {
@@ -144,7 +137,7 @@ public class WebSocketHandler extends TextWebSocketHandler  {
         }
 
         public String toString() {
-            return " id: " + mWsSession.getId() + " user: " + mHttpSessionCntx.getUserId();
+            return " id: " + mWsSession.getId() + " user: " + mHttpSessionCntx.getAccount();
         }
     }
 }
