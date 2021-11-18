@@ -2,7 +2,6 @@
 package com.hoddmimes.te.common.transport.http;
 
 
-import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.google.gson.*;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
@@ -17,8 +16,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
 
 
 import javax.net.ssl.*;
@@ -82,13 +80,13 @@ public class TeHttpClient
 	}
 
 
-	public JsonObject post( JsonObject pJsonRqst, String pDestination) throws  IOException
+	public JsonObject post( JsonObject pJsonRqst, String pDestination) throws  IOException, TeRequestException
 	{
 		return post( pJsonRqst.toString(), pDestination );
 	}
 
 
-	public JsonObject post(String pJsonRqstString, String pDestination ) throws IOException
+	public JsonObject post(String pJsonRqstString, String pDestination ) throws IOException, TeRequestException
 	{
 		// Construct HTTP/HTTPS request
 
@@ -99,10 +97,12 @@ public class TeHttpClient
 		log("[post] destination: " + tPostRqst.toString() + "\n   " + mGsonPrinter.toJson( pJsonRqstString ) );
 		CloseableHttpResponse tResponse = mHttpclient.execute(tPostRqst);
 
+
 		if (tResponse.getStatusLine().getStatusCode() != 200) {
+			String rspmsg  = readResponse( tResponse );
 			log("[Receive-Error] \n   " + " status-code: "  + tResponse.getStatusLine().getStatusCode() +
-					" status: " + readResponse( tResponse ));
-			return null;
+					" status: " + rspmsg);
+			throw new TeRequestException( tResponse.getStatusLine().getStatusCode(), tResponse.getStatusLine().getReasonPhrase(), rspmsg  );
 		}
 
 		// Read response data from the response message

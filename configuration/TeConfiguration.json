@@ -6,7 +6,7 @@
         "dataStore": "configuration/UsersDefinitions.json"
       },
       "schemaDefinitions" : "configuration/jsonSchemas",
-      "traceExecutionTimeLimitUsec":0,
+      "traceExecutionTimeLimitUsec":1200,
       "traceExecutionTimeVerbose":false,
       "messageLoggerEnabled" : true,
       "messageLoggerFlushMode" : "NONE",
@@ -17,8 +17,8 @@
     },
     "tradeContainer" : {
       "configuration" : {
-        "txlogName" : "trades-%date%",
-        "txlogDir" : " ./logs"
+        "txlogName" : "trades",
+        "txlogDir" : "./logs"
       }
     },
     "matchingEngineFrontendConfiguration" : {

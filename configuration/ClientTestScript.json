@@ -1,0 +1,8 @@
+{ "baseHttp": {"uri": "https://localhost:8883/te/"},
+  "baseWss": {"uri": "wss://localhost:8883/marketdata"},
+  "requests" : [
+    {"endpoint" :  "logon", "body" : {"username":"test", "password":"test","ref" : "sr-71"}},
+    {"endpoint" :  "addOrder", "body" : {"symbol":"AMZN","price":100.0,"volume":22,"side":"BUY","ref" : "001"}},
+    {"endpoint" :  "addOrder", "body" : {"symbol":"AMZN","price":100.0,"volume":22,"side":"SELL","ref" : "001"}}
+  ]
+}

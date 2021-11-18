@@ -2,12 +2,36 @@ plugins {
     id 'java'
 }
 
-group 'org.example'
-version '1.0-SNAPSHOT'
+group 'com.hoddmimes'
+version '1.0'
 
 repositories {
     mavenCentral()
 }
+task buildClientJar (type: Jar ) {
+    archiveBaseName = 'teclient';
+    destinationDirectory  = file("../");
+
+    from {
+        configurations.runtimeClasspath.collect{ it.isDirectory() ? it : zipTree(it) }
+    } with jar
+
+    exclude "META-INF/*.SF"
+    exclude "META-INF/*.DSA"
+    exclude "META-INF/*.RSA"
+
+    from('build/classes/java/main') {
+        include '**/*.class'
+    }
+    duplicatesStrategy = 'exclude'
+
+    manifest {
+        attributes 'Implementation-Title': 'Trading Engine Client', 'Implementation-Version': archiveVersion
+    }
+}
+
+
+build.finalizedBy(buildClientJar)
 
 dependencies {
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.5.6'

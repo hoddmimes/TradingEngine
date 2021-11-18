@@ -4,10 +4,9 @@ package com.hoddmimes.te.engine;
 import com.hoddmimes.jsontransform.MessageInterface;
 
 import com.hoddmimes.te.common.interfaces.RequestContextInterface;
-import com.hoddmimes.te.instrumentctl.Symbol;
+import com.hoddmimes.te.instrumentctl.SymbolX;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
-import com.hoddmimes.te.sessionctl.RequestContext;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
@@ -15,7 +14,7 @@ import java.util.*;
 public class Orderbook
 {
     private Logger                              mLog;
-    private Symbol                              mSymbol;
+    private SymbolX mSymbol;
     private TreeMap<Double,LinkedList<Order>>   mBuySide;
     private TreeMap<Double,LinkedList<Order>>   mSellSide;
     private MatchingEngineCallback              mEngineCallbackIf;
@@ -24,7 +23,7 @@ public class Orderbook
     private long                                mSeqNo;
     private BdxPriceLevel                       mPriceLevels;
 
-    public Orderbook(Symbol pSymbol, Logger pLogger, MatchingEngineCallback pEngineCallbackIf ) {
+    public Orderbook(SymbolX pSymbol, Logger pLogger, MatchingEngineCallback pEngineCallbackIf ) {
         mSeqNo = 0;
         mSymbol = pSymbol;
         mBuySide = new TreeMap<>(new PriceComarator( Order.Side.BUY));

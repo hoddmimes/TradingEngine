@@ -1,22 +1,34 @@
 package com.hoddmimes.te.testclient;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.hoddmimes.te.common.AuxJson;
+import com.hoddmimes.te.common.transport.http.TeRequestException;
 import com.hoddmimes.te.common.transport.http.TeWebsocketClient;
 import com.hoddmimes.te.common.transport.http.TeHttpClient;
-import org.springframework.web.servlet.mvc.method.annotation.JsonViewResponseBodyAdvice;
+
 
 
 import javax.websocket.*;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 
 
 @ClientEndpoint
-public class TestClient extends Endpoint {
-    private enum Side { BUY, SELL};
-    private static String BASE_URI = "https://localhost:8883/te/";
-    private static String WSS_URI = "wss://localhost:8883/marketdata";
+public class TestClient implements  TeWebsocketClient.WssCallback {
+    private static SimpleDateFormat SDF = new SimpleDateFormat("HH:mm:ss.SSS");
+    private enum MsgType { RESP,RQST };
+
+    private JsonObject mCmdRoot;
+    private JsonArray mRequests;
     private long tRef = (System.currentTimeMillis() / 10000L);
+    private Gson mGson = new Gson();
+
 
     private TeWebsocketClient tWssClient;
     private TeHttpClient tHttpClient;
@@ -25,40 +37,67 @@ public class TestClient extends Endpoint {
         System.setProperty("org.springframework.boot.logging.LoggingSystem", "none");
         System.setProperty("java.util.logging.SimpleFormatter.format", "");
 
+        if (args.length == 0) {
+            System.out.println("script file argument missing");
+            System.exit(0);
+        }
+
+
         TestClient tc = new TestClient();
+        tc.loadCommandFile( args[0]);
         tc.init();
         tc.test();
     }
 
+    private void msglog( JsonObject pMsg  )
+    {
+        if (pMsg.has("endpoint")) {
+            System.out.println(SDF.format(System.currentTimeMillis()) + " [RQST] endpoint: <" + pMsg.get("endpoint").getAsString() + "> msg: " + mGson.toJson(pMsg.get("body").getAsJsonObject()).toString());
+        } else {
+            System.out.println(SDF.format(System.currentTimeMillis()) + " [RESP]  msg: " + mGson.toJson(pMsg).toString());
+        }
+    }
+
+    private void msglog( String  pMsg  ) {
+        System.out.println(SDF.format(System.currentTimeMillis()) + pMsg);
+    }
+
+
+    private void loadCommandFile( String pCommandfile ) {
+        try {
+            FileReader tCmdFileReader = new FileReader( pCommandfile );
+            mCmdRoot = JsonParser.parseReader(tCmdFileReader).getAsJsonObject();
+            mRequests = mCmdRoot.get("requests").getAsJsonArray();
+        }
+        catch( IOException e) {
+            e.printStackTrace();
+            System.exit(0);
+        }
+    }
+
+
+
     private void init() {
         String tAuthId = null;
 
-        tHttpClient = new TeHttpClient(BASE_URI, true);
+        tHttpClient = new TeHttpClient(AuxJson.navigateString( mCmdRoot,"baseHttp/uri"), false);
         try {
-            JsonObject jLogonRsp = tHttpClient.post("{'username':'test','password':'test','ref' :'0001'}".replace('\'', '"'), "logon");
+            JsonObject tLogonRqst = mRequests.get(0).getAsJsonObject();
+            msglog( tLogonRqst );
+            JsonObject jLogonRsp = tHttpClient.post( tLogonRqst.get("body").getAsJsonObject().toString(), tLogonRqst.get("endpoint").getAsString());
+            msglog( jLogonRsp );
             tAuthId = jLogonRsp.get("sessionAuthId").getAsString();
         }
-        catch( Exception e) { e.printStackTrace();}
-
-        tWssClient = new TeWebsocketClient( WSS_URI, tAuthId, this );
-        //tWssClient.sendMessage("{'from':'TestClient','source':'WssClient'".replace('\'','"'));
-    }
-
-    private void createOrders( String pSymbol, Side pSide, double pPrice, int pOrdersOnLevel, int pLevels ) throws Exception{
-        JsonObject jResponse;
-        int tVol = 10;
-        BigDecimal bdStep = new BigDecimal( "0.1");
-        BigDecimal bdPrice = new BigDecimal( Double.toString( pPrice));
-
-        for (int pl = 1; pl <= pLevels; pl++) {
-            for (int ol = 1; ol <= pOrdersOnLevel; ol++) {
-                jResponse = tHttpClient.post(("{'symbol':'" + pSymbol+ "','price':" + bdPrice.toString() +",'volume':" + (tVol * ol) +",'side':'" +
-                        pSide.name() +"','ref' :'" + Long.toHexString( (tRef++)) +"'}").replace('\'','"'), "addOrder");
-            }
-            bdPrice = (pSide == pSide.BUY) ? bdPrice.subtract( bdStep) : bdPrice.add( bdStep);
-            tVol *= pl;
+        catch( IOException e) { e.printStackTrace();}
+        catch( TeRequestException tre) {
+            msglog( tre.toJson() );
         }
+
+        tWssClient = new TeWebsocketClient( AuxJson.navigateString(mCmdRoot,"baseWss/uri"), tAuthId, this );
+
     }
+
+
 
     private void chill( long pTime ) {
         try { Thread.sleep( pTime ); }
@@ -67,50 +106,22 @@ public class TestClient extends Endpoint {
 
 
     private void test() {
-    JsonObject jResponse;
-        try {
-
-            createOrders("AMZN", Side.BUY, 99.90d, 4, 5);
-            createOrders("AMZN", Side.SELL, 100.10d, 4, 5);
-
-            jResponse = tHttpClient.post("{'ref' :'2222'}".replace('\'','"'), "queryOwnOrders");
-            jResponse = tHttpClient.post("{'ref' :'2223'}".replace('\'','"'), "queryOwnOrders");
-            jResponse = tHttpClient.post("{'ref' :'2224'}".replace('\'','"'), "queryOwnOrders");
-            jResponse = tHttpClient.post("{'ref' :'2225'}".replace('\'','"'), "queryOwnOrders");
-
-            jResponse = tHttpClient.post("{'symbol':'AMZN','price':100.0,'volume':22,'side':'BUY','ref' :'0003'}".replace('\'','"'), "addOrder");
-            chill( 1000L);
-            jResponse = tHttpClient.post("{'symbol':'AMZN','price':100.0,'volume':22,'side':'BUY','ref' :'0004'}".replace('\'','"'), "addOrder");
-            chill( 1000L);
-            jResponse = tHttpClient.post("{'symbol':'AMZN','price':100.0,'volume':22,'side':'BUY','ref' :'0005'}".replace('\'','"'), "addOrder");
-            chill( 1000L);
-
-            System.out.println("foo");
-
-            //String tOrderId = jResponse.get("orderId").getAsString();
-            //jResponse = tHttpClient.post(("{'symbol':'AMZN','orderId':'" + tOrderId + "','ref' :'0004b','deltaVolume': 4 }").replace('\'','"'), "amendOrder");
-            //System.out.println(jResponse.toString());
-            /*
-            jResponse = tHttpClient.post("{'symbol':'AMZN','price':100.0,'volume':22,'side':'BUY','ref' :'0003'}".replace('\'','"'), "addOrder");
-            jResponse = tHttpClient.post("{'symbol':'AMZN','price':99.75,'volume':40,'side':'BUY','ref' :'0004'}".replace('\'','"'), "addOrder");
-
-            String tOrderId = jResponse.get("orderId").getAsString();
-            jResponse = tHttpClient.post(("{'symbol':'AMZN','orderId':'" + tOrderId + "','ref' :'0004b'}").replace('\'','"'), "deleteOrder");
-
-
-            jResponse = tHttpClient.post("{'symbol':'AMZN','price':100.25,'volume':20,'side':'SELL','ref' :'0005'}".replace('\'','"'), "addOrder");
-            jResponse = tHttpClient.post("{'symbol':'AMZN','price':100.50,'volume':10,'side':'SELL','ref' :'0006'}".replace('\'','"'), "addOrder");
-            jResponse = tHttpClient.post("{'symbol':'AMZN','price':100.50,'volume':10,'side':'SELL','ref' :'0007'}".replace('\'','"'), "addOrder");
-            jResponse = tHttpClient.post("{'symbol':'AMZN','price':100.50,'volume':10,'side':'SELL','ref' :'0008'}".replace('\'','"'), "addOrder");
-            jResponse = tHttpClient.post("{'symbol':'AMZN','ref' :'0009'}".replace('\'','"'), "queryOrderbook");
-            */
-
-        }
-        catch( Exception e) {
-            e.printStackTrace();
+        for (int i = 1; i < mRequests.size(); i++) {
+            JsonObject tRqst = mRequests.get(i).getAsJsonObject();
+            try {
+                msglog( tRqst );
+                JsonObject tRspMsg = tHttpClient.post( tRqst.get("body").getAsJsonObject().toString(), tRqst.get("endpoint").getAsString());
+                msglog( tRspMsg );
+            }
+            catch( IOException e) {
+                e.printStackTrace();
+            }
+            catch( TeRequestException tre) {
+                msglog( tre.toJson() );
+            }
         }
 
-        try { Thread.sleep(15000L);}
+        try { Thread.sleep(5000L);}
         catch( InterruptedException e) {}
 
     }
@@ -118,5 +129,20 @@ public class TestClient extends Endpoint {
     @Override
     public void onOpen(Session session, EndpointConfig config) {
         System.out.println("WSS socket session established");
+    }
+
+    @Override
+    public void onMessage(String pBdxMsg) {
+        msglog(" [BDX] " +pBdxMsg);
+    }
+
+    @Override
+    public void onClose(Session session, CloseReason closeReason) {
+
+    }
+
+    @Override
+    public void onError(Session session, Throwable throwable) {
+
     }
 }

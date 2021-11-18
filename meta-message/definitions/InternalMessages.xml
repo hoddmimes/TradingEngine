@@ -68,4 +68,16 @@
         <Attribute name="tradeTime" type="long"/>
     </Message>
 
+
+    <Message name="Symbol" rootMessage="false">
+        <Attribute name="symbol" type="String"/>
+        <Attribute name="tickSize" type="double"/>
+        <Attribute name="minPricePctChg" type="double"/>
+        <Attribute name="maxPricePctChg" type="double"/>
+        <Attribute name="marketOpen" type="String"/>
+        <Attribute name="marketClose" type="String"/>
+        <Attribute name="enabled" type="boolean"/>
+        <Attribute name="closed" type="boolean"/>
+    </Message>
+
 </Messages>

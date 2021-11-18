@@ -7,7 +7,7 @@ import com.hoddmimes.te.common.AuxJson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.Map;
 public class InstrumentContainer
 {
 	private Logger mLog = LogManager.getLogger( InstrumentContainer.class );
-	private Map<String,Symbol> mInstruments;
+	private Map<String, SymbolX> mInstruments;
 	private JsonObject mConfiguration;
 
    public InstrumentContainer( JsonObject pTeConfiguration ) {
@@ -30,11 +30,9 @@ public class InstrumentContainer
 	     JsonObject tInstruments = jElement.getAsJsonObject();
 		 JsonArray tSymbolArray = tInstruments.get("instruments").getAsJsonArray();
 		 for (int i = 0; i < tSymbolArray.size(); i++) {
-			 JsonObject jSym = tSymbolArray.get(i).getAsJsonObject();
-			 double minP = (jSym.has("minPricePct")) ? jSym.get("minPricePct").getAsDouble() : 0.0d;
-			 double maxP = (jSym.has("maxPricePct")) ? jSym.get("maxPricePct").getAsDouble() : 0.0d;
-			 Symbol tSymbol = new Symbol( jSym.get("symbol").getAsString(),
-					                      jSym.get("tickSize").getAsDouble(), minP, maxP );
+			 JsonObject jSymbol = tSymbolArray.get(i).getAsJsonObject();
+			 SymbolX tSymbol = new SymbolX( jSymbol );
+			 tSymbol.setClosed( false );
 			 mInstruments.put( tSymbol.getId(), tSymbol );
 		 }
 	 }
@@ -42,14 +40,42 @@ public class InstrumentContainer
 		 mLog.fatal("Fail to load instruments from \"" + tDataStore + "\"");
 		 System.exit(-1);
 	 }
+
    }
 
-   public Symbol getSymbol( String pSymbolId ) {
+   public SymbolX getSymbol(String pSymbolId ) {
 	   return mInstruments.get( pSymbolId );
    }
 
-   public List<Symbol> getSymbols() {
-	   List<Symbol> tSymbols = new ArrayList<>();
+   public boolean isOpen( String pSymbolId ) {
+	   SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+	   String tNowStr = sdf.format(System.currentTimeMillis());
+
+	   SymbolX tSymbol = mInstruments.get(pSymbolId);
+	   if (tSymbol == null) {
+		   mLog.warn("open/close check symbol: " + pSymbolId + " is not found");
+		   return false;
+	   }
+
+	   if (tSymbol.getClosed().get()) {
+		   return false;
+	   }
+
+	   if (tSymbol.getMarketOpen().get().contentEquals("00:00") && tSymbol.getMarketClose().get().contentEquals("00:00")) {
+		   return true;
+	   }
+	   if ((tSymbol.getMarketClose().get().compareTo(tNowStr) > 0) && (tSymbol.getMarketOpen().get().compareTo(tNowStr) <= 0)) {
+		   return true;
+	   }
+
+	   return false;
+   }
+
+
+
+
+   public List<SymbolX> getSymbols() {
+	   List<SymbolX> tSymbols = new ArrayList<>();
 	   tSymbols.addAll( mInstruments.values());
 	   return tSymbols;
    }

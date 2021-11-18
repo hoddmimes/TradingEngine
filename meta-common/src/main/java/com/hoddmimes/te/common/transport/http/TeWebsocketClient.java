@@ -17,11 +17,18 @@ import java.security.cert.X509Certificate;
 
 @ClientEndpoint
 public class TeWebsocketClient extends Endpoint implements MessageHandler.Whole<String> {
+	public interface WssCallback {
+		public void onOpen(Session session, EndpointConfig config);
+		public void onMessage( String pBdxMsg );
+		public void onClose(Session session, CloseReason closeReason);
+		public void onError(Session session, Throwable throwable);
+	}
+
 	private Session mSession;
-	private Endpoint mCallback;
+	private WssCallback mCallback;
 
 
-	public TeWebsocketClient(String endpointURI, String pAuthId, Endpoint pCallback ) {
+	public TeWebsocketClient(String endpointURI, String pAuthId, WssCallback pCallback ) {
 		try {
 			mCallback = pCallback;
 
@@ -61,7 +68,7 @@ public class TeWebsocketClient extends Endpoint implements MessageHandler.Whole<
 
 	@Override
 	public void onMessage(String message) {
-		System.out.println("bdx: " + message );
+		mCallback.onMessage( message );
 	}
 
 	private SSLContext createSSLContext() {

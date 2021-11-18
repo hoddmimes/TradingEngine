@@ -4,17 +4,19 @@ import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.messages.generated.PriceLevel;
 import com.hoddmimes.te.trades.TradeX;
 
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class Test extends Thread
-{
-	double mTickSize = 0.01d;
+public class Test extends Thread {
+	private static SimpleDateFormat cSDF = new SimpleDateFormat("yyMMdd-HHmmssSSS");
 
 	public static void main(String[] args) {
 		Test t = new Test();
@@ -22,24 +24,17 @@ public class Test extends Thread
 	}
 
 
-	private boolean isTickSizeAligned( double pPrice ) {
-		if (mTickSize == 0) {
-			return true;
-		}
-		BigDecimal tPrice = new BigDecimal( Double.toString( pPrice));
-		double  r = tPrice.subtract(tPrice.divideToIntegralValue(new BigDecimal("1.0"))).doubleValue();
-
-		int x = (int) (r * 1000.0d);
-		int y = (int) (mTickSize * 1000.0d);
-
-		return ((x % y) == 0);
-	}
-
-
-
-
 	private void test() {
-		System.out.println("valid : " + isTickSizeAligned( 99.8));
-	}
+		TxLoggerReplayInterface txReplay = TxLoggerFactory.getReplayer( "./logs", "trades");
+		TxLoggerReplayIterator tItr = txReplay.replaySync(TxLoggerReplayInterface.DIRECTION.Backward, new Date());
 
+
+
+		TxLoggerWriterInterface txl = TxLoggerFactory.getWriter("./logs", "trades");
+		for (int i = 0; i < 1000; i++) {
+			String tMsg = "Test message " + String.valueOf( i );
+			txl.write( tMsg.getBytes(StandardCharsets.UTF_8));
+		}
+
+	}
 }
