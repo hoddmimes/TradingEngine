@@ -16,7 +16,7 @@
         Request messages sent from Modum Client to Matching Engine
     -->
     <Message name="LogonRequest" implements="RequestMsgInterface" rootMessage="true">
-        <Attribute name="username" type="String" mandatory="true" />
+        <Attribute name="account" type="String" mandatory="true" />
         <Attribute name="password" type="String" mandatory="true"/>
         <Attribute name="ref" type="String" mandatory="true"/>
     </Message>
@@ -43,11 +43,8 @@
       ********************************************************************************* -->
 
     <Message name="LogonResponse" rootMessage="true">
-        <Attribute name="isOk" type="boolean"/>
         <Attribute name="ref" type="String"/>
-        <Attribute name="statusMessage" type="String"/>
         <Attribute name="sessionAuthId" type="String"/>
-        <Attribute name="exceptionMessage" type="String"/>
     </Message>
 
     <Message name="InternalPriceLevelResponse" rootMessage="true">
@@ -68,14 +65,24 @@
         <Attribute name="tradeTime" type="long"/>
     </Message>
 
-
-    <Message name="Symbol" rootMessage="false">
-        <Attribute name="symbol" type="String"/>
-        <Attribute name="tickSize" type="double"/>
-        <Attribute name="minPricePctChg" type="double"/>
-        <Attribute name="maxPricePctChg" type="double"/>
+    <Message name="Market" rootMessage="false">
+        <Attribute name="id" type="int"/>
+        <Attribute name="name" type="String"/>
+        <Attribute name="description" type="double"/>
         <Attribute name="marketOpen" type="String"/>
         <Attribute name="marketClose" type="String"/>
+        <Attribute name="minPricePctChg" type="double"/>
+        <Attribute name="maxPricePctChg" type="double"/>
+        <Attribute name="enabled" type="boolean"/>
+        <Attribute name="closed" type="boolean"/>
+    </Message>
+
+    <Message name="Symbol" rootMessage="false">
+        <Attribute name="symbol" type="String" mandatory="true"/>
+        <Attribute name="marketId" type="int"/>
+        <Attribute name="tickSize" type="double" mandatory="true"/>
+        <Attribute name="minPricePctChg" type="double"/>
+        <Attribute name="maxPricePctChg" type="double"/>
         <Attribute name="enabled" type="boolean"/>
         <Attribute name="closed" type="boolean"/>
     </Message>

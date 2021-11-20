@@ -87,6 +87,34 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
+            case "QueryMarketsRequest":
+            {
+            	QueryMarketsRequest tMessage = new QueryMarketsRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryMarketsResponse":
+            {
+            	QueryMarketsResponse tMessage = new QueryMarketsResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QuerySymbolsRequest":
+            {
+            	QuerySymbolsRequest tMessage = new QuerySymbolsRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QuerySymbolsResponse":
+            {
+            	QuerySymbolsResponse tMessage = new QuerySymbolsResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
             case "QueryPriceLevelsRequest":
             {
             	QueryPriceLevelsRequest tMessage = new QueryPriceLevelsRequest();

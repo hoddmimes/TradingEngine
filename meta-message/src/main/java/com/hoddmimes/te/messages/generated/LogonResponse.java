@@ -39,11 +39,8 @@ import com.google.gson.GsonBuilder;
                 public static String NAME = "LogonResponse";
 
             
-                    private Boolean mIsOk;
                     private String mRef;
-                    private String mStatusMessage;
                     private String mSessionAuthId;
-                    private String mExceptionMessage;
                public LogonResponse()
                {
                 
@@ -55,14 +52,6 @@ import com.google.gson.GsonBuilder;
                     this.decode( tDecoder );
                }
     
-            public LogonResponse setIsOk( Boolean pIsOk ) {
-            mIsOk = pIsOk;
-            return this;
-            }
-            public Optional<Boolean> getIsOk() {
-              return  Optional.ofNullable(mIsOk);
-            }
-        
             public LogonResponse setRef( String pRef ) {
             mRef = pRef;
             return this;
@@ -71,28 +60,12 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mRef);
             }
         
-            public LogonResponse setStatusMessage( String pStatusMessage ) {
-            mStatusMessage = pStatusMessage;
-            return this;
-            }
-            public Optional<String> getStatusMessage() {
-              return  Optional.ofNullable(mStatusMessage);
-            }
-        
             public LogonResponse setSessionAuthId( String pSessionAuthId ) {
             mSessionAuthId = pSessionAuthId;
             return this;
             }
             public Optional<String> getSessionAuthId() {
               return  Optional.ofNullable(mSessionAuthId);
-            }
-        
-            public LogonResponse setExceptionMessage( String pExceptionMessage ) {
-            mExceptionMessage = pExceptionMessage;
-            return this;
-            }
-            public Optional<String> getExceptionMessage() {
-              return  Optional.ofNullable(mExceptionMessage);
             }
         
 
@@ -113,20 +86,11 @@ import com.google.gson.GsonBuilder;
         
             JsonEncoder tEncoder = new JsonEncoder();
             pEncoder.add("LogonResponse", tEncoder.toJson() );
-            //Encode Attribute: mIsOk Type: boolean List: false
-            tEncoder.add( "isOk", mIsOk );
-        
             //Encode Attribute: mRef Type: String List: false
             tEncoder.add( "ref", mRef );
         
-            //Encode Attribute: mStatusMessage Type: String List: false
-            tEncoder.add( "statusMessage", mStatusMessage );
-        
             //Encode Attribute: mSessionAuthId Type: String List: false
             tEncoder.add( "sessionAuthId", mSessionAuthId );
-        
-            //Encode Attribute: mExceptionMessage Type: String List: false
-            tEncoder.add( "exceptionMessage", mExceptionMessage );
         
         }
 
@@ -136,20 +100,11 @@ import com.google.gson.GsonBuilder;
         
             JsonDecoder tDecoder = pDecoder.get("LogonResponse");
         
-            //Decode Attribute: mIsOk Type:boolean List: false
-            mIsOk = tDecoder.readBoolean("isOk");
-        
             //Decode Attribute: mRef Type:String List: false
             mRef = tDecoder.readString("ref");
         
-            //Decode Attribute: mStatusMessage Type:String List: false
-            mStatusMessage = tDecoder.readString("statusMessage");
-        
             //Decode Attribute: mSessionAuthId Type:String List: false
             mSessionAuthId = tDecoder.readString("sessionAuthId");
-        
-            //Decode Attribute: mExceptionMessage Type:String List: false
-            mExceptionMessage = tDecoder.readString("exceptionMessage");
         
 
         }
@@ -175,28 +130,13 @@ import com.google.gson.GsonBuilder;
           }
 
         
-                        public Builder setIsOk( Boolean pValue ) {
-                        mInstance.setIsOk( pValue );
-                        return this;
-                    }
-                
                         public Builder setRef( String pValue ) {
                         mInstance.setRef( pValue );
                         return this;
                     }
                 
-                        public Builder setStatusMessage( String pValue ) {
-                        mInstance.setStatusMessage( pValue );
-                        return this;
-                    }
-                
                         public Builder setSessionAuthId( String pValue ) {
                         mInstance.setSessionAuthId( pValue );
-                        return this;
-                    }
-                
-                        public Builder setExceptionMessage( String pValue ) {
-                        mInstance.setExceptionMessage( pValue );
                         return this;
                     }
                 

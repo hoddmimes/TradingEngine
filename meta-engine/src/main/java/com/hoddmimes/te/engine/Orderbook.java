@@ -86,7 +86,7 @@ public class Orderbook
 
         // If clean ammend update the existing order
         if (tCleanAmend) {
-            int tNewVolume = (!pAmendRqst.getDeltaVolume().isEmpty()) ? (tOrderToAmend.getVolume() + pAmendRqst.getDeltaVolume().get()) : tOrderToAmend.getVolume();
+            int tNewVolume = (!pAmendRqst.getDeltaVolume().isEmpty()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaVolume().get()) : tOrderToAmend.getQuantity();
             double tNewPrice = (!pAmendRqst.getPrice().isEmpty()) ? (pAmendRqst.getPrice().get()) : tOrderToAmend.getPrice();
 
             if (tNewVolume <= 0) {
@@ -95,7 +95,7 @@ public class Orderbook
                 return tAmendRsp.setInserted(false).setOrderId(Long.toHexString(tOrderToAmend.getOrderId())).
                         setRef(pAmendRqst.getRef().get()).setMatched(0);
             } else {
-                tOrderToAmend.setVolume(tNewVolume);
+                tOrderToAmend.setQuantity(tNewVolume);
                 tOrderToAmend.setPrice(tNewPrice);
 
                 mEngineCallbackIf.orderbookChanged(mSymbol.getId());
@@ -107,7 +107,7 @@ public class Orderbook
         }
 
         // Amend require the existing order to be deleted and possibly a new to be inserted
-        int tVolume = (!pAmendRqst.getDeltaVolume().isEmpty()) ? (tOrderToAmend.getVolume() + pAmendRqst.getDeltaVolume().get()) : tOrderToAmend.getVolume();
+        int tVolume = (!pAmendRqst.getDeltaVolume().isEmpty()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaVolume().get()) : tOrderToAmend.getQuantity();
         String tSide = (!pAmendRqst.getSide().isEmpty()) ? pAmendRqst.getSide().get() : tOrderToAmend.getSide().name();
         double tPrice = (!pAmendRqst.getPrice().isEmpty()) ? pAmendRqst.getPrice().get() : tOrderToAmend.getPrice();
 
@@ -119,7 +119,7 @@ public class Orderbook
             return tAmendRsp.setInserted(false).setOrderId(Long.toHexString(tOrderToAmend.getOrderId())).
                     setRef(pAmendRqst.getRef().get()).setMatched(0);
         } else {
-            AddOrderRequest tAddOrderRqst = new AddOrderRequest().setPrice(tPrice).setRef(pAmendRqst.getRef().get()).setVolume(tVolume).setSymbol(this.mSymbol.getId()).setSide(tSide);
+            AddOrderRequest tAddOrderRqst = new AddOrderRequest().setPrice(tPrice).setRef(pAmendRqst.getRef().get()).setQuantity(tVolume).setSymbol(this.mSymbol.getId()).setSide(tSide);
             Order tNewOrder = new Order(pRqstCntx.getAccountId(), tAddOrderRqst);
 
             MessageInterface tResponse = this.addOrder(tNewOrder, pRqstCntx);
@@ -280,7 +280,7 @@ public class Orderbook
             DeleteOrderResponse tResponse = new DeleteOrderResponse();
             tResponse.setOrderId( Long.toHexString(tRemovedOrder.getOrderId()));
             tResponse.setRef(pUserRef);
-            tResponse.setRemaining(tRemovedOrder.getVolume());
+            tResponse.setRemaining(tRemovedOrder.getQuantity());
             pRqstCntx.timestamp("build delete order success response");
             return tResponse;
         } else {
@@ -312,7 +312,7 @@ public class Orderbook
         pRqstCntx.timestamp("Starting matching order");
         Iterator<LinkedList<Order>> tOrderListItr = pBook.values().iterator();
 
-        while(tOrderListItr.hasNext() && (pNewOrder.getVolume() > 0) && (!tEndOfMatch)) {
+        while(tOrderListItr.hasNext() && (pNewOrder.getQuantity() > 0) && (!tEndOfMatch)) {
             LinkedList<Order> tOrderList = tOrderListItr.next();
             Iterator<Order> tItr = tOrderList.iterator();
             while (tItr.hasNext()) {
@@ -320,18 +320,18 @@ public class Orderbook
                 pRqstCntx.timestamp("find orderbook");
                 if (pNewOrder.match(tBookOrder)) {
                     pRqstCntx.timestamp("match orderbook");
-                    int tMatchedSize = Math.min(tBookOrder.getVolume(), pNewOrder.getVolume());
+                    int tMatchedSize = Math.min(tBookOrder.getQuantity(), pNewOrder.getQuantity());
                     mLastTradePrice = tBookOrder.getPrice();
                     mLastTradeTime = System.currentTimeMillis();
 
                     mEngineCallbackIf.trade(new InternalTrade(tBookOrder.getPrice(), tMatchedSize, pNewOrder, tBookOrder), pRqstCntx.getSessionContext());
                     pRqstCntx.timestamp("create and process trade");
 
-                    tBookOrder.setVolume(tBookOrder.getVolume() - tMatchedSize);
-                    pNewOrder.setVolume(pNewOrder.getVolume() - tMatchedSize);
+                    tBookOrder.setQuantity(tBookOrder.getQuantity() - tMatchedSize);
+                    pNewOrder.setQuantity(pNewOrder.getQuantity() - tMatchedSize);
                     tTotMatched += tMatchedSize;
 
-                    if (tBookOrder.getVolume() == 0) {
+                    if (tBookOrder.getQuantity() == 0) {
                         mEngineCallbackIf.orderRemoved(tBookOrder,  pRqstCntx.getSessionContext(), ++mSeqNo);
                         tItr.remove();
                         if (tOrderList.isEmpty()) {
@@ -348,7 +348,7 @@ public class Orderbook
         }
 
         // If remaining volume after match insert order in the book
-        if (pNewOrder.getVolume() > 0) {
+        if (pNewOrder.getQuantity() > 0) {
             addOrderToBook( pNewOrder );
             mEngineCallbackIf.orderAdded( pNewOrder, pRqstCntx.getSessionContext(), ++mSeqNo );
             pRqstCntx.timestamp("insert new order");
@@ -360,7 +360,7 @@ public class Orderbook
         mEngineCallbackIf.orderbookChanged( mSymbol.getId() );
 
         AddOrderResponse tResponse = new AddOrderResponse();
-        tResponse.setInserted( (pNewOrder.getVolume() > 0) ? true : false );
+        tResponse.setInserted( (pNewOrder.getQuantity() > 0) ? true : false );
         tResponse.setMatched( tTotMatched );
         tResponse.setOrderId( Long.toHexString(pNewOrder.getOrderId()));
         tResponse.setRef(pNewOrder.getUserRef());
@@ -386,7 +386,7 @@ public class Orderbook
             List<Order> tOrderList = tPriceEntry.getValue();
             int tVolume = 0;
             for( Order tOrder : tOrderList) {
-                tVolume += tOrder.getVolume();
+                tVolume += tOrder.getQuantity();
             }
             PriceLevel pl = new PriceLevel().setPrice(tPriceEntry.getKey()).setVolume( tVolume );
             tPriceLevelList.add( pl );

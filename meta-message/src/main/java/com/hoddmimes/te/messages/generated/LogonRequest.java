@@ -39,7 +39,7 @@ import com.google.gson.GsonBuilder;
                 public static String NAME = "LogonRequest";
 
             
-                    private String mUsername;
+                    private String mAccount;
                     private String mPassword;
                     private String mRef;
                public LogonRequest()
@@ -53,12 +53,12 @@ import com.google.gson.GsonBuilder;
                     this.decode( tDecoder );
                }
     
-            public LogonRequest setUsername( String pUsername ) {
-            mUsername = pUsername;
+            public LogonRequest setAccount( String pAccount ) {
+            mAccount = pAccount;
             return this;
             }
-            public Optional<String> getUsername() {
-              return  Optional.ofNullable(mUsername);
+            public Optional<String> getAccount() {
+              return  Optional.ofNullable(mAccount);
             }
         
             public LogonRequest setPassword( String pPassword ) {
@@ -95,8 +95,8 @@ import com.google.gson.GsonBuilder;
         
             JsonEncoder tEncoder = new JsonEncoder();
             pEncoder.add("LogonRequest", tEncoder.toJson() );
-            //Encode Attribute: mUsername Type: String List: false
-            tEncoder.add( "username", mUsername );
+            //Encode Attribute: mAccount Type: String List: false
+            tEncoder.add( "account", mAccount );
         
             //Encode Attribute: mPassword Type: String List: false
             tEncoder.add( "password", mPassword );
@@ -112,8 +112,8 @@ import com.google.gson.GsonBuilder;
         
             JsonDecoder tDecoder = pDecoder.get("LogonRequest");
         
-            //Decode Attribute: mUsername Type:String List: false
-            mUsername = tDecoder.readString("username");
+            //Decode Attribute: mAccount Type:String List: false
+            mAccount = tDecoder.readString("account");
         
             //Decode Attribute: mPassword Type:String List: false
             mPassword = tDecoder.readString("password");
@@ -145,8 +145,8 @@ import com.google.gson.GsonBuilder;
           }
 
         
-                        public Builder setUsername( String pValue ) {
-                        mInstance.setUsername( pValue );
+                        public Builder setAccount( String pValue ) {
+                        mInstance.setAccount( pValue );
                         return this;
                     }
                 

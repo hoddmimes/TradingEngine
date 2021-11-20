@@ -4,18 +4,49 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.te.messages.generated.Symbol;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 
 public class SymbolX extends Symbol
 {
+	private MarketX mMarket;
 
-
-	SymbolX(JsonObject pJsonObject) {
+	SymbolX(JsonObject pJsonObject, MarketX pMarket ) {
 		super( pJsonObject.toString() );
+		mMarket = pMarket;
 	}
 
 	public String getId() {
 		return super.getSymbol().get();
 	}
+
+
+	public  boolean isOpen() {
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+
+		if (!super.getClosed().isEmpty()) {
+			if (super.getClosed().get()) {
+				return false;
+			}
+		}
+
+		if (mMarket.getClosed().get()) {
+			return false;
+		}
+
+		if (mMarket.getMarketOpen().get().contentEquals("00:00") && mMarket.getMarketClose().get().contentEquals("00:00")) {
+			return true;
+		}
+		String tNowStr = sdf.format( System.currentTimeMillis());
+
+		if ((mMarket.getMarketClose().get().compareTo(tNowStr) > 0) && (mMarket.getMarketOpen().get().compareTo(tNowStr) <= 0)) {
+			return true;
+		}
+
+		return false;
+
+	}
+
+
 
 
 	private boolean isTickSizeAligned( double pPrice ) {
@@ -31,8 +62,17 @@ public class SymbolX extends Symbol
 		return ((x % y) == 0);
 	}
 
+
 	public boolean isEnabled() {
-		return super.getEnabled().get();
+		if (!super.getEnabled().isEmpty()) {
+			if (!super.getEnabled().get()) {
+				return false;
+			}
+		}
+		if (!mMarket.getEnabled().get()) {
+			return false;
+		}
+		return true;
 	}
 
 	public void validate( double pPrice, double pLastKnownTradingPrice ) throws Exception {
@@ -41,17 +81,35 @@ public class SymbolX extends Symbol
 			throw new Exception("order price is not tick size aligned");
 		}
 
-		if ((super.getMinPricePctChg().get() != 0.0d) && (pLastKnownTradingPrice != 0)) {
-			double p = (super.getMinPricePctChg().get() / 100.0d);
-			if (pPrice < (pLastKnownTradingPrice - (pLastKnownTradingPrice * p))) {
-				throw new Exception("order price is outside (min) price limit " + super.getMinPricePctChg().get() + " %");
+		if (!super.getMinPricePctChg().isEmpty()) {
+			if ((super.getMinPricePctChg().get() != 0.0d) && (pLastKnownTradingPrice != 0)) {
+				double p = (super.getMinPricePctChg().get() / 100.0d);
+				if (pPrice < (pLastKnownTradingPrice - (pLastKnownTradingPrice * p))) {
+					throw new Exception("order price is outside (min) price limit " + super.getMinPricePctChg().get() + " %");
+				}
+			}
+		} else {
+			if ((mMarket.getMinPricePctChg().get() != 0.0d) && (pLastKnownTradingPrice != 0)) {
+				double p = (mMarket.getMinPricePctChg().get() / 100.0d);
+				if (pPrice < (pLastKnownTradingPrice - (pLastKnownTradingPrice * p))) {
+					throw new Exception("order price is outside (min) price limit " + mMarket.getMinPricePctChg().get() + " %");
+				}
 			}
 		}
 
-		if ((super.getMaxPricePctChg().get() != 0.0d) && (pLastKnownTradingPrice != 0)) {
-			double p = (super.getMaxPricePctChg().get() / 100.0d);
-			if (pPrice > (pLastKnownTradingPrice + (pLastKnownTradingPrice * p))) {
-				throw new Exception("order price is outside (max) price limit " + super.getMaxPricePctChg().get() + " %");
+		if (!super.getMaxPricePctChg().isEmpty()) {
+			if ((super.getMaxPricePctChg().get() != 0.0d) && (pLastKnownTradingPrice != 0)) {
+				double p = (super.getMaxPricePctChg().get() / 100.0d);
+				if (pPrice > (pLastKnownTradingPrice + (pLastKnownTradingPrice * p))) {
+					throw new Exception("order price is outside (max) price limit " + super.getMaxPricePctChg().get() + " %");
+				}
+			}
+		} else {
+			if ((mMarket.getMaxPricePctChg().get() != 0.0d) && (pLastKnownTradingPrice != 0)) {
+				double p = (mMarket.getMaxPricePctChg().get() / 100.0d);
+				if (pPrice > (pLastKnownTradingPrice + (pLastKnownTradingPrice * p))) {
+					throw new Exception("order price is outside (max) price limit " + mMarket.getMaxPricePctChg().get() + " %");
+				}
 			}
 		}
 	}

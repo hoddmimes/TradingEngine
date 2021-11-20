@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
+import com.hoddmimes.te.common.TeException;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.socket.TextMessage;
 
 import javax.servlet.http.HttpSession;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 @Configuration
@@ -28,6 +30,7 @@ public class RestMessageController
 	private ConnectorInterface.ConnectorCallbackInterface mCallback;
 	private JsonObject mConfiguration;
 	private MessageFactory mMessageFactory;
+	private AtomicInteger mInternalRef = new AtomicInteger(1);
 
 
 	public RestMessageController() {
@@ -42,17 +45,19 @@ public class RestMessageController
 	 * ======================================================================================
 	 */
 	@PostMapping( path = "/logon" )
-	ResponseEntity<?> logon(HttpSession pSession, @RequestBody String pJsonRqstString )
+	ResponseEntity<String> logon(HttpSession pSession, @RequestBody String pJsonRqstString )
 	{
 		String jRqstMsgString  = AuxJson.tagMessageBody(LogonRequest.NAME, pJsonRqstString);
-		LogonResponse tRspMsg =  mCallback.logon( pSession.getId(), jRqstMsgString );
-		if (tRspMsg.getIsOk().get()) {
-			// Login Ok
-			SessionCntxInterface tSessCntx = mCallback.getSessionCntx( pSession.getId() );
-			pSession.setAttribute( TeFilter.TE_SESS_CNTX, tSessCntx);
-			pSession.setMaxInactiveInterval( AuxJson.navigateInt( mConfiguration, "inactivityTimer"));
+		try {
+			LogonResponse tRspMsg = mCallback.logon(pSession.getId(), jRqstMsgString);
+			SessionCntxInterface tSessCntx = mCallback.getSessionCntx(pSession.getId());
+			pSession.setAttribute(TeFilter.TE_SESS_CNTX, tSessCntx);
+			pSession.setMaxInactiveInterval(AuxJson.navigateInt(mConfiguration, "inactivityTimer"));
+			return buildResponse(tRspMsg);
 		}
-		return buildResponse( tRspMsg );
+		catch( TeException te) {
+			return new ResponseEntity<String>( AuxJson.getMessageBody(te.getStatusMessage().toJson()).toString(), HttpStatus.resolve(te.getStatusCode()) );
+		}
 	}
 
 	@PostMapping( path = "/addOrder" )
@@ -82,6 +87,14 @@ public class RestMessageController
 		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), jRqstMsgString );
 		return buildResponse( tResponseMessage );
 	}
+
+	@GetMapping( path = "/querySymbols" )
+	ResponseEntity<?> querySymbols(HttpSession pSession ) {
+		QuerySymbolsRequest tRequest = new QuerySymbolsRequest().setRef( String.valueOf( mInternalRef.getAndIncrement()));
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(),  tRequest.toJson().toString() );
+		return buildResponse( tResponseMessage );
+	}
+
 
 	@PostMapping( path = "/queryTradePrices" )
 	ResponseEntity<?> queryTradePrices(HttpSession pSession, @RequestBody String pJsonRqstString ) {
@@ -125,7 +138,7 @@ public class RestMessageController
 		return buildResponse(tResponseMessage);
 	}
 
-	private ResponseEntity<?> buildStatusMessageResponse( StatusMessage pStsMsg ) {
+	private ResponseEntity<String> buildStatusMessageResponse( StatusMessage pStsMsg ) {
 		if (pStsMsg.getIsOk().get()) {
 			return new ResponseEntity<>( AuxJson.getMessageBody(pStsMsg.toJson()).toString(), HttpStatus.OK );
 		} else {
@@ -133,17 +146,9 @@ public class RestMessageController
 		}
 	}
 
-	private ResponseEntity<?> buildResponse(MessageInterface pResponseMessage ) {
+	private ResponseEntity<String> buildResponse(MessageInterface pResponseMessage ) {
 		if (pResponseMessage instanceof StatusMessage) {
 			return buildStatusMessageResponse((StatusMessage) pResponseMessage);
-		}
-		if (pResponseMessage instanceof LogonResponse) {
-			LogonResponse tLogonRsp = (LogonResponse) pResponseMessage;
-			if (!tLogonRsp.getIsOk().get()) {
-				new ResponseEntity<>( AuxJson.getMessageBody(pResponseMessage.toJson()).toString(), HttpStatus.UNAUTHORIZED );
-			} else {
-				new ResponseEntity<>( AuxJson.getMessageBody(pResponseMessage.toJson()).toString(), HttpStatus.OK );
-			}
 		}
 		return new ResponseEntity<>( AuxJson.getMessageBody(pResponseMessage.toJson()).toString(), HttpStatus.OK );
 	}

@@ -68,14 +68,13 @@ public class TestFilter implements Filter
 
 		trace( tHttpRqst );
 
-/*
+
 		if (!tHttpRqst.getRequestURI().equals(LOGIN_URL)) {
 			if (!validateSession( tSession )) {
 				generateAndSendValidationError( tHttpRqst, tHttpResp);
 				return;
 			}
 		}
-*/
 		chain.doFilter(request, response);
 	}
 

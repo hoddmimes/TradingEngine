@@ -11,7 +11,7 @@
     <Message name="AddOrderRequest" implements="EngineMsgInterface" rootMessage="true">
         <Attribute name="symbol" type="String" mandatory="true" />
         <Attribute name="price" type="double" mandatory="true"/>
-        <Attribute name="volume" type = "int" mandatory="true"/>
+        <Attribute name="quantity" type = "int" mandatory="true"/>
         <Attribute name="ref" type = "String" mandatory="true"/>
         <Attribute name="side" type="String" mandatory="true"/>
     </Message>
@@ -59,6 +59,22 @@
         <Attribute name="symbol" type = "String"/>
     </Message>
 
+    <Message name="QueryMarketsRequest" implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String" mandatory="true" />
+    </Message>
+
+    <Message name="QueryMarketsResponse" rootMessage="true" >
+        <Attribute name="markets"  type = "Market" list="array" />
+    </Message>
+
+    <Message name="QuerySymbolsRequest" implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String" mandatory="true" />
+        <Attribute name="marketId" type = "int" mandatory="true" />
+    </Message>
+
+    <Message name="QuerySymbolsResponse" rootMessage="true" >
+        <Attribute name="symbols"  type = "Symbol" list="array" />
+    </Message>
 
     <!-- Market Data Query -->
     <Message name="QueryPriceLevelsRequest" implements="RequestMsgInterface" rootMessage="true" >

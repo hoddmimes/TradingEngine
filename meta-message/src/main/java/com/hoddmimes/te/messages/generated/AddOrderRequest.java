@@ -41,7 +41,7 @@ import com.google.gson.GsonBuilder;
             
                     private String mSymbol;
                     private Double mPrice;
-                    private Integer mVolume;
+                    private Integer mQuantity;
                     private String mRef;
                     private String mSide;
                public AddOrderRequest()
@@ -71,12 +71,12 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mPrice);
             }
         
-            public AddOrderRequest setVolume( Integer pVolume ) {
-            mVolume = pVolume;
+            public AddOrderRequest setQuantity( Integer pQuantity ) {
+            mQuantity = pQuantity;
             return this;
             }
-            public Optional<Integer> getVolume() {
-              return  Optional.ofNullable(mVolume);
+            public Optional<Integer> getQuantity() {
+              return  Optional.ofNullable(mQuantity);
             }
         
             public AddOrderRequest setRef( String pRef ) {
@@ -119,8 +119,8 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mPrice Type: double List: false
             tEncoder.add( "price", mPrice );
         
-            //Encode Attribute: mVolume Type: int List: false
-            tEncoder.add( "volume", mVolume );
+            //Encode Attribute: mQuantity Type: int List: false
+            tEncoder.add( "quantity", mQuantity );
         
             //Encode Attribute: mRef Type: String List: false
             tEncoder.add( "ref", mRef );
@@ -142,8 +142,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mPrice Type:double List: false
             mPrice = tDecoder.readDouble("price");
         
-            //Decode Attribute: mVolume Type:int List: false
-            mVolume = tDecoder.readInteger("volume");
+            //Decode Attribute: mQuantity Type:int List: false
+            mQuantity = tDecoder.readInteger("quantity");
         
             //Decode Attribute: mRef Type:String List: false
             mRef = tDecoder.readString("ref");
@@ -185,8 +185,8 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setVolume( Integer pValue ) {
-                        mInstance.setVolume( pValue );
+                        public Builder setQuantity( Integer pValue ) {
+                        mInstance.setQuantity( pValue );
                         return this;
                     }
                 

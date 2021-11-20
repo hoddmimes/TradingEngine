@@ -27,8 +27,8 @@ public class Order implements Comparable<Order>
 		return mSide;
 	}
 
-	public int getVolume() {
-		return mVolume;
+	public int getQuantity() {
+		return mQuantity;
 	}
 
 	public long getCreationTime() {
@@ -47,8 +47,8 @@ public class Order implements Comparable<Order>
 		return mAccountId;
 	}
 
-	public void setVolume( int pVolume ) {
-		mVolume = pVolume;
+	public void setQuantity(int pQuantity) {
+		mQuantity = pQuantity;
 	}
 
 	public void setPrice(double pPrice ) {
@@ -63,7 +63,7 @@ public class Order implements Comparable<Order>
 	private String     mSymbol;
 	private double     mPrice;
 	private Side       mSide;
-	private int        mVolume;
+	private int        mQuantity;
 	private long       mCreationTime;
 	private String     mUserRef;
 	private long       mOrderId;
@@ -110,7 +110,7 @@ public class Order implements Comparable<Order>
 		o.setSide( this.mSide.toString());
 		o.setOrderId( Long.toHexString(this.mOrderId));
 		o.setPrice( this.mPrice );
-		o.setVolume( this.mVolume );
+		o.setVolume( this.mQuantity);
 		return o;
 	}
 
@@ -121,7 +121,7 @@ public class Order implements Comparable<Order>
 		tBdx.setSide( this.mSide.toString());
 		tBdx.setOrderId(Long.toHexString(this.mOrderId));
 		tBdx.setPrice(this.mPrice);
-		tBdx.setVolume(this.mVolume);
+		tBdx.setVolume(this.mQuantity);
 		return tBdx;
 	}
 
@@ -131,7 +131,7 @@ public class Order implements Comparable<Order>
 		oo.setPrice( this.mPrice );
 		oo.setSide( this.mSide.name());
 		oo.setRef( this.mUserRef );
-		oo.setVolume( this.mVolume );
+		oo.setVolume( this.mQuantity);
 		oo.setSymbol( this.mSymbol );
 		return oo;
 	}
@@ -143,7 +143,7 @@ public class Order implements Comparable<Order>
 		tBdx.setSide( this.mSide.toString());
 		tBdx.setOrderId(Long.toHexString(this.mOrderId));
 		tBdx.setPrice(this.mPrice);
-		tBdx.setVolume(this.mVolume);
+		tBdx.setVolume(this.mQuantity);
 		tBdx.setRef( this.mUserRef );
 		return tBdx;
 	}
@@ -152,7 +152,7 @@ public class Order implements Comparable<Order>
 	public Order(String pUserId, AddOrderRequest pAddOrderRequest) {
 		mSymbol = pAddOrderRequest.getSymbol().get();
 		mPrice = pAddOrderRequest.getPrice().get();
-		mVolume = pAddOrderRequest.getVolume().get();
+		mQuantity = pAddOrderRequest.getQuantity().get();
 		mSide = Side.valueOf( pAddOrderRequest.getSide().get().toUpperCase());
 		mUserRef = pAddOrderRequest.getRef().orElse(null);
 		mCreationTime = System.currentTimeMillis();
@@ -163,7 +163,7 @@ public class Order implements Comparable<Order>
 	private Order( String pUserId,  String pSymbol, double pPrice, int pVolume, Side pSide, String pRef, String pCreationTime  ) {
 		this.mSymbol = pSymbol;
 		this.mPrice = pPrice;
-		this.mVolume = pVolume;
+		this.mQuantity = pVolume;
 		this.mSide = pSide;
 		this.mUserRef = pRef;
 		mOrderId = TXIDFactory.getId();
@@ -179,7 +179,7 @@ public class Order implements Comparable<Order>
 	@Override
 	public String toString() {
 
-		return "Symbol: " + mSymbol + " " + mVolume + "@" + fmtprice(mPrice)  + " " + mSide.toString() +
+		return "Symbol: " + mSymbol + " " + mQuantity + "@" + fmtprice(mPrice)  + " " + mSide.toString() +
 				" ref: " + mUserRef + " time: " + SDF.format( mCreationTime ) + " user: " + mAccountId +
 				" ordid: " + Long.toHexString( mOrderId );
 	}

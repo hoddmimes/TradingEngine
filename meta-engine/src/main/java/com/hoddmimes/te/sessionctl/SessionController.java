@@ -17,6 +17,8 @@ import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.HTTP;
+import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -105,21 +107,27 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 	}
 
 
-	public SessionCntxInterface logoninternal(String pUsername, String pPassword, String pSessionId) throws TeException{
+	public SessionCntxInterface logoninternal(LogonRequest pLogonRequest, String pSessionId) throws TeException
+	{
 		if (pSessionId == null) {
-			throw new TeException("Logon, user session id object for user \"" + pUsername + "\" must not be null");
+			mLog.warn(("Logon, user session id object for user " + pLogonRequest.getAccount().get() + " must not be null"));
+			throw new TeException( HttpStatus.BAD_REQUEST.value(),
+					StatusMessageBuilder.error(("Logon, user session id object for user " + pLogonRequest.getAccount().get() + " must not be null"), pLogonRequest.getRef().get()));
 		}
+
 		synchronized (SessionController.class) {
 			if (mSessions.containsKey(pSessionId)) {
 				return mSessions.get(pSessionId); // already signed in
 			}
-			if (mAuthenticator.logon(pUsername, pPassword)) {
-				SessionCntxInterface tSessCntx = new SessionCntx(pUsername, pSessionId);
+			if (mAuthenticator.logon(pLogonRequest.getAccount().get(), pLogonRequest.getPassword().get())) {
+				SessionCntxInterface tSessCntx = new SessionCntx(pLogonRequest.getAccount().get(), pSessionId);
 				mSessions.put(pSessionId, tSessCntx);
 				return tSessCntx;
 			}
 		}
-		throw new TeException("Logon failure user \"" + pUsername + "\"");
+		mLog.warn("Unauthorized logon, account: " + pLogonRequest.getAccount().get() + " sessionid: " + pSessionId);
+		throw new TeException( HttpStatus.UNAUTHORIZED.value(),
+				StatusMessageBuilder.error("Unauthorized logon", pLogonRequest.getRef().get()));
 	}
 
 	public SessionCntxInterface getSessionContext( String pSessionId ) {
@@ -264,7 +272,12 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 				tResponseMessage = TeAppCntx.getInstance().getTradeContainer().queryOwnTrades((QueryOwnTradesRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryOwnOrdersRequest) {
 				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().executeQueryOwnOrders((QueryOwnOrdersRequest) pRqstMsg, tRequestContext);
-			} else {
+			} else if (pRqstMsg instanceof QuerySymbolsRequest) {
+				tResponseMessage = TeAppCntx.getInstance().getInstrumentContainer().querySymbols((QuerySymbolsRequest) pRqstMsg, tRequestContext);
+			} else if (pRqstMsg instanceof QueryMarketsRequest) {
+				tResponseMessage = TeAppCntx.getInstance().getInstrumentContainer().queryMarkets((QueryMarketsRequest) pRqstMsg, tRequestContext);
+			}
+			else {
 				mLog.fatal("No execute implementation for request \"" + pRqstMsg.getMessageName() + "\"");
 				tResponseMessage = StatusMessageBuilder.error(("No execute implementation for request \"" + pRqstMsg.getMessageName() + "\""), pRqstMsg.getRef().get());
 			}
@@ -285,31 +298,25 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 
 
 	@Override
-	public LogonResponse logon(String pSessionId, String pJsonRqstMsgStr )
+	public LogonResponse logon(String pSessionId, String pJsonRqstMsgStr ) throws TeException
 	{
 		SessionCntxInterface mSessionCntx = null;
 		String tRef = AuxJson.getMessageRef( pJsonRqstMsgStr );
 		Pattern tUsrPattern = Pattern.compile("\"username\"\\s*:\\s*\"([^\"]+)\"");
 		Matcher m = tUsrPattern.matcher( pJsonRqstMsgStr );
-		LogonResponse tRsp = new LogonResponse();
+		LogonResponse tLogonRsp = new LogonResponse();
 
 		String tUsrStr = (m.find()) ? m.group(1) : "null";
 
 		try {mSchemaValidator.validate( pJsonRqstMsgStr );}
 		catch( Exception e) {
 			mLog.warn("Logon invalid message syntax: " + tUsrStr + " reason: " + e.getMessage());
-			return tRsp.setIsOk(false).setRef(tRef).setStatusMessage("Invalid message syntax").setExceptionMessage( e.getMessage());
+			throw new TeException(HttpStatus.BAD_REQUEST.value(), StatusMessageBuilder.error("Inavlid message syntax", tRef));
 		}
-		try {
-			LogonRequest tLoginMsg = new LogonRequest( pJsonRqstMsgStr );
-			mSessionCntx = this.logoninternal( tLoginMsg.getUsername().get(), tLoginMsg.getPassword().get(), pSessionId );
-			mLog.info("successfull logon: " + tUsrStr + " session id: " + pSessionId);
-			return tRsp.setIsOk(true).setRef(tRef).setStatusMessage("Successfull signed on").setSessionAuthId( mSessionCntx.getApiAuthId());
 
-		}
-		catch(Exception e) {
-			mLog.warn("Logon unauthorized user: " + tUsrStr + " reason: " + e.getMessage());
-			return tRsp.setIsOk(false).setRef(tRef).setStatusMessage("Logon not authorized").setExceptionMessage( e.getMessage());
-		}
+		LogonRequest tLogonRequest = new LogonRequest( pJsonRqstMsgStr );
+		mSessionCntx = this.logoninternal( tLogonRequest, pSessionId );
+		mLog.info("successfull logon: " + tUsrStr + " session id: " + pSessionId);
+		return tLogonRsp.setRef(tRef).setSessionAuthId( mSessionCntx.getApiAuthId());
 	}
 }
