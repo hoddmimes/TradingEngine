@@ -40,10 +40,10 @@ import com.google.gson.GsonBuilder;
 
             
                     private String mOrderId;
-                    private String mSymbol;
+                    private String mSid;
                     private String mAction;
                     private Double mPrice;
-                    private Integer mVolume;
+                    private Integer mQuantity;
                     private String mSide;
                     private Long mObSeqNo;
                public BdxOrderbookChange()
@@ -65,12 +65,12 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mOrderId);
             }
         
-            public BdxOrderbookChange setSymbol( String pSymbol ) {
-            mSymbol = pSymbol;
+            public BdxOrderbookChange setSid( String pSid ) {
+            mSid = pSid;
             return this;
             }
-            public Optional<String> getSymbol() {
-              return  Optional.ofNullable(mSymbol);
+            public Optional<String> getSid() {
+              return  Optional.ofNullable(mSid);
             }
         
             public BdxOrderbookChange setAction( String pAction ) {
@@ -89,12 +89,12 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mPrice);
             }
         
-            public BdxOrderbookChange setVolume( Integer pVolume ) {
-            mVolume = pVolume;
+            public BdxOrderbookChange setQuantity( Integer pQuantity ) {
+            mQuantity = pQuantity;
             return this;
             }
-            public Optional<Integer> getVolume() {
-              return  Optional.ofNullable(mVolume);
+            public Optional<Integer> getQuantity() {
+              return  Optional.ofNullable(mQuantity);
             }
         
             public BdxOrderbookChange setSide( String pSide ) {
@@ -134,8 +134,8 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mOrderId Type: String List: false
             tEncoder.add( "orderId", mOrderId );
         
-            //Encode Attribute: mSymbol Type: String List: false
-            tEncoder.add( "symbol", mSymbol );
+            //Encode Attribute: mSid Type: String List: false
+            tEncoder.add( "sid", mSid );
         
             //Encode Attribute: mAction Type: String List: false
             tEncoder.add( "action", mAction );
@@ -143,8 +143,8 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mPrice Type: double List: false
             tEncoder.add( "price", mPrice );
         
-            //Encode Attribute: mVolume Type: int List: false
-            tEncoder.add( "volume", mVolume );
+            //Encode Attribute: mQuantity Type: int List: false
+            tEncoder.add( "quantity", mQuantity );
         
             //Encode Attribute: mSide Type: String List: false
             tEncoder.add( "side", mSide );
@@ -163,8 +163,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mOrderId Type:String List: false
             mOrderId = tDecoder.readString("orderId");
         
-            //Decode Attribute: mSymbol Type:String List: false
-            mSymbol = tDecoder.readString("symbol");
+            //Decode Attribute: mSid Type:String List: false
+            mSid = tDecoder.readString("sid");
         
             //Decode Attribute: mAction Type:String List: false
             mAction = tDecoder.readString("action");
@@ -172,8 +172,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mPrice Type:double List: false
             mPrice = tDecoder.readDouble("price");
         
-            //Decode Attribute: mVolume Type:int List: false
-            mVolume = tDecoder.readInteger("volume");
+            //Decode Attribute: mQuantity Type:int List: false
+            mQuantity = tDecoder.readInteger("quantity");
         
             //Decode Attribute: mSide Type:String List: false
             mSide = tDecoder.readString("side");
@@ -210,8 +210,8 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setSymbol( String pValue ) {
-                        mInstance.setSymbol( pValue );
+                        public Builder setSid( String pValue ) {
+                        mInstance.setSid( pValue );
                         return this;
                     }
                 
@@ -225,8 +225,8 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setVolume( Integer pValue ) {
-                        mInstance.setVolume( pValue );
+                        public Builder setQuantity( Integer pValue ) {
+                        mInstance.setQuantity( pValue );
                         return this;
                     }
                 

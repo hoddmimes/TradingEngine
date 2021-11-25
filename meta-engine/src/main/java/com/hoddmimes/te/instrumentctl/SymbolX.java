@@ -1,6 +1,7 @@
 package com.hoddmimes.te.instrumentctl;
 
 import com.google.gson.JsonObject;
+import com.hoddmimes.te.common.SID;
 import com.hoddmimes.te.messages.generated.Symbol;
 
 import java.math.BigDecimal;
@@ -9,14 +10,18 @@ import java.text.SimpleDateFormat;
 public class SymbolX extends Symbol
 {
 	private MarketX mMarket;
+	private SID mSID;
 
 	SymbolX(JsonObject pJsonObject, MarketX pMarket ) {
 		super( pJsonObject.toString() );
 		mMarket = pMarket;
+		mSID = new SID( pMarket.getId().get(), pJsonObject.get("symbol").getAsString() );
+		super.setSid( mSID.toString());
+		super.setName( pJsonObject.get("symbol").getAsString());
 	}
 
 	public String getId() {
-		return super.getSymbol().get();
+		return super.getSid().get();
 	}
 
 

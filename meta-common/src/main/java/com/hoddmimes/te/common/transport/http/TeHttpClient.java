@@ -6,6 +6,7 @@ import com.google.gson.*;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -31,6 +32,7 @@ public class TeHttpClient
 {
 	private static SimpleDateFormat SDF = new SimpleDateFormat("HH:mm:ss.SSS");
 	private static boolean VERBOSE = false;
+	private static boolean ERROR_VERBOSE = true;
 
 
 	private String  mBaseUrl;
@@ -53,11 +55,21 @@ public class TeHttpClient
 		catch(Exception e ) { e.printStackTrace(); }
 	}
 
-	private void log( String pMessage ) {
-		if (VERBOSE) {
+	private void log( String pMessage )
+	{
+		log( pMessage, false);
+	}
+
+	private void log( String pMessage, boolean pError ) {
+		if (VERBOSE || pError) {
 			System.out.println(SDF.format(System.currentTimeMillis()) + " " + pMessage );
 		}
 	}
+
+
+
+
+
 
 	public JsonObject get( String pDestination ) throws IOException
 	{
@@ -67,7 +79,27 @@ public class TeHttpClient
 
 		if (tResponse.getStatusLine().getStatusCode() != 200) {
 			log("[Receive-Error] \n   " + " status-code: "  + tResponse.getStatusLine().getStatusCode() +
-					" status: " + readResponse( tResponse ));
+					" status: " + readResponse( tResponse ), true);
+			return null;
+		}
+
+		// Read response data from the response message
+		String tResponseData = readResponse( tResponse );
+		// Build Json response message
+		JsonObject tJsonRsp = JsonParser.parseString( tResponseData ).getAsJsonObject();
+		log("[Receive] \n   " + mGsonPrinter.toJson( tJsonRsp ));
+		return tJsonRsp;
+	}
+
+	public JsonObject delete( String pDestination ) throws IOException
+	{
+		HttpDelete tDelRqst = new HttpDelete( mBaseUrl + pDestination );
+		log("[delete] destination: " + tDelRqst.toString());
+		CloseableHttpResponse tResponse = mHttpclient.execute(tDelRqst);
+
+		if (tResponse.getStatusLine().getStatusCode() != 200) {
+			log("[Receive-Error] \n   " + " status-code: "  + tResponse.getStatusLine().getStatusCode() +
+					" status: " + readResponse( tResponse ), true);
 			return null;
 		}
 
@@ -101,7 +133,7 @@ public class TeHttpClient
 		if (tResponse.getStatusLine().getStatusCode() != 200) {
 			String rspmsg  = readResponse( tResponse );
 			log("[Receive-Error] \n   " + " status-code: "  + tResponse.getStatusLine().getStatusCode() +
-					" status: " + rspmsg);
+					" status: " + rspmsg, true);
 			throw new TeRequestException( tResponse.getStatusLine().getStatusCode(), tResponse.getStatusLine().getReasonPhrase(), rspmsg  );
 		}
 

@@ -40,6 +40,7 @@ import com.google.gson.GsonBuilder;
 
             
                     private String mRef;
+                    private Integer mMarketId;
                public QueryPriceLevelsRequest()
                {
                 
@@ -57,6 +58,14 @@ import com.google.gson.GsonBuilder;
             }
             public Optional<String> getRef() {
               return  Optional.ofNullable(mRef);
+            }
+        
+            public QueryPriceLevelsRequest setMarketId( Integer pMarketId ) {
+            mMarketId = pMarketId;
+            return this;
+            }
+            public Optional<Integer> getMarketId() {
+              return  Optional.ofNullable(mMarketId);
             }
         
 
@@ -80,6 +89,9 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mRef Type: String List: false
             tEncoder.add( "ref", mRef );
         
+            //Encode Attribute: mMarketId Type: int List: false
+            tEncoder.add( "marketId", mMarketId );
+        
         }
 
         
@@ -90,6 +102,9 @@ import com.google.gson.GsonBuilder;
         
             //Decode Attribute: mRef Type:String List: false
             mRef = tDecoder.readString("ref");
+        
+            //Decode Attribute: mMarketId Type:int List: false
+            mMarketId = tDecoder.readInteger("marketId");
         
 
         }
@@ -117,6 +132,11 @@ import com.google.gson.GsonBuilder;
         
                         public Builder setRef( String pValue ) {
                         mInstance.setRef( pValue );
+                        return this;
+                    }
+                
+                        public Builder setMarketId( Integer pValue ) {
+                        mInstance.setMarketId( pValue );
                         return this;
                     }
                 

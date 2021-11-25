@@ -40,7 +40,7 @@ import com.google.gson.GsonBuilder;
 
             
                     private Double mPrice;
-                    private Integer mVolume;
+                    private Integer mQuantity;
                     private String mOrderId;
                     private String mSide;
                public Order()
@@ -62,12 +62,12 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mPrice);
             }
         
-            public Order setVolume( Integer pVolume ) {
-            mVolume = pVolume;
+            public Order setQuantity( Integer pQuantity ) {
+            mQuantity = pQuantity;
             return this;
             }
-            public Optional<Integer> getVolume() {
-              return  Optional.ofNullable(mVolume);
+            public Optional<Integer> getQuantity() {
+              return  Optional.ofNullable(mQuantity);
             }
         
             public Order setOrderId( String pOrderId ) {
@@ -106,8 +106,8 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mPrice Type: double List: false
             tEncoder.add( "price", mPrice );
         
-            //Encode Attribute: mVolume Type: int List: false
-            tEncoder.add( "volume", mVolume );
+            //Encode Attribute: mQuantity Type: int List: false
+            tEncoder.add( "quantity", mQuantity );
         
             //Encode Attribute: mOrderId Type: String List: false
             tEncoder.add( "orderId", mOrderId );
@@ -126,8 +126,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mPrice Type:double List: false
             mPrice = tDecoder.readDouble("price");
         
-            //Decode Attribute: mVolume Type:int List: false
-            mVolume = tDecoder.readInteger("volume");
+            //Decode Attribute: mQuantity Type:int List: false
+            mQuantity = tDecoder.readInteger("quantity");
         
             //Decode Attribute: mOrderId Type:String List: false
             mOrderId = tDecoder.readString("orderId");
@@ -164,8 +164,8 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setVolume( Integer pValue ) {
-                        mInstance.setVolume( pValue );
+                        public Builder setQuantity( Integer pValue ) {
+                        mInstance.setQuantity( pValue );
                         return this;
                     }
                 

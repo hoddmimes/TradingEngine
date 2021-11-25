@@ -11,42 +11,48 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MarketDataConsilidator extends Thread {
+public class MarketDataConsilidator extends Thread
+{
 	private final Logger mLog = LogManager.getLogger(MarketDataConsilidator.class);
 	private final long mInterval;
 	private final int mLevels;
-	private AtomicReference<ConcurrentHashMap<String, String>> mSymolTouchedRef ;
-	private final ConcurrentHashMap<String, BdxPriceLevel> mSymolPriceLevels;
+	private AtomicReference<ConcurrentHashMap<String, String>>        mTouchedRef ;
+	private final ConcurrentHashMap<String, BdxPriceLevel>            mPriceLevels;
+
 
 
 	MarketDataConsilidator(int pLevels, long pInterval) {
 		mInterval = pInterval;
 		mLevels = pLevels;
-		mSymolTouchedRef = new AtomicReference<>(new ConcurrentHashMap<>());
-		mSymolPriceLevels = new ConcurrentHashMap<>();
+		mTouchedRef = new AtomicReference<>(new ConcurrentHashMap<>());
+		mPriceLevels = new ConcurrentHashMap<>();
 		this.start();
 	}
 
-	void touch(String pSymbol) {
-		mSymolTouchedRef.get().put(pSymbol, pSymbol);
+
+
+	void touch(String pSid) {
+		mTouchedRef.get().put(pSid, pSid);
 	}
 
-	private void update(InternalPriceLevelResponse pRspMsg, String pSymbol) {
-		BdxPriceLevel tCurrValue = mSymolPriceLevels.get(pSymbol);
+	private void update(InternalPriceLevelResponse pRspMsg, String pSid ) {
+		BdxPriceLevel tCurrValue = mPriceLevels.get( pSid );
 		if ((tCurrValue != null) && (tCurrValue.same(pRspMsg.getBdxPriceLevel().get()))) {
 			return;
 		}
-		mSymolPriceLevels.put(pSymbol, pRspMsg.getBdxPriceLevel().get());
+
+		mPriceLevels.put( pSid, pRspMsg.getBdxPriceLevel().get());
 		TeAppCntx.getInstance().getMarketDataDistributor().queueBdxPublic(pRspMsg.getBdxPriceLevel().get());
 	}
 
 	public QueryPriceLevelsResponse queryPriceLevels( QueryPriceLevelsRequest pQryRqst ) {
 		QueryPriceLevelsResponse tRsp = new QueryPriceLevelsResponse();
 		tRsp.setRef( pQryRqst.getRef().get());
-		Iterator<BdxPriceLevel> tItr = mSymolPriceLevels.values().iterator();
+
+		Iterator<BdxPriceLevel> tItr = mPriceLevels.values().iterator();
 		while( tItr.hasNext() ) {
 			BdxPriceLevel tBdx = tItr.next();
-			PriceLevelSymbol pls = new PriceLevelSymbol().setSymbol( tBdx.getSymbol().get());
+			PriceLevelSymbol pls = new PriceLevelSymbol().setSid( tBdx.getSid().get());
 			pls.setBuySide( tBdx.getBuySide().get());
 			pls.setSellSide( tBdx.getSellSide().get());
 			tRsp.addOrderbooks( pls );
@@ -63,25 +69,25 @@ public class MarketDataConsilidator extends Thread {
 			} catch (InterruptedException e) {
 			}
 
-			if (mSymolTouchedRef.get().size() > 0) {
+			if (mTouchedRef.get().size() > 0) {
 				SessionController tSessionController = TeAppCntx.getInstance().getSessionController();
 
-				ConcurrentHashMap<String, String> tNewSymbolMap = new ConcurrentHashMap<>();
-				ConcurrentHashMap<String, String> tOldSymbolMap = mSymolTouchedRef.getAndSet(tNewSymbolMap);
+				ConcurrentHashMap<String, String> tNewTouchMap = new ConcurrentHashMap<>();
+				ConcurrentHashMap<String, String> tOldSymbolMap = mTouchedRef.getAndSet(tNewTouchMap);
 
-				for (String tSymbol : tOldSymbolMap.values()) {
+				for (String tSid : tOldSymbolMap.values()) {
 					InternalPriceLevelRequest tRqst = new InternalPriceLevelRequest();
 					tRqst.setRef("X");
-					tRqst.setSymbol(tSymbol);
+					tRqst.setSid(tSid);
 					tRqst.setLevels(mLevels);
 
 					MessageInterface tRspMsg = tSessionController.connectorMessage( SessionController.INTERNAL_SESSION_ID, tRqst.toString() );
 
 					if (tRspMsg instanceof StatusMessage) {
 						StatusMessage tSts = (StatusMessage) tRspMsg;
-						mLog.error("InternalPriceLevelRequest failed \"" + tSymbol + "\" reason: " + tSts.getStatusMessage().orElse("unknown"));
+						mLog.error("InternalPriceLevelRequest failed \"" + tSid + "\" reason: " + tSts.getStatusMessage().orElse("unknown"));
 					} else if (tRspMsg instanceof InternalPriceLevelResponse) {
-						update((InternalPriceLevelResponse) tRspMsg, tSymbol);
+						update((InternalPriceLevelResponse) tRspMsg, tSid);
 					}
 				}
 			}

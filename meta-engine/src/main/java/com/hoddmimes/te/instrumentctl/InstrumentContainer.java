@@ -4,7 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
+import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
+import com.hoddmimes.te.common.SID;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
 import com.hoddmimes.te.sessionctl.RequestContext;
@@ -37,10 +39,10 @@ public class InstrumentContainer
 		 }
 	 }
 	 catch( Exception e) {
-		 mLog.fatal("Fail to load instruments configuration from \"" + tDataStore + "\"");
+		 mLog.fatal("Fail to load instruments configuration from \"" + tDataStore + "\"", e);
 		 System.exit(-1);
 	 }
-
+	   TeAppCntx.getInstance().setInstrumentContainer( this );
    }
 
 	public QueryMarketsResponse queryMarkets(QueryMarketsRequest pRqstMsg, RequestContext pRequestContext) {
@@ -68,6 +70,13 @@ public class InstrumentContainer
 	   return tRspMsg;
    }
 
+	public boolean marketDefined( int pMarket ) {
+	   return mMarkets.containsKey( pMarket );
+	}
+
+	public boolean marketDefined( SID pSID ) {
+		return mMarkets.containsKey( pSID );
+	}
 
 
 

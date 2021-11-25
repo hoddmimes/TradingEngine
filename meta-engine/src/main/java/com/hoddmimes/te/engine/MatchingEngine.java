@@ -12,7 +12,6 @@ import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.instrumentctl.SymbolX;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
-import com.hoddmimes.te.sessionctl.RequestContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -64,13 +63,13 @@ public class MatchingEngine implements MatchingEngineCallback
 	}
 
 	MessageInterface processAddOrder(AddOrderRequest pAddOrderRequest, RequestContextInterface pRequestContext ) {
-		Orderbook tOrderbook = mOrderbooks.get(pAddOrderRequest.getSymbol().get());
+		Orderbook tOrderbook = mOrderbooks.get(pAddOrderRequest.getSid().get());
 		if (tOrderbook == null) {
-			mLog.warn("orderbook " + pAddOrderRequest.getSymbol().get() + " does not exists " + pRequestContext);
-			return  StatusMessageBuilder.error("orderbook " + pAddOrderRequest.getSymbol().get() + " does not exists", pAddOrderRequest.getRef().get());
+			mLog.warn("orderbook " + pAddOrderRequest.getSid().get() + " does not exists " + pRequestContext);
+			return  StatusMessageBuilder.error("orderbook " + pAddOrderRequest.getSid().get() + " does not exists", pAddOrderRequest.getRef().get());
 		}
-		if (!mInstrumentContainer.isOpen( pAddOrderRequest.getSymbol().get())) {
-			return  StatusMessageBuilder.error("orderbook " + pAddOrderRequest.getSymbol().get() + " is not open for trading", pAddOrderRequest.getRef().get());
+		if (!mInstrumentContainer.isOpen( pAddOrderRequest.getSid().get())) {
+			return  StatusMessageBuilder.error("orderbook " + pAddOrderRequest.getSid().get() + " is not open for trading", pAddOrderRequest.getRef().get());
 		}
 
 		synchronized (tOrderbook) {
@@ -84,13 +83,13 @@ public class MatchingEngine implements MatchingEngineCallback
 	MessageInterface processAmendOrder( AmendOrderRequest pAmendOrderRequest, RequestContextInterface pRequestContext) {
 		long tOrderId;
 
-		Orderbook tOrderbook = mOrderbooks.get(pAmendOrderRequest.getSymbol().get());
+		Orderbook tOrderbook = mOrderbooks.get(pAmendOrderRequest.getSid().get());
 		if (tOrderbook == null) {
-			mLog.warn("orderbook " + pAmendOrderRequest.getSymbol().get() + " does not exists " + pRequestContext);
-			return StatusMessageBuilder.error("orderbook " + pAmendOrderRequest.getSymbol().get() + " does not exists", pAmendOrderRequest.getRef().get());
+			mLog.warn("orderbook " + pAmendOrderRequest.getSid().get() + " does not exists " + pRequestContext);
+			return StatusMessageBuilder.error("orderbook " + pAmendOrderRequest.getSid().get() + " does not exists", pAmendOrderRequest.getRef().get());
 		}
-		if (!mInstrumentContainer.isOpen( pAmendOrderRequest.getSymbol().get())) {
-			return  StatusMessageBuilder.error("orderbook " + pAmendOrderRequest.getSymbol().get() + " is not open for trading", pAmendOrderRequest.getRef().get());
+		if (!mInstrumentContainer.isOpen( pAmendOrderRequest.getSid().get())) {
+			return  StatusMessageBuilder.error("orderbook " + pAmendOrderRequest.getSid().get() + " is not open for trading", pAmendOrderRequest.getRef().get());
 		}
 
 		synchronized (tOrderbook) {
@@ -109,13 +108,13 @@ public class MatchingEngine implements MatchingEngineCallback
 	MessageInterface processDeleteOrder( DeleteOrderRequest pDeleteOrderRequest, RequestContextInterface pRequestContext) {
 		long tOrderId;
 
-		Orderbook tOrderbook = mOrderbooks.get( pDeleteOrderRequest.getSymbol().get());
+		Orderbook tOrderbook = mOrderbooks.get( pDeleteOrderRequest.getSid().get());
 		if (tOrderbook == null) {
-			mLog.warn("orderbook " + pDeleteOrderRequest.getSymbol().get() + " does not exists " + pRequestContext );
-			return StatusMessageBuilder.error("orderbook " + pDeleteOrderRequest.getSymbol().get() + " does not exists", pDeleteOrderRequest.getRef().get());
+			mLog.warn("orderbook " + pDeleteOrderRequest.getSid().get() + " does not exists " + pRequestContext );
+			return StatusMessageBuilder.error("orderbook " + pDeleteOrderRequest.getSid().get() + " does not exists", pDeleteOrderRequest.getRef().get());
 		}
-		if (!mInstrumentContainer.isOpen( pDeleteOrderRequest.getSymbol().get())) {
-			return  StatusMessageBuilder.error("orderbook " + pDeleteOrderRequest.getSymbol().get() + " is not open for trading", pDeleteOrderRequest.getRef().get());
+		if (!mInstrumentContainer.isOpen( pDeleteOrderRequest.getSid().get())) {
+			return  StatusMessageBuilder.error("orderbook " + pDeleteOrderRequest.getSid().get() + " is not open for trading", pDeleteOrderRequest.getRef().get());
 		}
 
 		synchronized( tOrderbook ) {
@@ -131,28 +130,47 @@ public class MatchingEngine implements MatchingEngineCallback
 		}
 	}
 
-	MessageInterface processDeleteOrders(  DeleteOrdersRequest pDeleteOrdersRequest, RequestContextInterface pRequestContext) {
-		Orderbook tOrderbook = mOrderbooks.get( pDeleteOrdersRequest.getSymbol().get());
-		if (tOrderbook == null) {
-			mLog.warn("orderbook " + pDeleteOrdersRequest.getSymbol().get() + " does not exists " + pRequestContext );
-			return StatusMessageBuilder.error("orderbook " + pDeleteOrdersRequest.getSymbol().get() + " does not exists", pDeleteOrdersRequest.getRef().get());
+	MessageInterface processQueryBBO( QueryBBORequest pRqstMsg, RequestContextInterface pRequestContext) {
+		Iterator<Orderbook> tItr = mOrderbooks.values().iterator();
+		QueryBBOResponse tRspMsg = new QueryBBOResponse();
+		tRspMsg.setRef( pRqstMsg.getRef().get());
+		while(tItr.hasNext()) {
+			Orderbook ob = tItr.next();
+			if (ob.getMarketId() == pRqstMsg.getMarketId().get()) {
+				synchronized (ob) {
+					tRspMsg.addPrices( ob.getBBO());
+				}
+			}
 		}
-		if (!mInstrumentContainer.isOpen( pDeleteOrdersRequest.getSymbol().get())) {
-			return  StatusMessageBuilder.error("orderbook " + pDeleteOrdersRequest.getSymbol().get() + " is not open for trading", pDeleteOrdersRequest.getRef().get());
-		}
+		return tRspMsg;
+	}
 
-		synchronized( tOrderbook ) {
-			MessageInterface tMsg = tOrderbook.deleteOrders(pDeleteOrdersRequest.getRef().get(), pRequestContext);
-			return tMsg;
+
+
+	MessageInterface processDeleteOrders(  DeleteOrdersRequest pDeleteOrdersRequest, RequestContextInterface pRequestContext) {
+		Iterator<Orderbook> tItr = mOrderbooks.values().iterator();
+		int tOrdersDeleted = 0;
+
+		while(tItr.hasNext()) {
+			Orderbook ob = tItr.next();
+			if (mInstrumentContainer.isOpen( ob.getSymbolId())) {
+				if (ob.getMarketId() == pDeleteOrdersRequest.getMarket().get() &&
+					(pDeleteOrdersRequest.getSid().isEmpty() || (pDeleteOrdersRequest.getSid().get().contentEquals( ob.getSymbolId())))) {
+					synchronized (ob) {
+						tOrdersDeleted += ob.deleteOrders( pDeleteOrdersRequest.getRef().get(), pRequestContext);
+					}
+				}
+			}
 		}
+		return StatusMessageBuilder.success("Deleted " + tOrdersDeleted + " orders for account: " + pRequestContext.getAccountId(), pDeleteOrdersRequest.getRef().get());
 	}
 
 
 	 MessageInterface processQueryOrderbook( QueryOrderbookRequest pQueryOrderbookRequest, RequestContextInterface  pRequestContext) {
-		Orderbook tOrderbook = mOrderbooks.get( pQueryOrderbookRequest.getSymbol().get());
+		Orderbook tOrderbook = mOrderbooks.get( pQueryOrderbookRequest.getSid().get());
 		if (tOrderbook == null) {
-			mLog.warn("orderbook " + pQueryOrderbookRequest.getSymbol().get() + " does not exists " + pRequestContext );
-			return StatusMessageBuilder.error("orderbook " + pQueryOrderbookRequest.getSymbol().get() + " does not exists", pQueryOrderbookRequest.getRef().get());
+			mLog.warn("orderbook " + pQueryOrderbookRequest.getSid().get() + " does not exists " + pRequestContext );
+			return StatusMessageBuilder.error("orderbook " + pQueryOrderbookRequest.getSid().get() + " does not exists", pQueryOrderbookRequest.getRef().get());
 		}
 
 		synchronized ( tOrderbook ) {
@@ -161,10 +179,10 @@ public class MatchingEngine implements MatchingEngineCallback
 	}
 
 	MessageInterface processQueryOwnOrders( InternalOwnOrdersRequest pInternalOwnOrdersRequest, RequestContextInterface pRequestContext) {
-		Orderbook tOrderbook = mOrderbooks.get( pInternalOwnOrdersRequest.getSymbol().get());
+		Orderbook tOrderbook = mOrderbooks.get( pInternalOwnOrdersRequest.getSid().get());
 		if (tOrderbook == null) {
-			mLog.warn("orderbook " + pInternalOwnOrdersRequest.getSymbol().get() + " does not exists " + pRequestContext );
-			return StatusMessageBuilder.error("orderbook " + pInternalOwnOrdersRequest.getSymbol().get() + " does not exists", pInternalOwnOrdersRequest.getRef().get());
+			mLog.warn("orderbook " + pInternalOwnOrdersRequest.getSid().get() + " does not exists " + pRequestContext );
+			return StatusMessageBuilder.error("orderbook " + pInternalOwnOrdersRequest.getSid().get() + " does not exists", pInternalOwnOrdersRequest.getRef().get());
 		}
 
 		synchronized( tOrderbook ) {
@@ -174,11 +192,11 @@ public class MatchingEngine implements MatchingEngineCallback
 	}
 
 	 MessageInterface processPriceLevel(InternalPriceLevelRequest pInternalPriceLevelRequest, RequestContextInterface pRequestContext) {
-		Orderbook tOrderbook = mOrderbooks.get( pInternalPriceLevelRequest.getSymbol().get());
+		Orderbook tOrderbook = mOrderbooks.get( pInternalPriceLevelRequest.getSid().get());
 
 		if (tOrderbook == null) {
-			mLog.warn("orderbook " + pInternalPriceLevelRequest.getSymbol().get() + " does not exists " + pRequestContext );
-			return StatusMessageBuilder.error("orderbook " + pInternalPriceLevelRequest.getSymbol().get() + " does not exists", pInternalPriceLevelRequest.getRef().get());
+			mLog.warn("orderbook " + pInternalPriceLevelRequest.getSid().get() + " does not exists " + pRequestContext );
+			return StatusMessageBuilder.error("orderbook " + pInternalPriceLevelRequest.getSid().get() + " does not exists", pInternalPriceLevelRequest.getRef().get());
 		}
 
 		synchronized (tOrderbook) {
@@ -192,11 +210,11 @@ public class MatchingEngine implements MatchingEngineCallback
 
 
 
-	public List<String> getOrderbookSymbols() {
+	public List<String> getOrderbookSymbolIds() {
 		ArrayList<String> tList = new ArrayList<>();
 		Iterator<Orderbook> tItr = mOrderbooks.values().iterator();
 		while( tItr.hasNext()) {
-			tList.add( tItr.next().getSymbolName());
+			tList.add( tItr.next().getSymbolId());
 		}
 		return tList;
 	}
@@ -236,13 +254,13 @@ public class MatchingEngine implements MatchingEngineCallback
 
 	@Override
 	public void trade(InternalTrade pTrade, SessionCntxInterface pSessionCntx) {
-		String tSymbol =  pTrade.getSymbol();
+		String tSymbol =  pTrade.getSid();
 
-		TeAppCntx.getInstance().getTradeContainer().addTrade( pTrade );
+		BdxTrade tBdxTrade = TeAppCntx.getInstance().getTradeContainer().addTrade( pTrade );
 
 
 		if (mIsEnabledTradeflow) {
-			mMarketDataDistributor.queueBdxPublic(pTrade.toBdxTrade());
+			mMarketDataDistributor.queueBdxPublic(tBdxTrade);
 		}
 
 		if (mIsEnabledPrivateFlow) {

@@ -16,4 +16,5 @@ public interface MatchingEngineInterface
 	MessageInterface executeQueryOrderbook(QueryOrderbookRequest pQueryOrderbookRequest,  RequestContextInterface pRequestContext );
 	MessageInterface executePriceLevel( InternalPriceLevelRequest pInternalPriceLevelRequest,  RequestContextInterface pRequestContext );
 	MessageInterface executeQueryOwnOrders( QueryOwnOrdersRequest pQueryOwnOrdersRequest,  RequestContextInterface pRequestContext );
+	MessageInterface executeQueryBBO( QueryBBORequest pQueryBBORequest,  RequestContextInterface pRequestContext );
 }

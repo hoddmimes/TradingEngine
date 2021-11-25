@@ -4,7 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.hoddmimes.jaux.AuxParseArguments;
-import com.hoddmimes.te.messages.generated.User;
+import com.hoddmimes.te.messages.generated.Account;
+import com.hoddmimes.te.sessionctl.AccountX;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -76,8 +77,8 @@ public class Password
 			System.exit(-1);
 		}
 
-		User u = new User( jUser.toString() );
-		u.setPassword( com.hoddmimes.te.sessionctl.User.hashPassword( mPassword ));
+		Account a = new Account( jUser.toString() );
+		a.setPassword( AccountX.hashPassword( mPassword ));
 	}
 
 	private void getUser() {

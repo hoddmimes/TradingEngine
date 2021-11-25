@@ -1,24 +1,28 @@
 package com.hoddmimes.te.sessionctl;
 
+import com.hoddmimes.te.messages.generated.Account;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class User
+public class AccountX extends Account
 {
-	private String mUserId;
-	private boolean mEnabled;
-	private String mHashedPassword;
-
-
-
-	public User( String pUserId, String pHashedPassword  ) {
-		this( pUserId, pHashedPassword,true);
+	public AccountX()
+	{
+		super();
 	}
 
-	public User( String pUserId, String pHashedPassword, boolean pEnabled  ) {
-		mEnabled = pEnabled;
-		mUserId = pUserId;
-		mHashedPassword = pHashedPassword;
+
+	public AccountX(String pAccountId, String pHashedPassword  )
+	{
+		this( pAccountId, pHashedPassword,true);
+	}
+
+	public AccountX(String pAccountId, String pHashedPassword, boolean pEnabled  ) {
+		super();
+		super.setAccount( pAccountId );
+		super.setEnabled( pEnabled );
+		super.setPassword( pHashedPassword );
 	}
 
 
@@ -26,7 +30,7 @@ public class User
 	  if ((pPassword == null) || (pPassword.isEmpty())) {
 		  return false;
 	  }
-	  if (hashPassword( pPassword ).contentEquals( this.mHashedPassword)) {
+	  if (hashPassword( pPassword ).contentEquals( super.getPassword().get())) {
 		  return true;
 	  }
 	  return false;
@@ -53,23 +57,23 @@ public class User
 	}
 
 
-	public String getUserId() {
-		return mUserId;
+	public String getAccountId() {
+		return super.getAccount().get();
 	}
 
 	public boolean isEnabled() {
-		return mEnabled;
+		return super.getEnabled().get();
 	}
 
 	public void setEnabled(boolean pEnabled) {
-		mEnabled = pEnabled;
+		super.setEnabled( pEnabled );
 	}
 
 	public String getHashedPassword() {
-		return mHashedPassword;
+		return super.getPassword().get();
 	}
 
 	public void setHashedPassword(String pHashedPassword) {
-		mHashedPassword = pHashedPassword;
+		super.setPassword( pHashedPassword );
 	}
 }

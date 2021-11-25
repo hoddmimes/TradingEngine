@@ -40,11 +40,11 @@ import com.google.gson.GsonBuilder;
 
             
                     private String mOrderId;
-                    private String mSymbol;
+                    private String mSid;
                     private Double mPrice;
-                    private Integer mVolume;
+                    private Integer mQuantity;
                     private String mTradeId;
-                    private String mRef;
+                    private String mTime;
                     private String mSide;
                public BdxOwnTrade()
                {
@@ -65,12 +65,12 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mOrderId);
             }
         
-            public BdxOwnTrade setSymbol( String pSymbol ) {
-            mSymbol = pSymbol;
+            public BdxOwnTrade setSid( String pSid ) {
+            mSid = pSid;
             return this;
             }
-            public Optional<String> getSymbol() {
-              return  Optional.ofNullable(mSymbol);
+            public Optional<String> getSid() {
+              return  Optional.ofNullable(mSid);
             }
         
             public BdxOwnTrade setPrice( Double pPrice ) {
@@ -81,12 +81,12 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mPrice);
             }
         
-            public BdxOwnTrade setVolume( Integer pVolume ) {
-            mVolume = pVolume;
+            public BdxOwnTrade setQuantity( Integer pQuantity ) {
+            mQuantity = pQuantity;
             return this;
             }
-            public Optional<Integer> getVolume() {
-              return  Optional.ofNullable(mVolume);
+            public Optional<Integer> getQuantity() {
+              return  Optional.ofNullable(mQuantity);
             }
         
             public BdxOwnTrade setTradeId( String pTradeId ) {
@@ -97,12 +97,12 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mTradeId);
             }
         
-            public BdxOwnTrade setRef( String pRef ) {
-            mRef = pRef;
+            public BdxOwnTrade setTime( String pTime ) {
+            mTime = pTime;
             return this;
             }
-            public Optional<String> getRef() {
-              return  Optional.ofNullable(mRef);
+            public Optional<String> getTime() {
+              return  Optional.ofNullable(mTime);
             }
         
             public BdxOwnTrade setSide( String pSide ) {
@@ -134,20 +134,20 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mOrderId Type: String List: false
             tEncoder.add( "orderId", mOrderId );
         
-            //Encode Attribute: mSymbol Type: String List: false
-            tEncoder.add( "symbol", mSymbol );
+            //Encode Attribute: mSid Type: String List: false
+            tEncoder.add( "sid", mSid );
         
             //Encode Attribute: mPrice Type: double List: false
             tEncoder.add( "price", mPrice );
         
-            //Encode Attribute: mVolume Type: int List: false
-            tEncoder.add( "volume", mVolume );
+            //Encode Attribute: mQuantity Type: int List: false
+            tEncoder.add( "quantity", mQuantity );
         
             //Encode Attribute: mTradeId Type: String List: false
             tEncoder.add( "tradeId", mTradeId );
         
-            //Encode Attribute: mRef Type: String List: false
-            tEncoder.add( "ref", mRef );
+            //Encode Attribute: mTime Type: String List: false
+            tEncoder.add( "time", mTime );
         
             //Encode Attribute: mSide Type: String List: false
             tEncoder.add( "side", mSide );
@@ -163,20 +163,20 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mOrderId Type:String List: false
             mOrderId = tDecoder.readString("orderId");
         
-            //Decode Attribute: mSymbol Type:String List: false
-            mSymbol = tDecoder.readString("symbol");
+            //Decode Attribute: mSid Type:String List: false
+            mSid = tDecoder.readString("sid");
         
             //Decode Attribute: mPrice Type:double List: false
             mPrice = tDecoder.readDouble("price");
         
-            //Decode Attribute: mVolume Type:int List: false
-            mVolume = tDecoder.readInteger("volume");
+            //Decode Attribute: mQuantity Type:int List: false
+            mQuantity = tDecoder.readInteger("quantity");
         
             //Decode Attribute: mTradeId Type:String List: false
             mTradeId = tDecoder.readString("tradeId");
         
-            //Decode Attribute: mRef Type:String List: false
-            mRef = tDecoder.readString("ref");
+            //Decode Attribute: mTime Type:String List: false
+            mTime = tDecoder.readString("time");
         
             //Decode Attribute: mSide Type:String List: false
             mSide = tDecoder.readString("side");
@@ -210,8 +210,8 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setSymbol( String pValue ) {
-                        mInstance.setSymbol( pValue );
+                        public Builder setSid( String pValue ) {
+                        mInstance.setSid( pValue );
                         return this;
                     }
                 
@@ -220,8 +220,8 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setVolume( Integer pValue ) {
-                        mInstance.setVolume( pValue );
+                        public Builder setQuantity( Integer pValue ) {
+                        mInstance.setQuantity( pValue );
                         return this;
                     }
                 
@@ -230,8 +230,8 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setRef( String pValue ) {
-                        mInstance.setRef( pValue );
+                        public Builder setTime( String pValue ) {
+                        mInstance.setTime( pValue );
                         return this;
                     }
                 

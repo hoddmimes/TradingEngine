@@ -10,7 +10,8 @@ public class InternalTrade
 {
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-    private String      mSymbol;
+    private String      mSid;
+    private int         mMarketId;
     private long        mTradeTime;
     private long        mTradeNo;
     private double      mPrice;
@@ -19,21 +20,26 @@ public class InternalTrade
     private Order       mSellOrder;
 
 
-    public InternalTrade(double pPrice, int pQuantity, Order pOrder1, Order pOrder2 ) {
+    public InternalTrade(String pSid, int pMarketId, double pPrice, int pQuantity, Order pOrder1, Order pOrder2 ) {
+        mSid = pSid;
+        mMarketId = pMarketId;
         mTradeTime = System.currentTimeMillis();
         mTradeNo = TXIDFactory.getId();
         mPrice = pPrice;
         mQuantity = pQuantity;
         mBuyOrder = (pOrder1.getSide() == Order.Side.BUY) ? pOrder1 : pOrder2;
         mSellOrder = (pOrder1.getSide() == Order.Side.SELL) ? pOrder1 : pOrder2;
-        mSymbol = pOrder1.getSymbol();
     }
 
     @Override
     public String toString() {
-        return "Inst: " + getBuyOrder().getSymbol() + " price: " + getPrice() + " volume: " + getQuantity() + " time: " + SDF.format(getTradeTime()) +
+        return "Inst: " + getBuyOrder().getSid() + " price: " + getPrice() + " volume: " + getQuantity() + " time: " + SDF.format(getTradeTime()) +
                 " trdno: " + Long.toHexString(getTradeNo()) + " buyorder: " + Long.toHexString(getBuyOrder().getOrderId()) +
                 " sellorder: " + Long.toHexString(getSellOrder().getOrderId()) + " buyref: " + getBuyOrder().getUserRef() + " sellref: " + getSellOrder().getUserRef();
+    }
+
+    public  int getMarketId() {
+        return mMarketId;
     }
 
     public boolean isOnSellSide( String pUserId ) {
@@ -46,36 +52,26 @@ public class InternalTrade
 
     public BdxOwnTrade toOwnBdxTrade( Order.Side pSide) {
         BdxOwnTrade tBdx = new BdxOwnTrade();
-        tBdx.setSymbol(this.getBuyOrder().getSymbol());
+        tBdx.setSid(this.getBuyOrder().getSid());
         if (pSide == Order.Side.BUY) {
             tBdx.setOrderId(Long.toHexString(this.getBuyOrder().getOrderId()));
-            tBdx.setRef(this.getBuyOrder().getUserRef());
             tBdx.setSide( Order.Side.BUY.name());
         }
         if (pSide == Order.Side.SELL) {
-            tBdx.setRef(Long.toHexString(this.getSellOrder().getOrderId()));
-            tBdx.setRef(this.getSellOrder().getUserRef());
+            tBdx.setOrderId(Long.toHexString(this.getSellOrder().getOrderId()));
             tBdx.setSide( Order.Side.SELL.name());
         }
         tBdx.setTradeId( String.valueOf(this.getTradeNo()));
         tBdx.setPrice(this.getPrice());
-        tBdx.setVolume(this.getQuantity());
+        tBdx.setQuantity(this.getQuantity());
+        tBdx.setTime( SDF.format( this.getTradeTime()));
 
         return tBdx;
     }
 
-    public BdxTrade toBdxTrade() {
-        BdxTrade tBdx = new BdxTrade();
-        tBdx.setSymbol(this.getBuyOrder().getSymbol());
-        tBdx.setBuyOrderId( Long.toHexString(this.getBuyOrder().getOrderId()));
-        tBdx.setSellOrderId( Long.toHexString(this.getSellOrder().getOrderId()));
-        tBdx.setPrice(this.getPrice());
-        tBdx.setVolume(this.getQuantity());
-        return tBdx;
-    }
 
-    public String getSymbol() {
-        return mSymbol;
+    public String getSid() {
+        return mSid;
     }
 
     public long getTradeTime() {

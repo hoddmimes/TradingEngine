@@ -6,5 +6,5 @@ import java.util.Optional;
 
 public interface EngineMsgInterface extends RequestMsgInterface
 {
-	public Optional<String> getSymbol();
+	public Optional<String> getSid();
 }

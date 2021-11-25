@@ -39,7 +39,7 @@ import com.google.gson.GsonBuilder;
                 public static String NAME = "PriceLevelSymbol";
 
             
-                    private String mSymbol;
+                    private String mSid;
                     private List<PriceLevel> mBuySide;
                     private List<PriceLevel> mSellSide;
                public PriceLevelSymbol()
@@ -53,12 +53,12 @@ import com.google.gson.GsonBuilder;
                     this.decode( tDecoder );
                }
     
-            public PriceLevelSymbol setSymbol( String pSymbol ) {
-            mSymbol = pSymbol;
+            public PriceLevelSymbol setSid( String pSid ) {
+            mSid = pSid;
             return this;
             }
-            public Optional<String> getSymbol() {
-              return  Optional.ofNullable(mSymbol);
+            public Optional<String> getSid() {
+              return  Optional.ofNullable(mSid);
             }
         
             public PriceLevelSymbol setBuySide( List<PriceLevel> pBuySide ) {
@@ -184,8 +184,8 @@ import com.google.gson.GsonBuilder;
 
         
             JsonEncoder tEncoder = pEncoder;
-            //Encode Attribute: mSymbol Type: String List: false
-            tEncoder.add( "symbol", mSymbol );
+            //Encode Attribute: mSid Type: String List: false
+            tEncoder.add( "sid", mSid );
         
             //Encode Attribute: mBuySide Type: PriceLevel List: true
             tEncoder.addMessageArray("buySide", mBuySide );
@@ -201,8 +201,8 @@ import com.google.gson.GsonBuilder;
         
             JsonDecoder tDecoder = pDecoder;
         
-            //Decode Attribute: mSymbol Type:String List: false
-            mSymbol = tDecoder.readString("symbol");
+            //Decode Attribute: mSid Type:String List: false
+            mSid = tDecoder.readString("sid");
         
             //Decode Attribute: mBuySide Type:PriceLevel List: true
             mBuySide = (List<PriceLevel>) tDecoder.readMessageArray( "buySide", "array", PriceLevel.class );
@@ -234,8 +234,8 @@ import com.google.gson.GsonBuilder;
           }
 
         
-                        public Builder setSymbol( String pValue ) {
-                        mInstance.setSymbol( pValue );
+                        public Builder setSid( String pValue ) {
+                        mInstance.setSid( pValue );
                         return this;
                     }
                 

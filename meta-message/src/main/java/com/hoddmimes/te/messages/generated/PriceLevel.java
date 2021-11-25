@@ -40,7 +40,7 @@ import com.google.gson.GsonBuilder;
 
             
                     private Double mPrice;
-                    private Integer mVolume;
+                    private Integer mQuantity;
                public PriceLevel()
                {
                 
@@ -60,12 +60,12 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mPrice);
             }
         
-            public PriceLevel setVolume( Integer pVolume ) {
-            mVolume = pVolume;
+            public PriceLevel setQuantity( Integer pQuantity ) {
+            mQuantity = pQuantity;
             return this;
             }
-            public Optional<Integer> getVolume() {
-              return  Optional.ofNullable(mVolume);
+            public Optional<Integer> getQuantity() {
+              return  Optional.ofNullable(mQuantity);
             }
         
 
@@ -88,8 +88,8 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mPrice Type: double List: false
             tEncoder.add( "price", mPrice );
         
-            //Encode Attribute: mVolume Type: int List: false
-            tEncoder.add( "volume", mVolume );
+            //Encode Attribute: mQuantity Type: int List: false
+            tEncoder.add( "quantity", mQuantity );
         
         }
 
@@ -102,8 +102,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mPrice Type:double List: false
             mPrice = tDecoder.readDouble("price");
         
-            //Decode Attribute: mVolume Type:int List: false
-            mVolume = tDecoder.readInteger("volume");
+            //Decode Attribute: mQuantity Type:int List: false
+            mQuantity = tDecoder.readInteger("quantity");
         
 
         }
@@ -116,7 +116,7 @@ import com.google.gson.GsonBuilder;
         }
     
             public boolean same( PriceLevel pl ) {
-              if ((this.mVolume != pl.mVolume) || (this.mPrice != pl.mPrice)) {
+              if ((this.mQuantity != pl.mQuantity) || (this.mPrice != pl.mPrice)) {
                 return false;
               }
               return true;
@@ -141,8 +141,8 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setVolume( Integer pValue ) {
-                        mInstance.setVolume( pValue );
+                        public Builder setQuantity( Integer pValue ) {
+                        mInstance.setQuantity( pValue );
                         return this;
                     }
                 

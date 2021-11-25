@@ -6,7 +6,8 @@ import com.hoddmimes.te.messages.generated.ContainerTrade;
 public class TradeX extends ContainerTrade
 {
 	public TradeX(InternalTrade pInternalTrade) {
-		this.setSymbol(pInternalTrade.getSymbol());
+		this.setSid(pInternalTrade.getSid());
+		this.setMarketId(pInternalTrade.getMarketId());
 		this.setBuyer(pInternalTrade.getBuyOrder().getAccountId());
 		this.setSeller( pInternalTrade.getSellOrder().getAccountId());
 		this.setBuyerOrderId(pInternalTrade.getBuyOrder().getOrderId());

@@ -7,7 +7,8 @@ import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
 import com.hoddmimes.te.management.gui.table.TableModel;
-import com.hoddmimes.te.messages.generated.User;
+import com.hoddmimes.te.messages.generated.Account;
+import com.hoddmimes.te.sessionctl.AccountX;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -20,11 +21,11 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 
-public class AddUser extends JFrame implements TableCallbackInterface<AddUser.UserEntry> {
+public class AddAccount extends JFrame implements TableCallbackInterface<AddAccount.AccountEntry> {
 	private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 14 );
 	String mConfigurationFile;
-	JsonObject mUsers;
-	JTextField mUsernameTxt;
+	JsonObject jAccounts;
+	JTextField mAccountTxt;
 	JPasswordField mPasswordField;
 	JCheckBox mEnabledChkBox;
 
@@ -32,7 +33,7 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 	JButton mUpdateBtn;
 
 
-	TableModel<UserEntry> mUserTableModel;
+	TableModel<AccountEntry> mUserTableModel;
 
 	public static void main(String[] args) {
 		try {
@@ -41,7 +42,7 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 			System.out.println(ex.getMessage());
 		}
 
-		AddUser au = new AddUser();
+		AddAccount au = new AddAccount();
 		au.parseArguments( args );
 		au.init();
 	}
@@ -49,7 +50,7 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 	private void parseArguments( String[] args ) {
 		int i = 0;
 		while( i < args.length) {
-			if (args[i].contentEquals("-userdb")) {
+			if (args[i].contentEquals("-accountdb")) {
 				mConfigurationFile = args[++i];
 			}
 			i++;
@@ -68,7 +69,7 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 		mUpdateBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				updateUser();
+				updateAccount();
 			}
 		});
 
@@ -79,38 +80,38 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 			}
 		});
 
-		this.setTitle("Trading Engine Add / Update User");
+		this.setTitle("Trading Engine Add / Update Account");
 		this.setContentPane( tRootPanel );
 		this.pack();
 		this.setVisible(true);
 	}
 
-	private void updateUser() {
-		String tUsername = mUsernameTxt.getText();
+	private void updateAccount() {
+		String tUsername = mAccountTxt.getText();
 		if (tUsername.isEmpty() || tUsername.isBlank()) {
 			JOptionPane.showMessageDialog(this,
-					"Username must not be empty or blank",
-					"Invalid username",
+					"Account must not be empty or blank",
+					"Invalid account",
 					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 		String tPassword = mPasswordField.getText();
 		if (tUsername.isEmpty() || tUsername.isBlank()) {
 			JOptionPane.showMessageDialog(this,
-					"Username must not be empty or blank",
-					"Invalid username",
+					"Account must not be empty or blank",
+					"Invalid account",
 					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 		JsonObject jUser = getJsonUser( tUsername );
-		jUser.addProperty("password", com.hoddmimes.te.sessionctl.User.hashPassword(tPassword));
+		jUser.addProperty("password", AccountX.hashPassword(tPassword));
 		jUser.addProperty( "enabled", mEnabledChkBox.isSelected());
 
 	    // Update table model
-		java.util.List<UserEntry> tTableUsers =  mUserTableModel.getObjects();
-		for( UserEntry ue : tTableUsers) {
-			if (ue.mUsername.contentEquals( tUsername )) {
-				ue.mPassword = com.hoddmimes.te.sessionctl.User.hashPassword(tPassword);
+		java.util.List<AccountEntry> tTableUsers =  mUserTableModel.getObjects();
+		for( AccountEntry ue : tTableUsers) {
+			if (ue.mAccount.contentEquals( tUsername )) {
+				ue.mPassword = AccountX.hashPassword(tPassword);
 				ue.mEnabled = String.valueOf( mEnabledChkBox.isSelected());
 				mUserTableModel.fireTableDataChanged();
 				break;
@@ -121,7 +122,7 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 	}
 
 	private void createUser() {
-		String tUsername = mUsernameTxt.getText();
+		String tUsername = mAccountTxt.getText();
 		if (tUsername.isEmpty() || tUsername.isBlank()) {
 			JOptionPane.showMessageDialog(this,
 					"Username must not be empty or blank",
@@ -147,24 +148,24 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 			return;
 		}
 
-		User tUser = new User();
-		tUser.setUsername( tUsername );
-		tUser.setPassword( com.hoddmimes.te.sessionctl.User.hashPassword( tPassword ));
-		tUser.setEnabled( mEnabledChkBox.isSelected());
+		Account tAccount = new Account();
+		tAccount.setAccount( tUsername );
+		tAccount.setPassword( AccountX.hashPassword( tPassword ));
+		tAccount.setEnabled( mEnabledChkBox.isSelected());
 
-		JsonArray jUsrArr = mUsers.get("users").getAsJsonArray();
-		jUsrArr.add( tUser.toJson() );
+		JsonArray jUsrArr = jAccounts.get("accounts").getAsJsonArray();
+		jUsrArr.add( tAccount.toJson() );
 
-		mUserTableModel.addEntry(new UserEntry( tUsername, tUser.getPassword().get(), tUser.getEnabled().get()));
+		mUserTableModel.addEntry(new AccountEntry( tUsername, tAccount.getPassword().get(), tAccount.getEnabled().get()));
 
 		saveUsers();
 	}
 
 	private JsonObject getJsonUser( String pUsername ) {
-		JsonArray jUsrArr = mUsers.get("users").getAsJsonArray();
+		JsonArray jUsrArr = jAccounts.get("accounts").getAsJsonArray();
 		for (int i = 0; i < jUsrArr.size(); i++) {
 			JsonObject u = jUsrArr.get(i).getAsJsonObject();
-			if (pUsername.contentEquals(u.get("username").getAsString())) {
+			if (pUsername.contentEquals(u.get("account").getAsString())) {
 				return u;
 			}
 		}
@@ -172,10 +173,10 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 	}
 
 	private boolean isUserDefined( String pUsername ) {
-		JsonArray jUsrArr = mUsers.get("users").getAsJsonArray();
+		JsonArray jUsrArr = jAccounts.get("accounts").getAsJsonArray();
 		for (int i = 0; i < jUsrArr.size(); i++) {
 			JsonObject u = jUsrArr.get(i).getAsJsonObject();
-			if (pUsername.contentEquals(u.get("username").getAsString())) {
+			if (pUsername.contentEquals(u.get("account").getAsString())) {
 				return true;
 			}
 		}
@@ -185,7 +186,7 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 	private void saveUsers() {
 		try {
 			FileOutputStream tOut = new FileOutputStream(  mConfigurationFile );
-			tOut.write( mUsers.toString().getBytes(StandardCharsets.UTF_8));
+			tOut.write( jAccounts.toString().getBytes(StandardCharsets.UTF_8));
 			tOut.flush();
 			tOut.close();
 		}
@@ -227,12 +228,12 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 		tRootPanel.setBorder(new EmptyBorder(10, 10, 0, 10));
 
 		// Create Table
-		mUserTableModel = new TableModel(UserEntry.class);
+		mUserTableModel = new TableModel(AccountEntry.class);
 
-		JsonArray tUsrArr = mUsers.get("users").getAsJsonArray();
+		JsonArray tUsrArr = jAccounts.get("accounts").getAsJsonArray();
 		for (int i = 0; i < tUsrArr.size(); i++) {
 			JsonObject u = tUsrArr.get(i).getAsJsonObject();
-			UserEntry ue = new UserEntry(u.get("username").getAsString(), u.get("password").getAsString(), u.get("enabled").getAsBoolean());
+			AccountEntry ue = new AccountEntry(u.get("account").getAsString(), u.get("password").getAsString(), u.get("enabled").getAsBoolean());
 			mUserTableModel.addEntry( ue );
 		}
 
@@ -278,11 +279,11 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 		tInPanel.add( tUsrLbl, cb );
 		cb.gridx++;
 
-		mUsernameTxt = new JTextField();
-		mUsernameTxt.setFont( DEFAULT_FONT );
-		mUsernameTxt.setPreferredSize(new Dimension(150,22));
-		mUsernameTxt.setMargin( new Insets(0,5,0,0));
-		tInPanel.add( mUsernameTxt, cb );
+		mAccountTxt = new JTextField();
+		mAccountTxt.setFont( DEFAULT_FONT );
+		mAccountTxt.setPreferredSize(new Dimension(150,22));
+		mAccountTxt.setMargin( new Insets(0,5,0,0));
+		tInPanel.add(mAccountTxt, cb );
 
 		cb.gridx = 0; cb.gridy++;
 		JLabel tPwdLbl = new JLabel("Password");
@@ -334,7 +335,7 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 
 		try {
 			InputStreamReader tReader = new InputStreamReader(new FileInputStream(tFile));
-			mUsers = JsonParser.parseReader(tReader).getAsJsonObject();
+			jAccounts = JsonParser.parseReader(tReader).getAsJsonObject();
 			tReader.close();
 			mConfigurationFile = tFile.getAbsolutePath();
 		}
@@ -372,31 +373,31 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 
 
 	@Override
-	public void tableMouseButton2(UserEntry pObject, int pRow, int pCol) {
+	public void tableMouseButton2(AccountEntry pObject, int pRow, int pCol) {
 
 	}
 
 	@Override
-	public void tableMouseClick(UserEntry pObject, int pRow, int pCol) {
+	public void tableMouseClick(AccountEntry pObject, int pRow, int pCol) {
 		if (!mCreatBtn.isEnabled()) {
 			mUpdateBtn.setEnabled( false );
 			mCreatBtn.setEnabled( true );
-			mUsernameTxt.setText("");
+			mAccountTxt.setText("");
 			mPasswordField.setText("");
 			mEnabledChkBox.setSelected(true);
-			mUsernameTxt.setEditable( true );
+			mAccountTxt.setEditable( true );
 			mUserTableModel.doubleClickedClear();
 		}
 	}
 
 	@Override
-	public void tableMouseDoubleClick(UserEntry pUserEntry, int pRow, int pCol) {
-		mUsernameTxt.setText( pUserEntry.mUsername);
+	public void tableMouseDoubleClick(AccountEntry pUserEntry, int pRow, int pCol) {
+		mAccountTxt.setText( pUserEntry.mAccount);
 		mPasswordField.setText( pUserEntry.mPassword);
 		mEnabledChkBox.setSelected( Boolean.parseBoolean( pUserEntry.mEnabled));
 		mUpdateBtn.setEnabled( true );
 		mCreatBtn.setEnabled( false );
-		mUsernameTxt.setEditable( false );
+		mAccountTxt.setEditable( false );
 	}
 
 	class FileTypeFilter extends FileFilter {
@@ -421,23 +422,23 @@ public class AddUser extends JFrame implements TableCallbackInterface<AddUser.Us
 			}
 		}
 
-	public static class UserEntry {
+	public static class AccountEntry {
 
-		public String mUsername;
+		public String mAccount;
 		public String mPassword;
 		public String mEnabled;
 
 
-		public UserEntry(String pUsername, String pPassword, boolean pEnabled ) {
-			mUsername = pUsername;
+		public AccountEntry(String pAccount, String pPassword, boolean pEnabled ) {
+			mAccount = pAccount;
 			mPassword = pPassword;
 			mEnabled = String.valueOf( pEnabled );
 		}
 
 
-		@TableAttribute(header = "Username", column = 1, width = 100, alignment = JLabel.LEFT)
-		public String getUsername() {
-			return mUsername;
+		@TableAttribute(header = "Account", column = 1, width = 100, alignment = JLabel.LEFT)
+		public String getAccount() {
+			return mAccount;
 		}
 
 		@TableAttribute(header = "Password", column = 2, width = 240, alignment = JLabel.LEFT)

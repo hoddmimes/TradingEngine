@@ -56,9 +56,9 @@ public class MatchingEngineFrontend implements MatchingEngineInterface
 		QueryOwnOrdersResponse tQueryOwnOrdersResponse = new QueryOwnOrdersResponse();
 		tQueryOwnOrdersResponse.setRef( pQueryOwnOrdersRequest.getRef().get());
 
-		List<String> tSymbolNames = mMatchingEngine.getOrderbookSymbols();
-		for( String tSymbol : tSymbolNames ) {
-			InternalOwnOrdersRequest tQryRqst = new InternalOwnOrdersRequest().setRef(pQueryOwnOrdersRequest.getRef().get()).setSymbol( tSymbol);
+		List<String> tSidLst = mMatchingEngine.getOrderbookSymbolIds();
+		for( String tSid : tSidLst ) {
+			InternalOwnOrdersRequest tQryRqst = new InternalOwnOrdersRequest().setRef(pQueryOwnOrdersRequest.getRef().get()).setSid( tSid );
 			MessageInterface tRspMsg = mMatchingEngine.processQueryOwnOrders( tQryRqst, pRequestContext );
 			if (tRspMsg instanceof StatusMessage) {
 				return tRspMsg;
@@ -74,17 +74,8 @@ public class MatchingEngineFrontend implements MatchingEngineInterface
 
 	@Override
 	public MessageInterface executeDeleteOrders(DeleteOrdersRequest pDeleteOrderRequest, RequestContextInterface pRequestContext) {
-		if (pDeleteOrderRequest.getSymbol().get().contentEquals("*")) {
-			List<String> tSymbolNames = mMatchingEngine.getOrderbookSymbols();
-			for( String tSymbol : tSymbolNames ) {
-				DeleteOrdersRequest tDelRqst = new DeleteOrdersRequest().setRef(pDeleteOrderRequest.getRef().get()).setSymbol( tSymbol);
-				MessageInterface tMsg = mMatchingEngine.processDeleteOrders( tDelRqst, pRequestContext );
-			}
-			return StatusMessageBuilder.success(pDeleteOrderRequest.getRef().get());
-		} else {
 			MessageInterface tMsg = mMatchingEngine.processDeleteOrders( pDeleteOrderRequest, pRequestContext );
 			return tMsg;
-		}
 	}
 
 	@Override
@@ -96,6 +87,12 @@ public class MatchingEngineFrontend implements MatchingEngineInterface
 	@Override
 	public MessageInterface executePriceLevel(InternalPriceLevelRequest pInternalPriceLevelRequest, RequestContextInterface pRequestContext) {
 		MessageInterface tRspMsg = mMatchingEngine.processPriceLevel( pInternalPriceLevelRequest, pRequestContext );
+		return tRspMsg;
+	}
+
+	@Override
+	public MessageInterface executeQueryBBO(QueryBBORequest pQueryBBORequest, RequestContextInterface pRequestContext) {
+		MessageInterface tRspMsg = mMatchingEngine.processQueryBBO( pQueryBBORequest, pRequestContext );
 		return tRspMsg;
 	}
 }

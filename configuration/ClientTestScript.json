@@ -1,8 +1,11 @@
 { "baseHttp": {"uri": "https://localhost:8883/te/"},
   "baseWss": {"uri": "wss://localhost:8883/marketdata"},
   "requests" : [
-    {"endpoint" :  "logon", "body" : {"username":"test", "password":"test","ref" : "sr-71"}},
-    {"endpoint" :  "addOrder", "body" : {"symbol":"AMZN","price":100.0,"volume":22,"side":"BUY","ref" : "001"}},
-    {"endpoint" :  "addOrder", "body" : {"symbol":"AMZN","price":100.0,"volume":22,"side":"SELL","ref" : "001"}}
+    { "method" : "POST", "endpoint" :  "logon", "body" : {"account":"test", "password":"test","ref" : "sr-71"}},
+    { "method" : "GET", "endpoint" :  "queryMarkets" },
+    { "method" : "GET", "endpoint" :  "querySymbols/1" },
+    { "method" : "GET", "endpoint" :  "querySymbols/2" },
+    { "method" : "POST", "endpoint" :  "addOrder", "body" : {"sid":"1:AMZN","price":100.0,"quantity":22,"side":"BUY","ref" : "001"}},
+    { "method" : "POST", "endpoint" :  "addOrder", "body" : {"sid":"1:AMZN","price":100.0,"quantity":22,"side":"SELL","ref" : "001"}}
   ]
 }

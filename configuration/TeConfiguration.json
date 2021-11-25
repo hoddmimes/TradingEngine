@@ -3,7 +3,7 @@
     "sessionControllerConfiguration": {
       "autheticator": {
         "implementation": "com.hoddmimes.te.sessionctl.Authenticator",
-        "dataStore": "configuration/UsersDefinitions.json"
+        "dataStore": "configuration/AccountDefinitions.json"
       },
       "schemaDefinitions" : "configuration/jsonSchemas",
       "traceExecutionTimeLimitUsec":1200,

@@ -17,35 +17,35 @@ public class Authenticator implements AuthenticateInterface
 {
 	private Logger mLog = LogManager.getLogger( Authenticator.class );
 
-	private HashMap<String, User> mUsers;
+	private HashMap<String, AccountX> mAccounts;
 
 	public Authenticator( String pDataStore ) {
-		mUsers = new HashMap<>();
+		mAccounts = new HashMap<>();
 		loadUsers( pDataStore );
 	}
 
 	@Override
-	public boolean logon(String pUser, String pPassword) {
-		if ((pUser == null) || (pPassword == null)) {
+	public boolean logon(String pAccount, String pPassword) {
+		if ((pAccount == null) || (pPassword == null)) {
 			mLog.info("Invalid login data, user or password must no be null");
 			return false;
 		}
 
-		User u = mUsers.get(pUser.toUpperCase());
-		if (u == null) {
-			mLog.info("User \"" + pUser + "\" not found");
+		AccountX a = mAccounts.get(pAccount.toUpperCase());
+		if (a == null) {
+			mLog.info("Account \"" + pAccount + "\" not found");
 			return false;
 		}
-		if (!u.validatePassword( pPassword )) {
-			mLog.info("User \"" + pUser + "\" invalid password");
+		if (!a.validatePassword( pPassword )) {
+			mLog.info("Account \"" + pAccount + "\" invalid password");
 			return false;
 		}
-		mLog.info("User \"" + pUser + "\" successfully authenticated");
+		mLog.info("Account \"" + pAccount + "\" successfully authenticated");
 		return true;
 	}
 
 	private void loadUsers( String pDataStore ) {
-		JsonArray tUsers = null;
+		JsonArray tAccounts = null;
 
 		try {
 			List<JsonElement> tElementList = AuxJson.loadAndParseFile( pDataStore );
@@ -53,16 +53,16 @@ public class Authenticator implements AuthenticateInterface
 				mLog.error("no user defined in user data store \"" + pDataStore + "\"");
 				return;
 			}
-			tUsers = tElementList.get(0).getAsJsonObject().get("users").getAsJsonArray();
-			for (int i = 0; i < tUsers.size(); i++)
+			tAccounts = tElementList.get(0).getAsJsonObject().get("accounts").getAsJsonArray();
+			for (int i = 0; i < tAccounts.size(); i++)
 			{
-				JsonObject u = tUsers.get(i).getAsJsonObject();
-				User tUser = new User( u.get("username").getAsString().toUpperCase(), u.get("password").getAsString(), u.get("enabled").getAsBoolean());
-				mUsers.put( tUser.getUserId(), tUser );
+				JsonObject a = tAccounts.get(i).getAsJsonObject();
+				AccountX tAccount = new AccountX( a.get("account").getAsString().toUpperCase(), a.get("password").getAsString(), a.get("enabled").getAsBoolean());
+				mAccounts.put( tAccount.getAccountId(), tAccount );
 			}
 		}
 		catch( IOException e) {
-			mLog.fatal("Fail to load users from \"" + pDataStore + "\"", e);
+			mLog.fatal("Fail to load accounts from \"" + pDataStore + "\"", e);
 			System.exit(-1);
 		}
 	}

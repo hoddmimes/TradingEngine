@@ -5,8 +5,8 @@
        <Import path="com.hoddmimes.te.messages.*"/>
    </Imports>
 
-    <Message name="User" rootMessage="false">
-        <Attribute name="username" type="String" mandatory="true" />
+    <Message name="Account" rootMessage="false">
+        <Attribute name="account" type="String" mandatory="true" />
         <Attribute name="password" type="String" mandatory="true"/>
         <Attribute name="enabled" type="boolean" mandatory="true"/>
     </Message>
@@ -22,13 +22,13 @@
     </Message>
 
     <Message name="InternalPriceLevelRequest" implements="EngineMsgInterface" rootMessage="true">
-        <Attribute name="symbol" type="String" mandatory="true"/>
+        <Attribute name="sid" type="String" mandatory="true"/>
         <Attribute name="levels" type="int" mandatory="true"/>
         <Attribute name="ref" type="String" mandatory="true"/>
     </Message>
 
     <Message name="InternalOwnOrdersRequest" implements="EngineMsgInterface" rootMessage="true">
-        <Attribute name="symbol" type="String" mandatory="true"/>
+        <Attribute name="sid" type="String" mandatory="true"/>
         <Attribute name="ref" type="String" mandatory="true"/>
     </Message>
 
@@ -54,7 +54,8 @@
 
 
     <Message name="ContainerTrade" rootMessage="true">
-        <Attribute name="symbol" type="String"/>
+        <Attribute name="sid" type="String"/>
+        <Attribute name="marketId" type="int"/>
         <Attribute name="buyer" type="String"/>
         <Attribute name="seller" type="String"/>
         <Attribute name="buyerOrderId" type="long"/>
@@ -66,20 +67,22 @@
     </Message>
 
     <Message name="Market" rootMessage="false">
-        <Attribute name="id" type="int"/>
-        <Attribute name="name" type="String"/>
-        <Attribute name="description" type="double"/>
-        <Attribute name="marketOpen" type="String"/>
-        <Attribute name="marketClose" type="String"/>
-        <Attribute name="minPricePctChg" type="double"/>
-        <Attribute name="maxPricePctChg" type="double"/>
-        <Attribute name="enabled" type="boolean"/>
-        <Attribute name="closed" type="boolean"/>
+        <Attribute name="id" type="int" mandatory="true"/>
+        <Attribute name="name" type="String" mandatory="true"/>
+        <Attribute name="description" type="String" mandatory="true"/>
+        <Attribute name="marketOpen" type="String" mandatory="true"/>
+        <Attribute name="marketClose" type="String" mandatory="true"/>
+        <Attribute name="minPricePctChg" type="double" mandatory="true"/>
+        <Attribute name="maxPricePctChg" type="double" mandatory="true"/>
+        <Attribute name="enabled" type="boolean" mandatory="true"/>
+        <Attribute name="closed" type="boolean" mandatory="true"/>
     </Message>
 
     <Message name="Symbol" rootMessage="false">
-        <Attribute name="symbol" type="String" mandatory="true"/>
-        <Attribute name="marketId" type="int"/>
+        <Attribute name="sid" type="String" mandatory="true"/>
+        <Attribute name="name" type="String" mandatory="true"/>
+        <Attribute name="description" type="String"/>
+        <Attribute name="marketId" type="int" mandatory="true"/>
         <Attribute name="tickSize" type="double" mandatory="true"/>
         <Attribute name="minPricePctChg" type="double"/>
         <Attribute name="maxPricePctChg" type="double"/>

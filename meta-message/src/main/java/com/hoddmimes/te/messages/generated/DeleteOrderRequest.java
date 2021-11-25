@@ -39,7 +39,7 @@ import com.google.gson.GsonBuilder;
                 public static String NAME = "DeleteOrderRequest";
 
             
-                    private String mSymbol;
+                    private String mSid;
                     private String mRef;
                     private String mOrderId;
                public DeleteOrderRequest()
@@ -53,12 +53,12 @@ import com.google.gson.GsonBuilder;
                     this.decode( tDecoder );
                }
     
-            public DeleteOrderRequest setSymbol( String pSymbol ) {
-            mSymbol = pSymbol;
+            public DeleteOrderRequest setSid( String pSid ) {
+            mSid = pSid;
             return this;
             }
-            public Optional<String> getSymbol() {
-              return  Optional.ofNullable(mSymbol);
+            public Optional<String> getSid() {
+              return  Optional.ofNullable(mSid);
             }
         
             public DeleteOrderRequest setRef( String pRef ) {
@@ -95,8 +95,8 @@ import com.google.gson.GsonBuilder;
         
             JsonEncoder tEncoder = new JsonEncoder();
             pEncoder.add("DeleteOrderRequest", tEncoder.toJson() );
-            //Encode Attribute: mSymbol Type: String List: false
-            tEncoder.add( "symbol", mSymbol );
+            //Encode Attribute: mSid Type: String List: false
+            tEncoder.add( "sid", mSid );
         
             //Encode Attribute: mRef Type: String List: false
             tEncoder.add( "ref", mRef );
@@ -112,8 +112,8 @@ import com.google.gson.GsonBuilder;
         
             JsonDecoder tDecoder = pDecoder.get("DeleteOrderRequest");
         
-            //Decode Attribute: mSymbol Type:String List: false
-            mSymbol = tDecoder.readString("symbol");
+            //Decode Attribute: mSid Type:String List: false
+            mSid = tDecoder.readString("sid");
         
             //Decode Attribute: mRef Type:String List: false
             mRef = tDecoder.readString("ref");
@@ -145,8 +145,8 @@ import com.google.gson.GsonBuilder;
           }
 
         
-                        public Builder setSymbol( String pValue ) {
-                        mInstance.setSymbol( pValue );
+                        public Builder setSid( String pValue ) {
+                        mInstance.setSid( pValue );
                         return this;
                     }
                 

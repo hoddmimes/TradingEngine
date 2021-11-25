@@ -26,12 +26,12 @@
       <AppenderRef ref="TeFile"/>
     </Logger>
 
-    <!--
+<!--
     <Logger name="com.hoddmimes.te.connector.rest.TeFilter" level="trace">
       <AppenderRef ref="TeTracing"/>
       <AppenderRef ref="TeFile"/>
     </Logger>
-    -->
+-->
 
 
     <!--

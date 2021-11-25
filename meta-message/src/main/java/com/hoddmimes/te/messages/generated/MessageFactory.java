@@ -143,13 +143,6 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
-            case "QueryTradePriceRequest":
-            {
-            	QueryTradePriceRequest tMessage = new QueryTradePriceRequest();
-            	tMessage.decode( new JsonDecoder(pJsonMessageString));
-            	return tMessage;
-            }
-			
             case "QueryTradePricesRequest":
             {
             	QueryTradePricesRequest tMessage = new QueryTradePricesRequest();
@@ -157,16 +150,9 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
-            case "QueryTradePriceResponse":
+            case "QueryTradePricesResponse":
             {
-            	QueryTradePriceResponse tMessage = new QueryTradePriceResponse();
-            	tMessage.decode( new JsonDecoder(pJsonMessageString));
-            	return tMessage;
-            }
-			
-            case "QueryTradePricesCompactResponse":
-            {
-            	QueryTradePricesCompactResponse tMessage = new QueryTradePricesCompactResponse();
+            	QueryTradePricesResponse tMessage = new QueryTradePricesResponse();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }
@@ -195,6 +181,20 @@ public class MessageFactory implements MessageFactoryInterface
             case "QueryOwnOrdersResponse":
             {
             	QueryOwnOrdersResponse tMessage = new QueryOwnOrdersResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryBBORequest":
+            {
+            	QueryBBORequest tMessage = new QueryBBORequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryBBOResponse":
+            {
+            	QueryBBOResponse tMessage = new QueryBBOResponse();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }
@@ -237,6 +237,13 @@ public class MessageFactory implements MessageFactoryInterface
             case "BdxTrade":
             {
             	BdxTrade tMessage = new BdxTrade();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "BdxBBO":
+            {
+            	BdxBBO tMessage = new BdxBBO();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }

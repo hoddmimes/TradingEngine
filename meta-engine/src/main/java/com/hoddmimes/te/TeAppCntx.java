@@ -1,6 +1,7 @@
 package com.hoddmimes.te;
 
 import com.google.gson.JsonObject;
+import com.hoddmimes.jsontransform.JsonSchemaValidator;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.common.interfaces.MarketDataInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
@@ -71,6 +72,8 @@ public class TeAppCntx {
 	public void setSessionController(SessionController pSessionController) {
 		mSessionController = pSessionController;
 	}
+
+
 
 	public InstrumentContainer getInstrumentContainer() {
 		if (mInstrumentContainer == null) {

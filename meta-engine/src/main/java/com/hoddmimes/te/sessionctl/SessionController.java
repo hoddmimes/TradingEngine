@@ -110,9 +110,9 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 	public SessionCntxInterface logoninternal(LogonRequest pLogonRequest, String pSessionId) throws TeException
 	{
 		if (pSessionId == null) {
-			mLog.warn(("Logon, user session id object for user " + pLogonRequest.getAccount().get() + " must not be null"));
+			mLog.warn(("Logon, account session id object for user " + pLogonRequest.getAccount().get() + " must not be null"));
 			throw new TeException( HttpStatus.BAD_REQUEST.value(),
-					StatusMessageBuilder.error(("Logon, user session id object for user " + pLogonRequest.getAccount().get() + " must not be null"), pLogonRequest.getRef().get()));
+					StatusMessageBuilder.error(("Logon, account session id object for user " + pLogonRequest.getAccount().get() + " must not be null"), pLogonRequest.getRef().get()));
 		}
 
 		synchronized (SessionController.class) {
@@ -264,8 +264,6 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 			 *******/
 			if (pRqstMsg instanceof QueryTradePricesRequest) {
 				tResponseMessage = TeAppCntx.getInstance().getTradeContainer().queryTradePrices((QueryTradePricesRequest) pRqstMsg, tRequestContext);
-			} else if (pRqstMsg instanceof QueryTradePriceRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getTradeContainer().queryTradePrice((QueryTradePriceRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryPriceLevelsRequest) {
 				tResponseMessage = TeAppCntx.getInstance().getMarketDataDistributor().queryPriceLevels((QueryPriceLevelsRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryOwnTradesRequest) {
@@ -276,6 +274,8 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 				tResponseMessage = TeAppCntx.getInstance().getInstrumentContainer().querySymbols((QuerySymbolsRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryMarketsRequest) {
 				tResponseMessage = TeAppCntx.getInstance().getInstrumentContainer().queryMarkets((QueryMarketsRequest) pRqstMsg, tRequestContext);
+			} else if (pRqstMsg instanceof QueryBBORequest) {
+				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().executeQueryBBO((QueryBBORequest) pRqstMsg, tRequestContext);
 			}
 			else {
 				mLog.fatal("No execute implementation for request \"" + pRqstMsg.getMessageName() + "\"");
@@ -302,8 +302,8 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 	{
 		SessionCntxInterface mSessionCntx = null;
 		String tRef = AuxJson.getMessageRef( pJsonRqstMsgStr );
-		Pattern tUsrPattern = Pattern.compile("\"username\"\\s*:\\s*\"([^\"]+)\"");
-		Matcher m = tUsrPattern.matcher( pJsonRqstMsgStr );
+		Pattern tAccountPattern = Pattern.compile("\"account\"\\s*:\\s*\"([^\"]+)\"");
+		Matcher m = tAccountPattern.matcher( pJsonRqstMsgStr );
 		LogonResponse tLogonRsp = new LogonResponse();
 
 		String tUsrStr = (m.find()) ? m.group(1) : "null";

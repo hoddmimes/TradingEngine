@@ -1,7 +1,7 @@
 package com.hoddmimes.te.trades;
 
 import com.hoddmimes.te.messages.generated.TradePrice;
-import com.hoddmimes.te.messages.generated.TradePriceCompact;
+
 
 import java.text.SimpleDateFormat;
 
@@ -12,7 +12,7 @@ public class TradePriceX extends TradePrice
 	public TradePriceX( TradeX pTrade ) {
 		super();
 		super.setQuantity( pTrade.getQuantity().get());
-		super.setSymbol( pTrade.getSymbol().get());
+		super.setSid( pTrade.getSid().get());
 		super.setTime( SDF_TIME.format( pTrade.getTradeTime().get()));
 		super.setLow( pTrade.getPrice().get());
 		super.setHigh( pTrade.getPrice().get());
@@ -30,16 +30,5 @@ public class TradePriceX extends TradePrice
 		if (pTrade.getPrice().get() > super.getHigh().get()) {
 			super.setHigh(pTrade.getPrice().get());
 		}
-	}
-
-	public TradePriceCompact toCompact() {
-		TradePriceCompact tpc = new TradePriceCompact();
-		tpc.setHi( super.getHigh().get());
-		tpc.setLo( super.getLow().get());
-		tpc.setL( super.getLast().get());
-		tpc.setQ( super.getQuantity().get());
-		tpc.setS( super.getSymbol().get());
-		tpc.setT( super.getTime().get());
-		return tpc;
 	}
 }

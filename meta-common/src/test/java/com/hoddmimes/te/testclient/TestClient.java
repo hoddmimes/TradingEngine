@@ -8,7 +8,7 @@ import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.transport.http.TeRequestException;
 import com.hoddmimes.te.common.transport.http.TeWebsocketClient;
 import com.hoddmimes.te.common.transport.http.TeHttpClient;
-
+import com.hoddmimes.te.messages.generated.AddOrderResponse;
 
 
 import javax.websocket.*;
@@ -17,6 +17,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @ClientEndpoint
@@ -24,10 +28,12 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
     private static SimpleDateFormat SDF = new SimpleDateFormat("HH:mm:ss.SSS");
     private enum MsgType { RESP,RQST };
 
+    private OrderIdContainer mOrderIdContainer = new OrderIdContainer();
     private JsonObject mCmdRoot;
     private JsonArray mRequests;
     private long tRef = (System.currentTimeMillis() / 10000L);
     private Gson mGson = new Gson();
+
 
 
     private TeWebsocketClient tWssClient;
@@ -51,8 +57,20 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
 
     private void msglog( JsonObject pMsg  )
     {
+        if (pMsg == null) {
+            System.out.println(SDF.format(System.currentTimeMillis()) + " [RESP]  msg: <null message>");
+            return;
+        }
+
         if (pMsg.has("endpoint")) {
-            System.out.println(SDF.format(System.currentTimeMillis()) + " [RQST] endpoint: <" + pMsg.get("endpoint").getAsString() + "> msg: " + mGson.toJson(pMsg.get("body").getAsJsonObject()).toString());
+            String tEndpoint = pMsg.get("endpoint").getAsString();
+            String tMethod = pMsg.get("endpoint").getAsString();
+            JsonObject jRqstMsg = (pMsg.has("body")) ? pMsg.get("body").getAsJsonObject() : null;
+            if (jRqstMsg != null) {
+                System.out.println(SDF.format(System.currentTimeMillis()) + " [RQST] (" + tMethod + ") endpoint: <" + tEndpoint + "> msg: " + mGson.toJson(jRqstMsg).toString());
+            } else {
+                System.out.println(SDF.format(System.currentTimeMillis()) + " [RQST] (" + tMethod + ") endpoint: <" + tEndpoint + ">");
+            }
         } else {
             System.out.println(SDF.format(System.currentTimeMillis()) + " [RESP]  msg: " + mGson.toJson(pMsg).toString());
         }
@@ -99,6 +117,11 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
 
 
 
+
+
+
+
+
     private void chill( long pTime ) {
         try { Thread.sleep( pTime ); }
         catch( InterruptedException ie) {}
@@ -109,8 +132,26 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
         for (int i = 1; i < mRequests.size(); i++) {
             JsonObject tRqst = mRequests.get(i).getAsJsonObject();
             try {
+                JsonObject tRspMsg = null;
+
                 msglog( tRqst );
-                JsonObject tRspMsg = tHttpClient.post( tRqst.get("body").getAsJsonObject().toString(), tRqst.get("endpoint").getAsString());
+
+                mOrderIdContainer.orderIdReplace( tRqst );
+
+                if (tRqst.get("method").getAsString().contentEquals("POST")) {
+                    tRspMsg = tHttpClient.post(tRqst.get("body").getAsJsonObject().toString(), tRqst.get("endpoint").getAsString());
+                } else if (tRqst.get("method").getAsString().contentEquals("GET")) {
+                    tRspMsg = tHttpClient.get(tRqst.get("endpoint").getAsString());
+                } else if (tRqst.get("method").getAsString().contentEquals("DELETE")) {
+                    tRspMsg = tHttpClient.delete(tRqst.get("endpoint").getAsString());
+                } else {
+                    throw new RuntimeException("Unknown request method");
+                }
+                mOrderIdContainer.processResponse( tRqst, tRspMsg );
+
+
+
+
                 msglog( tRspMsg );
             }
             catch( IOException e) {
@@ -125,6 +166,9 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
         catch( InterruptedException e) {}
 
     }
+
+
+
 
     @Override
     public void onOpen(Session session, EndpointConfig config) {
@@ -142,7 +186,43 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
     }
 
     @Override
-    public void onError(Session session, Throwable throwable) {
+    public void onError(Session session, Throwable throwable)
+    {
 
+    }
+
+    class OrderIdContainer {
+        Pattern mRefPattern;
+        HashMap<String, String> mRefOrderIdmap;
+
+        OrderIdContainer() {
+            mRefOrderIdmap = new HashMap<>();
+            mRefPattern = Pattern.compile("%ref-([^%]+)%");
+        }
+
+        public void processResponse(JsonObject pRqstMsg, JsonObject pRspMsg) {
+            if (pRqstMsg.get("endpoint").getAsString().contentEquals("addOrder")) {
+                if (pRspMsg.has("orderId")) {
+                    mRefOrderIdmap.put( pRspMsg.get("ref").getAsString(), pRspMsg.get("orderId").getAsString());
+                }
+            }
+        }
+
+        public void orderIdReplace( JsonObject pRqstMsg ) {
+
+            if (pRqstMsg.has("body")) {
+                JsonObject jRqstBody = pRqstMsg.get("body").getAsJsonObject();
+                if (jRqstBody.has("orderId")) {
+                    String tOrderId = jRqstBody.get("orderId").getAsString();
+                    Matcher m = mRefPattern.matcher(tOrderId);
+                    if (m.matches()) {
+                        tOrderId = mRefOrderIdmap.get(String.valueOf(m.group(1)));
+                        if (tOrderId != null) {
+                            jRqstBody.addProperty("orderId", tOrderId);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

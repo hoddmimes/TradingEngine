@@ -39,12 +39,13 @@ import com.google.gson.GsonBuilder;
                 public static String NAME = "BdxTrade";
 
             
-                    private String mSellOrderId;
-                    private String mBuyOrderId;
-                    private String mSymbol;
-                    private Double mPrice;
-                    private Integer mVolume;
-                    private String mTradeId;
+                    private String mSid;
+                    private Double mLast;
+                    private Integer mQuantity;
+                    private Double mOpen;
+                    private Double mLow;
+                    private Double mHigh;
+                    private Integer mTotQuantity;
                public BdxTrade()
                {
                 
@@ -56,52 +57,60 @@ import com.google.gson.GsonBuilder;
                     this.decode( tDecoder );
                }
     
-            public BdxTrade setSellOrderId( String pSellOrderId ) {
-            mSellOrderId = pSellOrderId;
+            public BdxTrade setSid( String pSid ) {
+            mSid = pSid;
             return this;
             }
-            public Optional<String> getSellOrderId() {
-              return  Optional.ofNullable(mSellOrderId);
+            public Optional<String> getSid() {
+              return  Optional.ofNullable(mSid);
             }
         
-            public BdxTrade setBuyOrderId( String pBuyOrderId ) {
-            mBuyOrderId = pBuyOrderId;
+            public BdxTrade setLast( Double pLast ) {
+            mLast = pLast;
             return this;
             }
-            public Optional<String> getBuyOrderId() {
-              return  Optional.ofNullable(mBuyOrderId);
+            public Optional<Double> getLast() {
+              return  Optional.ofNullable(mLast);
             }
         
-            public BdxTrade setSymbol( String pSymbol ) {
-            mSymbol = pSymbol;
+            public BdxTrade setQuantity( Integer pQuantity ) {
+            mQuantity = pQuantity;
             return this;
             }
-            public Optional<String> getSymbol() {
-              return  Optional.ofNullable(mSymbol);
+            public Optional<Integer> getQuantity() {
+              return  Optional.ofNullable(mQuantity);
             }
         
-            public BdxTrade setPrice( Double pPrice ) {
-            mPrice = pPrice;
+            public BdxTrade setOpen( Double pOpen ) {
+            mOpen = pOpen;
             return this;
             }
-            public Optional<Double> getPrice() {
-              return  Optional.ofNullable(mPrice);
+            public Optional<Double> getOpen() {
+              return  Optional.ofNullable(mOpen);
             }
         
-            public BdxTrade setVolume( Integer pVolume ) {
-            mVolume = pVolume;
+            public BdxTrade setLow( Double pLow ) {
+            mLow = pLow;
             return this;
             }
-            public Optional<Integer> getVolume() {
-              return  Optional.ofNullable(mVolume);
+            public Optional<Double> getLow() {
+              return  Optional.ofNullable(mLow);
             }
         
-            public BdxTrade setTradeId( String pTradeId ) {
-            mTradeId = pTradeId;
+            public BdxTrade setHigh( Double pHigh ) {
+            mHigh = pHigh;
             return this;
             }
-            public Optional<String> getTradeId() {
-              return  Optional.ofNullable(mTradeId);
+            public Optional<Double> getHigh() {
+              return  Optional.ofNullable(mHigh);
+            }
+        
+            public BdxTrade setTotQuantity( Integer pTotQuantity ) {
+            mTotQuantity = pTotQuantity;
+            return this;
+            }
+            public Optional<Integer> getTotQuantity() {
+              return  Optional.ofNullable(mTotQuantity);
             }
         
 
@@ -122,23 +131,26 @@ import com.google.gson.GsonBuilder;
         
             JsonEncoder tEncoder = new JsonEncoder();
             pEncoder.add("BdxTrade", tEncoder.toJson() );
-            //Encode Attribute: mSellOrderId Type: String List: false
-            tEncoder.add( "sellOrderId", mSellOrderId );
+            //Encode Attribute: mSid Type: String List: false
+            tEncoder.add( "sid", mSid );
         
-            //Encode Attribute: mBuyOrderId Type: String List: false
-            tEncoder.add( "buyOrderId", mBuyOrderId );
+            //Encode Attribute: mLast Type: double List: false
+            tEncoder.add( "last", mLast );
         
-            //Encode Attribute: mSymbol Type: String List: false
-            tEncoder.add( "symbol", mSymbol );
+            //Encode Attribute: mQuantity Type: int List: false
+            tEncoder.add( "quantity", mQuantity );
         
-            //Encode Attribute: mPrice Type: double List: false
-            tEncoder.add( "price", mPrice );
+            //Encode Attribute: mOpen Type: double List: false
+            tEncoder.add( "open", mOpen );
         
-            //Encode Attribute: mVolume Type: int List: false
-            tEncoder.add( "volume", mVolume );
+            //Encode Attribute: mLow Type: double List: false
+            tEncoder.add( "low", mLow );
         
-            //Encode Attribute: mTradeId Type: String List: false
-            tEncoder.add( "tradeId", mTradeId );
+            //Encode Attribute: mHigh Type: double List: false
+            tEncoder.add( "high", mHigh );
+        
+            //Encode Attribute: mTotQuantity Type: int List: false
+            tEncoder.add( "totQuantity", mTotQuantity );
         
         }
 
@@ -148,23 +160,26 @@ import com.google.gson.GsonBuilder;
         
             JsonDecoder tDecoder = pDecoder.get("BdxTrade");
         
-            //Decode Attribute: mSellOrderId Type:String List: false
-            mSellOrderId = tDecoder.readString("sellOrderId");
+            //Decode Attribute: mSid Type:String List: false
+            mSid = tDecoder.readString("sid");
         
-            //Decode Attribute: mBuyOrderId Type:String List: false
-            mBuyOrderId = tDecoder.readString("buyOrderId");
+            //Decode Attribute: mLast Type:double List: false
+            mLast = tDecoder.readDouble("last");
         
-            //Decode Attribute: mSymbol Type:String List: false
-            mSymbol = tDecoder.readString("symbol");
+            //Decode Attribute: mQuantity Type:int List: false
+            mQuantity = tDecoder.readInteger("quantity");
         
-            //Decode Attribute: mPrice Type:double List: false
-            mPrice = tDecoder.readDouble("price");
+            //Decode Attribute: mOpen Type:double List: false
+            mOpen = tDecoder.readDouble("open");
         
-            //Decode Attribute: mVolume Type:int List: false
-            mVolume = tDecoder.readInteger("volume");
+            //Decode Attribute: mLow Type:double List: false
+            mLow = tDecoder.readDouble("low");
         
-            //Decode Attribute: mTradeId Type:String List: false
-            mTradeId = tDecoder.readString("tradeId");
+            //Decode Attribute: mHigh Type:double List: false
+            mHigh = tDecoder.readDouble("high");
+        
+            //Decode Attribute: mTotQuantity Type:int List: false
+            mTotQuantity = tDecoder.readInteger("totQuantity");
         
 
         }
@@ -190,33 +205,38 @@ import com.google.gson.GsonBuilder;
           }
 
         
-                        public Builder setSellOrderId( String pValue ) {
-                        mInstance.setSellOrderId( pValue );
+                        public Builder setSid( String pValue ) {
+                        mInstance.setSid( pValue );
                         return this;
                     }
                 
-                        public Builder setBuyOrderId( String pValue ) {
-                        mInstance.setBuyOrderId( pValue );
+                        public Builder setLast( Double pValue ) {
+                        mInstance.setLast( pValue );
                         return this;
                     }
                 
-                        public Builder setSymbol( String pValue ) {
-                        mInstance.setSymbol( pValue );
+                        public Builder setQuantity( Integer pValue ) {
+                        mInstance.setQuantity( pValue );
                         return this;
                     }
                 
-                        public Builder setPrice( Double pValue ) {
-                        mInstance.setPrice( pValue );
+                        public Builder setOpen( Double pValue ) {
+                        mInstance.setOpen( pValue );
                         return this;
                     }
                 
-                        public Builder setVolume( Integer pValue ) {
-                        mInstance.setVolume( pValue );
+                        public Builder setLow( Double pValue ) {
+                        mInstance.setLow( pValue );
                         return this;
                     }
                 
-                        public Builder setTradeId( String pValue ) {
-                        mInstance.setTradeId( pValue );
+                        public Builder setHigh( Double pValue ) {
+                        mInstance.setHigh( pValue );
+                        return this;
+                    }
+                
+                        public Builder setTotQuantity( Integer pValue ) {
+                        mInstance.setTotQuantity( pValue );
                         return this;
                     }
                 
