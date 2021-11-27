@@ -53,7 +53,7 @@ public class Trades  extends JFrame implements TableCallbackInterface<Trades.Tra
 
 	private JButton      mFilterBtn;
 	private JButton      mFilterClearBtn;
-	private JTextField  mFilterTxt;
+	private JTextField   mFilterTxt;
 	private JComboBox<FilterAttribute> mFilterFieldsComboBox;
 
 
@@ -106,14 +106,23 @@ public class Trades  extends JFrame implements TableCallbackInterface<Trades.Tra
 		tRoot.add( initTablePanel(), BorderLayout.CENTER);
 		tRoot.add( initExportPanel(), BorderLayout.SOUTH);
 
-		loadData();
+		while (!loadData()) {
+			mTradeLogDirectory = null;
+			mTxlFiles = null;
+			examineTradeDir();
+		}
 
 		this.setContentPane( tRoot );
 		this.pack();
 		this.setVisible( true );
 	}
 
-	private void loadData() {
+	private boolean loadData() {
+
+		if ((mTxlFiles == null) || (mTxlFiles.size() == 0)) {
+			return false;
+		}
+
 		Date tDate = null;
 		mTradeTableModel.clear();
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -125,8 +134,10 @@ public class Trades  extends JFrame implements TableCallbackInterface<Trades.Tra
 					"Invalid trade date format: " + mDatesComboBox.getSelectedItem().toString(),
 					"Invalid trade date format",
 					JOptionPane.WARNING_MESSAGE);
-			return;
+			return false;
 		}
+
+
 
 		TradeFilter tFilter = new TradeFilter( (FilterAttribute) mFilterFieldsComboBox.getSelectedItem(), mFilterTxt.getText());
 
@@ -152,6 +163,7 @@ public class Trades  extends JFrame implements TableCallbackInterface<Trades.Tra
 		catch( Exception e) {
 			e.printStackTrace();
 		}
+		return true;
 	}
 
 	private JPanel initFilterPanel() {
