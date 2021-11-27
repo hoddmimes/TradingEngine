@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <head>
+        <link rel="stylesheet" href="te.css"/>
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta http-equiv="Pragma" content="no-cache" />
+        <meta http-equiv="Expires" content="0" />
+    </head>
+    <title>TO BE DESCRIBED</title>
+
+</head>
+<body>
+<p id="contentheader">TE Essential Configuration and Setup</p>
+<p>
+The following describe the TE environment as it is organized in GIT HUB.</br>
+The project contains files that should allow to run the components out of the box after a successfull build.
+</p>
+<p><b>Development</b></p>
+<p>The TE is a 100% Java implementation. Java version 16 has used. There a couple of places Java <i>records</i> has been used.
+Besides that the code should be java 1.8 complaint.</br></br>
+IntelliJ (2021.2.3) has been used ISE when developing the code. The building tool used has been Gradle 7.2.</br></br>
+And obviously, GIT HUB is used as source repository.
+</br></br>
+There are no dependencies to any third party products. However I have included a couple of Auxillary libraries that I frequently uses.
+These are found under the <i>libs</i> directory in the project (they should be public and found under the Hoddmimes GIT HUB).</br></br>
+</p>
+<p><b>Building</b></p>
+<p>
+After the project has been cloned, it should be built. If using IntelliJ, open the Gradle window and execute "build" undet the top level
+i.e under <i>TradingEngine</i>. You may also build the project from a console window using Gradle, do so by;
+<ul>
+    <li>set default to the <i>TradingEngine</i> directory</li>
+    <li>execute the gradle command: <i>gradle build</i></li>
+</ul>
+</p>
+
+<p id="contentheader">Components</p>
+</p>
+The project contains four runnable components:
+<ul>
+    <li><b>Trading Eninge</b> the accual market market place.</li>
+    <li><b>Account Administration</b> application for adding modifying accounts.</li>
+    <li><b>Trading Client</b> simple application for testing / excersing the TE REST and WEB socket API</li>
+    <li><b>Trade Reports</b> application for creating trade reports..</li>
+</ul>
+</p>
+<p><b>TradingEngine</b></p>
+<p>The script file in the directory <i>./bin</i> te.sh (Linux) or te.bat (Windows)  will start the TE using the configuration
+in the file <i>./configuration/TeConfiguration.json</i></br>
+The TE application will load market and instrument definitions from the file <i>./configuration/InstrumentDefinitions.json</i></br>
+Account / User definitions are loaded from the file <i>./configuration/AccountDefinitions.json</i></br></br>
+
+Logfiles, default the TE is configured to create a logfile under the <i>./logs</i> directory i.e. <i>./logs/TradingEngine.log</i> (appended).
+The TE used Log4J for logging and the logging configuration is controlled by the LOG4J confuturation file "./configuration/log4j2.xml
+    </br></br>
+    The TE also log all incomming <i>request</i> and <i>responses</i> to a seprate log file, <i>./logs/TeMessagesLog-&lt;yyyy_MM_dd_HHmmss&gt.json</i>
+    </br></br>
+    Furthermore all execution i.e. trades are written to a separate trade logfile, configured to <i>./logs/trades-&lt;yyMMdd-HHmmssSSS&gt;.txl</i>
+    Persistence of trade excutions are most importance since they will result in a monetarily settlement. Therefor trade records are written synchronosly
+    and on (disk) block boundary with records start / end markers to guarantee a all or nothing execution.<br>
+    With the application <i>TE tradee broser</i> trades can be extracted from <i>txl</i> logfiles and be written to a more readable format i.e. Excel,Json or HTML.
+</p>
+<p><b>Account Administration</b></p>
+<p>Is a basic Swing application for administrating a Account configuration e.g. <i>./configuration/AccountDefinition.json</i></br>
+The primarily reason for having it is that passwords in the Account defintion file a kept encrypted and the application is taking care of the
+encryption when adding accounts.</br>
+The application allows accounts to be <i>added, modified</i> and <i>removed.</i></br>
+The script file in <i>./bin/account.sh</i> (Linux) and <i>./bin/account.bat</i> will start the Account application.
+</p>
+</br></br>
+<p><b>Trading Client</b></p>
+<p>
+Is basic console application connecting to the trading engine. The application reads a <i>command file</i> with
+requests to be sent to the TE. The command file configured to be used is <i>./configuration/ClientTestScript.json</i>.</br>
+The script file in <i>./bin/client.sh</i> (Linux) and <i>./bin/client.bat</i> will start the <i>Test</i> Client application.
+</br></br>
+</p>
+
+<p><b>Trade Reports</b></p>
+<p>Is basic Swing application application for viewing and extracting trades from <i>txl</i> logfiles.
+Besides viewing trades they can be extracted to readable files i.e. HTML, Excel and Json formatted.</br>
+The script file in <i>./bin/trades.sh</i> (Linux) and <i>./bin/trades.bat</i> will start the <i>Trade</i> viewer application.
+</p></br>
+
+<p><i><b>This is the essential to get things going. The rest is in the source, nothing fancy or complicated.
+If you have some basic developer and Java this should be a fairly straight forward thing.
+</br>
+    If you would for some unfathomable reason would like to get in contact with the development team behind  this project
+    you can do so by sending mail to <a href="mailto:par.bertilsson@yahoo.com">PoBe & Bob20200704</a>.<br>
+</b></i></p>
+
+</body>
+</html>

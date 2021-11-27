@@ -24,6 +24,8 @@ public class Table extends JScrollPane implements MouseListener
         mTable.setModel( mTableModel );
         mTable.setShowGrid( true );
         mTable.setGridColor( Color.BLACK);
+        mTable.setRowSelectionAllowed(true);
+        mTable.setColumnSelectionAllowed(false);
         mTable.setColumnModel( mTableModel.getTableColumnModel());
         mTable.setTableHeader( mTableModel.getTableHeader() );
         mTable.addMouseListener( this );
@@ -51,11 +53,11 @@ public class Table extends JScrollPane implements MouseListener
         int tCol = mTable.columnAtPoint(e.getPoint());
 
         if ((e.getButton() == MouseEvent.BUTTON1) && (e.getClickCount() == 1)) {
-            mTableModel.doubleClickedClear();
-            mTableModel.fireTableRowsUpdated( tRow,tRow);
+           // mTableModel.doubleClickedClear();
+           // mTableModel.fireTableRowsUpdated( tRow,tRow);
         } else if ((e.getButton() == MouseEvent.BUTTON1) && (e.getClickCount() == 2)) {
-            mTableModel.setRowDoubleClicked( tRow );
-            mTableModel.fireTableRowsUpdated( tRow,tRow);
+           // mTableModel.setRowDoubleClicked( tRow );
+           // mTableModel.fireTableRowsUpdated( tRow,tRow);
         }
 
         Object tObject = mTableModel.getObjectAtRow( tRow );
@@ -74,6 +76,13 @@ public class Table extends JScrollPane implements MouseListener
         }
     }
 
+    public void setSelectedRow( int pRow ) {
+        mTable.setRowSelectionInterval( pRow, pRow );
+    }
+
+    public void deSelect() {
+        mTable.getSelectionModel().clearSelection();
+    }
 
 
     @Override

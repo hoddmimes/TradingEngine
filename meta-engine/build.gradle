@@ -18,7 +18,7 @@ plugins {
 
 group 'com.hoddmimes'
 version '1.0'
-
+def appVersion = "1.0";
 
 
 repositories {
@@ -47,9 +47,34 @@ dependencies {
     implementation project(':meta-common')
 
 }
+task buildFatJar (type: Jar ) {
+    archiveBaseName= 'te';
+    destinationDirectory = file("./build/libs/")
+
+    from {
+        configurations.runtimeClasspath.collect{ it.isDirectory() ? it : zipTree(it) }
+    } with jar
+
+    exclude "META-INF/*.SF"
+    exclude "META-INF/*.DSA"
+    exclude "META-INF/*.RSA"
+
+    from('build/classes/java/main') {
+        include '**/*.class'
+
+    }
+    from('../modum-engine/build/classes/java/main') {
+        include '**/*.class'
+    }
+    duplicatesStrategy = 'exclude'
+
+    manifest {
+        attributes 'Implementation-Title': 'TE Fat Jar', 'Implementation-Version': appVersion
+    }
+}
 
 
-
+build.finalizedBy(buildFatJar)
 
 configurations {
     implementation.exclude module: 'spring-boot-starter-logging'

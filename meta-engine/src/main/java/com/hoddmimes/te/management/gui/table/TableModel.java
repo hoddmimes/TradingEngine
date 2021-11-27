@@ -9,8 +9,6 @@ import java.util.List;
 
 public class TableModel<T> extends AbstractTableModel
 {
-    int mRowDoubleClicked;
-
     List<T> mObjects = null;
     ColumnModel mTableColumnModel = null;
     ObjectRenderer mCellRenderer = new ObjectRenderer();
@@ -22,7 +20,6 @@ public class TableModel<T> extends AbstractTableModel
     public TableModel(Class<T> pObjectClass ) {
         mObjects = new ArrayList<>();
         mRenderCallback = null;
-        mRowDoubleClicked = -1;
 
         mTableAttributeHandle = new TableAttributeHandler(pObjectClass );
 
@@ -30,15 +27,13 @@ public class TableModel<T> extends AbstractTableModel
                 mTableAttributeHandle.getWidths(), mTableAttributeHandle.getDecimals(), mTableAttributeHandle.getEditables(), mTableAttributeHandle.getAlignements());
     }
 
-    public void doubleClickedClear() {
-        mRowDoubleClicked = -1;
+
+
+    public void remove( int pRow ) {
+       if (pRow < mObjects.size()) {
+           mObjects.remove( pRow );
+       }
     }
-
-    public void setRowDoubleClicked( int pRow ) {
-        mRowDoubleClicked = pRow;
-    }
-
-
 
     public int getPreferedWith() {
         int tWidth = 0;
@@ -196,12 +191,13 @@ public class TableModel<T> extends AbstractTableModel
 
         ColumnModel tColumnModel = (ColumnModel) pJTable.getColumnModel();
 
+
         if (pValue != null) {
             this.setText(pValue.toString());
         }
 
         this.setForeground(Color.BLACK);
-        this.setBackground( ((pRow == mRowDoubleClicked) ? Color.lightGray : Color.WHITE));
+        this.setBackground( (pIsSelected) ? Color.lightGray : Color.WHITE );
         this.setOpaque( true );
 
         ColumnData cd = (ColumnData) tColumnModel.getColumn( pCol );

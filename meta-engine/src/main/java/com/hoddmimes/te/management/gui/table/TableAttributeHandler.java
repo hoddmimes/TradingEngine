@@ -150,7 +150,7 @@ public class TableAttributeHandler
     }
 
 
-    class  TableAttributeEnity implements Comparable<TableAttributeEnity> {
+    public class  TableAttributeEnity implements Comparable<TableAttributeEnity> {
         int     mColumn;
         String  mHeader;
         Method  mMethod;

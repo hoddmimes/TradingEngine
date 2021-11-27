@@ -10,7 +10,7 @@ repositories {
 }
 task buildClientJar (type: Jar ) {
     archiveBaseName = 'teclient';
-    destinationDirectory  = file("../");
+    destinationDirectory  = file("./build/libs");
 
     from {
         configurations.runtimeClasspath.collect{ it.isDirectory() ? it : zipTree(it) }
@@ -20,7 +20,10 @@ task buildClientJar (type: Jar ) {
     exclude "META-INF/*.DSA"
     exclude "META-INF/*.RSA"
 
-    from('build/classes/java/main') {
+    from('build/classes/java/main/') {
+        include '**/*.class'
+    }
+    from('build/classes/java/test/') {
         include '**/*.class'
     }
     duplicatesStrategy = 'exclude'

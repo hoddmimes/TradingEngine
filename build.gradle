@@ -4,9 +4,20 @@ plugins {
 
 group 'com.hoddmimes'
 
+def appVersion = "1.0";
+
 repositories {
     mavenCentral()
 }
+task buildHTMLZip(type: Zip) {
+    from './doc/html'
+
+    archiveName 'te-html-' + appVersion + '.zip'
+    destinationDir(file('./'))
+}
+
+
+build.finalizedBy(buildHTMLZip)
 
 subprojects  {
     apply plugin: 'java'

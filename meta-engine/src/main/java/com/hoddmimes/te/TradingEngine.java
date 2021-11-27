@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystems;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,6 +52,7 @@ public class TradingEngine
 
 
 	private void initialize() {
+		mLog.info("current working dir: " + currentWorkingDirURI());
 		// Instansiate Instrument Container
 		mInstrumentContainer = new InstrumentContainer( mConfiguration );
 		mLog.info("successfully loaded InstrumentContainer");
@@ -82,6 +84,9 @@ public class TradingEngine
 		//Instansiate Matching Engine Frontend
 		mMatchingEngineFrontend = new MatchingEngineFrontend( mConfiguration, mMatchingEngine);
 		mLog.info("successfully loaded MatchingEngineFrontend");
+	}
+	private String currentWorkingDirURI() {
+		return FileSystems.getDefault().getPath("").toAbsolutePath().toUri().toString();
 	}
 
 	private void initConnector() {

@@ -1,0 +1,108 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trading Engine</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><h1 id="trading-engine">Trading Engine</h1>
+<h2 id="trading-engine--web-socket-interface"><span class="katex--inline"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</mtext></mrow><annotation encoding="application/x-tex">~~~~~~~~~</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0em; vertical-align: 0em;"></span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span></span></span></span></span> Trading Engine  WEB Socket Interface</h2>
+<h3 id="version-1.0----2021-11-22"><span class="katex--inline"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</mtext></mrow><annotation encoding="application/x-tex">~~~~~~~~~~~~~</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0em; vertical-align: 0em;"></span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span><span class="mspace nobreak">&nbsp;</span></span></span></span></span> Version 1.0    2021-11-22</h3>
+<p>This document describes the WEB Socket API used for the <em>Trading Engine</em> a.k.a TE<br>
+The WEB Socket interface is used for disseminating i.e unsolicited data updates  (i.e. broadcasts) from the  TE to clients. The reader of this document should be familiar with the Trading Engine REST API.</p>
+<p>The data format used when publishing data from the Trading engine is JSON.</p>
+<p>In order to receive data the client application must connect to the TE WEB Socket endpoint.<br>
+The endpoint is always using an encrypted schema i.e. HTTPS.<br>
+When connecting to the endpoint  a query “ApiAuthId” parameter must be  provided e.g.<br>
+WSS endpoint :  <strong>"wss://&lt;host&gt;:&lt;port&gt;/marketdata?authid=&lt;te-api-authid&gt;"</strong></p>
+<p>The APIAuthId parameter is returned in the logon response  after a successful logon to the TE. For details see the logon request  in the TE REST API.</p>
+<p>Currently the client should not send any WSS messages to the TE. The client will automatically receive all messages being published the TE market data publishing mechanism.</p>
+<p>A filtering a client subscription / filtering mechanism is considered.</p>
+<p>Currently the TE can be configured to publishing the following messages flows.</p>
+<h3 id="bdxownorderbookchange">BdxOwnOrderbookChange</h3>
+<p><strong>Description:</strong> Published to the owner (account) of the order when the order is changed in an orderbook.</p>
+<pre class=" language-json"><code class="prism  language-json"> <span class="token punctuation">{</span> BdxOwnOrderbookChange <span class="token punctuation">:</span> <span class="token punctuation">{</span>
+	   <span class="token string">"sid"</span> <span class="token punctuation">:</span> string
+	   <span class="token string">"orderId"</span> <span class="token punctuation">:</span> string
+	   <span class="token string">"action"</span> <span class="token punctuation">:</span> <span class="token function">string</span> <span class="token punctuation">(</span>ADD<span class="token punctuation">,</span>REMOVE<span class="token punctuation">,</span>MODIFY<span class="token punctuation">)</span>
+	   <span class="token string">"price"</span> <span class="token punctuation">:</span> double
+	   <span class="token string">"quantity"</span> <span class="token punctuation">:</span> integer 
+	   <span class="token string">"side"</span> <span class="token punctuation">:</span> <span class="token function">string</span> <span class="token punctuation">(</span>BUY<span class="token punctuation">,</span> SELL<span class="token punctuation">)</span>
+	   <span class="token string">"ref"</span> <span class="token punctuation">:</span> string
+	   <span class="token string">"obSeqNo"</span> <span class="token punctuation">:</span> long
+	 <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="bdxorderbookchange">BdxOrderbookChange</h3>
+<p><strong>Description:</strong> published to all clients connected to the <strong>wss</strong> market data service when and order has been changed.</p>
+<pre class=" language-json"><code class="prism  language-json"> <span class="token punctuation">{</span> BdxOrderbookChange<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+	   <span class="token string">"sid"</span> <span class="token punctuation">:</span> string
+	   <span class="token string">"orderId"</span> <span class="token punctuation">:</span> string
+	   <span class="token string">"action"</span> <span class="token punctuation">:</span> <span class="token function">string</span> <span class="token punctuation">(</span>ADD<span class="token punctuation">,</span>REMOVE<span class="token punctuation">,</span>MODIFY<span class="token punctuation">)</span>
+	   <span class="token string">"price"</span> <span class="token punctuation">:</span> double
+	   <span class="token string">"quantity"</span> <span class="token punctuation">:</span> integer 
+	   <span class="token string">"side"</span> <span class="token punctuation">:</span> <span class="token function">string</span> <span class="token punctuation">(</span>BUY<span class="token punctuation">,</span> SELL<span class="token punctuation">)</span>
+	   <span class="token string">"obSeqNo"</span> <span class="token punctuation">:</span> long
+   <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="bdxowntrade">BdxOwnTrade</h3>
+<p><strong>Description:</strong> published to the account owner when any of its orders have been matched.</p>
+<pre class=" language-json"><code class="prism  language-json"> <span class="token punctuation">{</span> BdxOwnTrade<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+	 <span class="token string">"sid"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
+	 <span class="token string">"orderId"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
+	 <span class="token string">"price"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+	 <span class="token string">"quantity"</span> <span class="token punctuation">:</span> integer<span class="token punctuation">,</span> 
+	 <span class="token string">"side"</span> <span class="token punctuation">:</span> <span class="token function">string</span> <span class="token punctuation">(</span>BUY<span class="token punctuation">,</span> SELL<span class="token punctuation">)</span><span class="token punctuation">,</span>
+	 <span class="token string">"time"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
+	 <span class="token string">"tradeId"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
+ <span class="token punctuation">}</span>
+</code></pre>
+<h3 id="bdxtrade">BdxTrade</h3>
+<p><strong>Description:</strong> published to all clients connected to the <strong>wss</strong> market data service when there is match between two orders occurs.</p>
+<pre class=" language-json"><code class="prism  language-json"> <span class="token punctuation">{</span> BdxTrade<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+	 <span class="token string">"sid"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
+	 <span class="token string">"last"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
+	 <span class="token string">"quantity"</span> <span class="token punctuation">:</span> integer<span class="token punctuation">,</span> 
+	 <span class="token string">"open"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
+	 <span class="token string">"low"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+	 <span class="token string">"high"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+	 <span class="token string">"time"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
+	 <span class="token string">"totalQuantity"</span> <span class="token punctuation">:</span> integer 
+ <span class="token punctuation">}</span>
+</code></pre>
+<h3 id="bdxpricelevel">BdxPriceLevel</h3>
+<p><strong>Description:</strong> <em>BdxPriceLevel</em> is a broadcast containing an aggregated view of the ‘n’ best price levels. Normally configured to expose 5 levels.  The broadcast is published to all clients when there is any change among the orders in the ‘n’ level. However the system is configured to limit the number of broadcast to 4 times a second.</p>
+<pre class=" language-json"><code class="prism  language-json"> <span class="token punctuation">{</span> BdxPriceLevel <span class="token punctuation">:</span> <span class="token punctuation">{</span>
+		<span class="token string">"sid"</span> <span class="token punctuation">:</span>  string<span class="token punctuation">,</span>  
+	    <span class="token string">"levels"</span> <span class="token punctuation">:</span> integer<span class="token punctuation">,</span> 
+	    <span class="token string">"buySide"</span> <span class="token punctuation">:</span> <span class="token punctuation">[</span> <span class="token punctuation">{</span>
+					    <span class="token string">"price"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+					    <span class="token string">"quantity"</span> <span class="token punctuation">:</span> integer
+					<span class="token punctuation">}</span> <span class="token punctuation">]</span><span class="token punctuation">,</span>
+		<span class="token string">"sellSide"</span> <span class="token punctuation">;</span> <span class="token punctuation">[</span> <span class="token punctuation">{</span>
+						<span class="token string">"price"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+						<span class="token string">"quantity"</span> <span class="token punctuation">:</span> integer
+					 <span class="token punctuation">}</span> <span class="token punctuation">]</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="bdxbbo">BdxBBO</h3>
+<p><strong>Description:</strong> The Best Bid/Offer broadcast is is disseminated to connected <strong>wss</strong> clients when there is a change to the best Bid/Offer price or volume.</p>
+<pre class=" language-json"><code class="prism  language-json"> <span class="token punctuation">{</span> BdxBBO <span class="token punctuation">:</span> <span class="token punctuation">{</span>
+		<span class="token string">"sid"</span> <span class="token punctuation">:</span>  string<span class="token punctuation">,</span>  
+	    <span class="token string">"bid"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+	    <span class="token string">"bidQty"</span> <span class="token punctuation">:</span> integer<span class="token punctuation">,</span>
+	    <span class="token string">"offer"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+	    <span class="token string">"offerQty"</span> <span class="token punctuation">:</span> integer
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+</div>
+</body>
+
+</html>
