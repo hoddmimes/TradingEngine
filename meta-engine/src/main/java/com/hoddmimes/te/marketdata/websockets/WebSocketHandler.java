@@ -1,9 +1,16 @@
 package com.hoddmimes.te.marketdata.websockets;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.hoddmimes.te.TeAppCntx;
+import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
+import com.hoddmimes.te.marketdata.SubscriptionFilter;
+import com.hoddmimes.te.marketdata.SubscriptionUpdateCallbackIf;
 import com.hoddmimes.te.messages.EngineBdxInterface;
+import com.hoddmimes.te.messages.generated.SubscriptionRequest;
+import com.hoddmimes.te.messages.generated.SubscriptionResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.web.socket.CloseStatus;
@@ -16,7 +23,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-public class WebSocketHandler extends TextWebSocketHandler  {
+public class WebSocketHandler extends TextWebSocketHandler implements SubscriptionUpdateCallbackIf {
     private Logger mLog = LogManager.getLogger(WebSocketHandler.class);
     private ConcurrentHashMap<String, WebSocketSessionCntx> mSessions;
 
@@ -26,36 +33,89 @@ public class WebSocketHandler extends TextWebSocketHandler  {
         mSessions = new ConcurrentHashMap<>();
     }
 
-    @Override
-    public void handleTextMessage(WebSocketSession pSession, TextMessage pMessage)
-            throws InterruptedException, IOException {
-        try {
-            String tMsgString = pMessage.getPayload();
-            mLog.warn("message from ws client: " + tMsgString);
 
-        } catch (JsonSyntaxException je) {
+    /**
+     * Client are suposed to send two types of messages
+     * 1) add subscription {"command" : "ADD", "subject" : "/<bdx></market>/<sid>" }
+     * 2) clear (all) subscription {"command" : "CLEAR" }
+     */
+
+    @Override
+    public void handleTextMessage(WebSocketSession pSession, TextMessage pMessage)  throws InterruptedException, IOException {
+        String tMsg = null;
+        SubscriptionResponse tSubscrRsp = null;
+
+
+        WebSocketSessionCntx tWsSessionCntx = mSessions.get(pSession.getId());
+        if (tWsSessionCntx == null) {
+            mLog.warn("(receive) invalid WS client : " + pSession.getId());
+            return;
+        }
+
+        try {
+            SubscriptionRequest tSubScr = parseSubscriptionRequest(pMessage.getPayload());
+            String tCommand = tSubScr.getCommand().get().toUpperCase();
+
+            // ADD subscription
+            if (tCommand.contentEquals("ADD")) {
+                String tSubject = tSubScr.getTopic().orElse(null);
+                if (tSubject == null) { throw new JsonSyntaxException("topic not specified"); }
+                tWsSessionCntx.mFilter.add( tSubject, this, tWsSessionCntx );
+                tSubscrRsp = new SubscriptionResponse().setIsOk(true).setMessage("successfully added filter : " + tSubject );
+
+            }
+
+            // Clear ALL subscriptions
+            else if (tCommand.contentEquals("CLEAR")) {
+                tWsSessionCntx.mFilter.remove( tWsSessionCntx );
+                tSubscrRsp = new SubscriptionResponse().setIsOk(true).setMessage("cleared subscription");
+            } else {
+                throw new JsonSyntaxException(tMsg);
+            }
+
+        } catch (Exception je) {
+            mLog.warn("message from ws client: " + tMsg + " client: " + tWsSessionCntx.toString());
+            tSubscrRsp = new SubscriptionResponse().setIsOk(false).setMessage( je.getMessage());
+        }
+
+        // Send response back to clients
+        try {
+            sendMsgToClient( tWsSessionCntx, tSubscrRsp.toJson().toString());
+        }
+        catch( IOException ie ) {
+            mLog.warn("failed to send wss message to " + tWsSessionCntx.toString());
+            synchronized ( mSessions ) {
+                mSessions.remove(mSessions.remove(tWsSessionCntx.mWsSession.getId()));
+            }
+            mLog.warn("ws session " + tWsSessionCntx.toString() + " removed");
         }
     }
 
-    private void sendBdx( WebSocketSession pSession, TextMessage pTxtMsg  ) throws IOException{
-        pSession.sendMessage( pTxtMsg );
+
+
+    SubscriptionRequest parseSubscriptionRequest( String pRequestMsg )  throws JsonSyntaxException
+    {
+        JsonObject jMsg = JsonParser.parseString( pRequestMsg ).getAsJsonObject();
+        String tRqstMsgStr = AuxJson.tagMessageBody( SubscriptionRequest.NAME, pRequestMsg );
+        SubscriptionRequest tSubScr = new SubscriptionRequest( tRqstMsgStr );
+        return tSubScr;
     }
+
+
+
+
+    private void sendMsgToClient( WebSocketSessionCntx pWssCntx, String pMessage  ) throws IOException
+    {
+            pWssCntx.mWsSession.sendMessage( new TextMessage(  pMessage ) );
+    }
+
 
     public void sendPublicBdx( EngineBdxInterface pBdx) {
         synchronized (mSessions) {
-            TextMessage tTxtMsg = new TextMessage(pBdx.toJson().toString());
             Iterator<String> tKeyItr = mSessions.keys().asIterator();
             while (tKeyItr.hasNext()) {
                 WebSocketSessionCntx wscntx = mSessions.get(tKeyItr.next());
-                if (wscntx != null) {
-                    try {
-                        sendBdx(wscntx.mWsSession, tTxtMsg);
-                    } catch (IOException e) {
-                        mLog.warn("failed to send public bdx to " + wscntx.toString());
-                        mSessions.remove(wscntx.mWsSession.getId());
-                        mLog.warn("ws session " + wscntx.toString() + " removed");
-                    }
-                }
+                wscntx.mFilter.match( pBdx.getSubjectName(), pBdx);
             }
         }
     }
@@ -63,19 +123,24 @@ public class WebSocketHandler extends TextWebSocketHandler  {
     void sendPrivateBdx(SessionCntxInterface pSessionCntxInterface, EngineBdxInterface pBdx) {
         WebSocketSessionCntx tWsSessionCntx = mSessions.get(pSessionCntxInterface.getMarketDataSessionId());
         if (tWsSessionCntx != null) {
-            try {
-                sendBdx(tWsSessionCntx.mWsSession, new TextMessage(pBdx.toJson().toString()));
-            } catch (IOException e) {
-                mLog.warn("failed to send private bdx to " + tWsSessionCntx.toString());
-                synchronized ( mSessions ) {
-                    mSessions.remove(mSessions.remove(tWsSessionCntx.mWsSession.getId()));
-                }
-                mLog.warn("ws session " + tWsSessionCntx.toString() + " removed");
-            }
+            tWsSessionCntx.mFilter.match( pBdx.getSubjectName(), pBdx );
         }
     }
 
-
+    @Override
+    public void distributorUpdate(String pSubjectName, EngineBdxInterface pBdxMessage, Object pCallbackParameter) {
+        WebSocketSessionCntx tWssCntx = (WebSocketSessionCntx) pCallbackParameter;
+        try {
+            sendMsgToClient( tWssCntx, pBdxMessage.toJson().toString());
+        }
+        catch( IOException ie) {
+            mLog.warn("failed to send wss message to " + tWssCntx.toString());
+            synchronized ( mSessions ) {
+                mSessions.remove(mSessions.remove(tWssCntx.mWsSession.getId()));
+            }
+            mLog.warn("ws session " + tWssCntx.toString() + " removed");
+        }
+    }
 
 
     @Override
@@ -126,14 +191,20 @@ public class WebSocketHandler extends TextWebSocketHandler  {
         }
     }
 
+
+
+
+
     class WebSocketSessionCntx
     {
         WebSocketSession        mWsSession;
         SessionCntxInterface    mHttpSessionCntx;
+        SubscriptionFilter      mFilter;
 
         WebSocketSessionCntx( WebSocketSession pWsSession, SessionCntxInterface pHttpSessionCntx ) {
             mWsSession = pWsSession;
             mHttpSessionCntx = pHttpSessionCntx;
+            mFilter = new SubscriptionFilter();
         }
 
         public String toString() {

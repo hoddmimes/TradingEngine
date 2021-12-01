@@ -206,6 +206,11 @@ import com.google.gson.GsonBuilder;
              return  gsonPrinter.toJson( this.toJson());
         }
     
+            public String getSubjectName() {
+            SID tSID = new SID( this.getSid().get());
+            return "/" + this.getMessageName() + "/" + String.valueOf(tSID.getMarket()) + "/" + tSID.getSymbol();
+            }
+        
 
         public static  Builder getBdxOwnOrderbookChangeBuilder() {
             return new BdxOwnOrderbookChange.Builder();

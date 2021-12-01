@@ -139,7 +139,11 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
                 mOrderIdContainer.orderIdReplace( tRqst );
 
                 if (tRqst.get("method").getAsString().contentEquals("POST")) {
-                    tRspMsg = tHttpClient.post(tRqst.get("body").getAsJsonObject().toString(), tRqst.get("endpoint").getAsString());
+                    if (tRqst.get("endpoint").getAsString().contentEquals("marketdata")) {
+                        tRspMsg = sendSubscriptionRequest( tRqst.get("body").getAsJsonObject() );
+                    } else {
+                        tRspMsg = tHttpClient.post(tRqst.get("body").getAsJsonObject().toString(), tRqst.get("endpoint").getAsString());
+                    }
                 } else if (tRqst.get("method").getAsString().contentEquals("GET")) {
                     tRspMsg = tHttpClient.get(tRqst.get("endpoint").getAsString());
                 } else if (tRqst.get("method").getAsString().contentEquals("DELETE")) {
@@ -168,6 +172,14 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
     }
 
 
+    private JsonObject sendSubscriptionRequest( JsonObject jRqstBody ) {
+        tWssClient.sendMessage( jRqstBody.toString() );
+
+        JsonObject jObject = new JsonObject();
+        jObject.addProperty("endpoint", "subscription");
+        jObject.add( "body", jRqstBody );
+        return jObject;
+    }
 
 
     @Override

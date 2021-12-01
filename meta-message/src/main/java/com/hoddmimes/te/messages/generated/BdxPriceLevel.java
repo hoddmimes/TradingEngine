@@ -261,6 +261,12 @@ import com.google.gson.GsonBuilder;
 
             return true;
           }
+
+          public String getSubjectName() {
+            SID tSID = new SID( this.getSid().get());
+            return "/" + this.getMessageName() + "/" + String.valueOf(tSID.getMarket()) + "/" + tSID.getSymbol();
+          }
+
         
 
         public static  Builder getBdxPriceLevelBuilder() {

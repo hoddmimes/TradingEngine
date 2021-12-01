@@ -173,6 +173,16 @@
 
 
 
+    <Message name="SubscriptionRequest" rootMessage="true" >
+        <Attribute name="command" type = "String"/> <!-- ADD or CLEAR" -->
+        <Attribute name="topic" type="String"/>
+    </Message>
+
+    <Message name="SubscriptionResponse" rootMessage="true" >
+        <Attribute name="isOk" type = "boolean"/>
+        <Attribute name="message" type="String"/>
+    </Message>
+
     <Message name="StatusMessage" rootMessage="true">
         <Attribute name="isOk" type="boolean"/>
         <Attribute name="ref" type="String"/>
@@ -199,6 +209,12 @@
         <Attribute name="quantity" type = "int"/>
         <Attribute name="side" type = "String"/>
         <Attribute name="obSeqNo" type = "long"/>
+        <code>
+        public String getSubjectName() {
+            SID tSID = new SID( this.getSid().get());
+            return "/" + this.getMessageName() + "/" + String.valueOf(tSID.getMarket()) + "/" + tSID.getSymbol();
+        }
+        </code>
     </Message>
 
     <!-- Private -->
@@ -221,6 +237,12 @@
         <Attribute name="tradeId" type = "String"/>
         <Attribute name="time" type = "String"/>
         <Attribute name="side" type = "String"/>
+        <code>
+            public String getSubjectName() {
+            SID tSID = new SID( this.getSid().get());
+            return "/" + this.getMessageName() + "/" + String.valueOf(tSID.getMarket()) + "/" + tSID.getSymbol();
+            }
+        </code>
     </Message>
 
     <!-- Private -->
@@ -242,6 +264,12 @@
         <Attribute name="side" type = "String"/>
         <Attribute name="ref" type = "String"/>
         <Attribute name="obSeqNo" type = "long"/>
+        <code>
+            public String getSubjectName() {
+            SID tSID = new SID( this.getSid().get());
+            return "/" + this.getMessageName() + "/" + String.valueOf(tSID.getMarket()) + "/" + tSID.getSymbol();
+            }
+        </code>
     </Message>
 
 
@@ -254,6 +282,12 @@
         <Attribute name="low" type = "double"/>
         <Attribute name="high" type = "double"/>
         <Attribute name="totQuantity" type = "int"/>
+        <code>
+            public String getSubjectName() {
+            SID tSID = new SID( this.getSid().get());
+            return "/" + this.getMessageName() + "/" + String.valueOf(tSID.getMarket()) + "/" + tSID.getSymbol();
+            }
+        </code>
     </Message>
 
     <!-- Public -->
@@ -263,7 +297,6 @@
         <Attribute name="offer" type = "double"/>
         <Attribute name="bidQty" type = "int"/>
         <Attribute name="offerQty" type = "int"/>
-
         <code>
             public boolean same( BdxBBO bbo ) {
                 if (mBid != bbo.mBid)  {
@@ -279,6 +312,11 @@
                     return false;
                 }
                 return true;
+            }
+
+            public String getSubjectName() {
+              SID tSID = new SID( this.getSid().get());
+              return "/" + this.getMessageName() + "/" + String.valueOf(tSID.getMarket()) + "/" + tSID.getSymbol();
             }
         </code>
 
@@ -331,6 +369,12 @@
 
             return true;
           }
+
+          public String getSubjectName() {
+            SID tSID = new SID( this.getSid().get());
+            return "/" + this.getMessageName() + "/" + String.valueOf(tSID.getMarket()) + "/" + tSID.getSymbol();
+          }
+
         </code>
     </Message>
 

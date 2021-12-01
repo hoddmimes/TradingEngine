@@ -1,7 +1,7 @@
 package com.hoddmimes.te.instrumentctl;
 
 import com.google.gson.JsonObject;
-import com.hoddmimes.te.common.SID;
+import com.hoddmimes.te.messages.SID;
 import com.hoddmimes.te.messages.generated.Symbol;
 
 import java.math.BigDecimal;

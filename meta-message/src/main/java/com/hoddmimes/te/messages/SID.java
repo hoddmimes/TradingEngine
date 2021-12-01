@@ -1,4 +1,4 @@
-package com.hoddmimes.te.common;
+package com.hoddmimes.te.messages;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

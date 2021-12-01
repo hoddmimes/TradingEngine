@@ -199,6 +199,20 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
+            case "SubscriptionRequest":
+            {
+            	SubscriptionRequest tMessage = new SubscriptionRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "SubscriptionResponse":
+            {
+            	SubscriptionResponse tMessage = new SubscriptionResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
             case "StatusMessage":
             {
             	StatusMessage tMessage = new StatusMessage();

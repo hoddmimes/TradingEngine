@@ -2,7 +2,7 @@
   "baseWss": {"uri": "wss://localhost:8883/marketdata"},
   "requests" : [
     { "method" : "POST", "endpoint" :  "logon", "body" : {"account":"test", "password":"test","ref" : "sr-71"}},
-
+    { "method" : "POST", "endpoint" :  "marketdata", "body":  {"command":"ADD", "subject" :  "/BdxBBO/..."}},
 
     { "method" : "GET", "endpoint" :  "queryMarkets" },
     { "method" : "GET", "endpoint" :  "querySymbols/1" },

@@ -20,8 +20,44 @@ The endpoint is always using an encrypted schema i.e. HTTPS.<br>
 When connecting to the endpoint  a query “ApiAuthId” parameter must be  provided e.g.<br>
 WSS endpoint :  <strong>"wss://&lt;host&gt;:&lt;port&gt;/marketdata?authid=&lt;te-api-authid&gt;"</strong></p>
 <p>The APIAuthId parameter is returned in the logon response  after a successful logon to the TE. For details see the logon request  in the TE REST API.</p>
-<p>Currently the client should not send any WSS messages to the TE. The client will automatically receive all messages being published the TE market data publishing mechanism.</p>
-<p>A filtering a client subscription / filtering mechanism is considered.</p>
+<p>Market data is not sent to a client unless the client has subscribed to it. So after a successful connection to the TE WEB Socket service the client should  request subscription to the data the client is interested in.</p>
+<p>This is done by sending a subscription request message to the TE WEB Socket service.</p>
+<p>All data published is associated with a topic name being a hierarchical structure, represented as a string having the forming format “<i>/&lt;bdx-flow&gt;/&lt;Markket&gt;/&lt;symbol&gt;</i>” i.e three levels.<br>
+Each level seprated by a slash i.e. “/”. e.g. “/BdxBBO/1/AMZN” for a best bid/offer update for the stock Amazon.</p>
+<p>The <em>subscription request</em> message has the following JSON format</p>
+<pre class=" language-json"><code class="prism  language-json"> <span class="token punctuation">{</span> <span class="token string">"command"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span> <span class="token string">"topic"</span> <span class="token punctuation">:</span> string <span class="token punctuation">}</span>
+</code></pre>
+<ul>
+<li><i><b>command</b></i> is mandatory  and could either be 
+<ul>
+	<li><i>ADD</i> for enabling subscription. When <i>adding</i> a subscription the property <i><b>subject</b>
+	</i> is mandatory.</li>
+	<li><i>CLEAR</i> will clear <i>all</i>  active subscription.
+</li></ul>
+</li><li><i><b>topic</b></i> specifies the topic(s) that the clients  are interested in. This attribute is only applicable when <i>adding</i> a subscription.
+</li></ul><p>Topics can contain <i>wildcards</i>. The strings “*” and “…” are used to express wildcard matching.</p>
+<p>The market data service will always publish  data with absolute topic names i.e. must not contain the strings “*” or “…”.<br>
+Subscribers may use absolute topics or wildcard subject when setting up subscriptions.</p>
+<p>Subject names are case sensitive.<br>
+Some typical matching rules.</p>
+<ul>
+<li>
+<p>“/foo/bar” will not match “/foo/bar/fie”</p>
+</li>
+<li>
+<p>“/foo/*” will  match all topics with two levels and starting with “/foo”</p>
+</li>
+<li>
+<p>“/foo/*/bar/*” will match all subjects with four levels, where level one is equal with “/foo” level three<br>
+with “/bar” and level two and four being whatever.</p>
+</li>
+<li>
+<p>“/foo/bar/…” will match anything with three or more levels, starting with “/foo” and “/bar” at level one and two.</p>
+</li>
+<li>
+<p>“/…” will match everything being published.</p>
+</li>
+</ul>
 <p>Currently the TE can be configured to publishing the following messages flows.</p>
 <h3 id="bdxownorderbookchange">BdxOwnOrderbookChange</h3>
 <p><strong>Description:</strong> Published to the owner (account) of the order when the order is changed in an orderbook.</p>
