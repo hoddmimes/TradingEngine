@@ -226,6 +226,7 @@
         <Attribute name="tradeId" type = "String"/>
         <Attribute name="time" type = "String"/>
         <Attribute name="side" type = "String"/>
+        <Attribute name="orderRef" type = "String"/>
     </Message>
 
 
@@ -237,6 +238,7 @@
         <Attribute name="tradeId" type = "String"/>
         <Attribute name="time" type = "String"/>
         <Attribute name="side" type = "String"/>
+        <Attribute name="orderRef" type = "String"/>
         <code>
             public String getSubjectName() {
             SID tSID = new SID( this.getSid().get());

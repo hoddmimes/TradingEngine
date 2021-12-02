@@ -46,6 +46,7 @@ import com.google.gson.GsonBuilder;
                     private String mTradeId;
                     private String mTime;
                     private String mSide;
+                    private String mOrderRef;
                public BdxOwnTrade()
                {
                 
@@ -113,6 +114,14 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mSide);
             }
         
+            public BdxOwnTrade setOrderRef( String pOrderRef ) {
+            mOrderRef = pOrderRef;
+            return this;
+            }
+            public Optional<String> getOrderRef() {
+              return  Optional.ofNullable(mOrderRef);
+            }
+        
 
         public String getMessageName() {
         return "BdxOwnTrade";
@@ -152,6 +161,9 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mSide Type: String List: false
             tEncoder.add( "side", mSide );
         
+            //Encode Attribute: mOrderRef Type: String List: false
+            tEncoder.add( "orderRef", mOrderRef );
+        
         }
 
         
@@ -180,6 +192,9 @@ import com.google.gson.GsonBuilder;
         
             //Decode Attribute: mSide Type:String List: false
             mSide = tDecoder.readString("side");
+        
+            //Decode Attribute: mOrderRef Type:String List: false
+            mOrderRef = tDecoder.readString("orderRef");
         
 
         }
@@ -242,6 +257,11 @@ import com.google.gson.GsonBuilder;
                 
                         public Builder setSide( String pValue ) {
                         mInstance.setSide( pValue );
+                        return this;
+                    }
+                
+                        public Builder setOrderRef( String pValue ) {
+                        mInstance.setOrderRef( pValue );
                         return this;
                     }
                 

@@ -60,6 +60,8 @@
         <Attribute name="seller" type="String"/>
         <Attribute name="buyerOrderId" type="long"/>
         <Attribute name="sellerOrderId" type="long"/>
+        <Attribute name="buyerOrderRef" type="String"/>
+        <Attribute name="sellerOrderRef" type="String"/>
         <Attribute name="price" type="double"/>
         <Attribute name="quantity" type="int"/>
         <Attribute name="tradeId" type="long"/>

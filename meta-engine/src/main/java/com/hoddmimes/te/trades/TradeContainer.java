@@ -158,6 +158,7 @@ public class TradeContainer
 				ot.setTradeId( Long.toHexString( trd.getTradeId().get()));
 				ot.setQuantity( trd.getQuantity().get());
 				ot.setSide(Order.Side.BUY.name());
+				ot.setOrderRef( trd.getBuyerOrderRef().get());
 				tRspMsg.addTrades( ot );
 			}
 			if (trd.getSeller().get().contentEquals(pRequestContext.getAccountId())) {
@@ -169,6 +170,7 @@ public class TradeContainer
 				ot.setTradeId( Long.toHexString( trd.getTradeId().get()));
 				ot.setQuantity( trd.getQuantity().get());
 				ot.setSide(Order.Side.SELL.name());
+				ot.setOrderRef( trd.getSellerOrderRef().get());
 				tRspMsg.addTrades( ot );
 			}
 		}

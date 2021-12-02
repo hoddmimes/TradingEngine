@@ -3,6 +3,8 @@ package com.hoddmimes.te.trades;
 import com.hoddmimes.te.engine.InternalTrade;
 import com.hoddmimes.te.messages.generated.ContainerTrade;
 
+import java.nio.charset.StandardCharsets;
+
 public class TradeX extends ContainerTrade
 {
 	public TradeX(InternalTrade pInternalTrade) {
@@ -16,6 +18,8 @@ public class TradeX extends ContainerTrade
 		this.setQuantity(pInternalTrade.getQuantity());
 		this.setTradeId(pInternalTrade.getTradeNo());
 		this.setTradeTime(pInternalTrade.getTradeTime());
+		this.setSellerOrderRef( pInternalTrade.getSellOrder().getUserRef());
+		this.setBuyerOrderRef( pInternalTrade.getBuyOrder().getUserRef());
 	}
 
 	public TradeX( String pJsonString ) {

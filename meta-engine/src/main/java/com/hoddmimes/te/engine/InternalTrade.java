@@ -56,10 +56,12 @@ public class InternalTrade
         if (pSide == Order.Side.BUY) {
             tBdx.setOrderId(Long.toHexString(this.getBuyOrder().getOrderId()));
             tBdx.setSide( Order.Side.BUY.name());
+            tBdx.setOrderRef( this.getBuyOrder().getUserRef());
         }
         if (pSide == Order.Side.SELL) {
             tBdx.setOrderId(Long.toHexString(this.getSellOrder().getOrderId()));
             tBdx.setSide( Order.Side.SELL.name());
+            tBdx.setOrderRef( this.getSellOrder().getUserRef());
         }
         tBdx.setTradeId( String.valueOf(this.getTradeNo()));
         tBdx.setPrice(this.getPrice());
