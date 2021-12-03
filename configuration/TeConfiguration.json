@@ -6,8 +6,10 @@
         "dataStore": "configuration/AccountDefinitions.json"
       },
       "schemaDefinitions" : "configuration/jsonSchemas",
-      "traceExecutionTimeLimitUsec":1200,
-      "traceExecutionTimeVerbose":false,
+
+      "traceExecutionTimeLimitUsec":1000,
+      "traceExecutionTimeVerbose":true,
+      "traceExecutionTimeOff":true,
       "messageLoggerEnabled" : true,
       "messageLoggerFlushMode" : "NONE",
       "messageLoggerFlushIntervalMs" : 15000,
@@ -17,6 +19,8 @@
     },
     "tradeContainer" : {
       "configuration" : {
+        "txStatistics" : false,
+        "txSyncDisabled" : true,
         "txlogName" : "trades",
         "txlogDir" : "./logs"
       }

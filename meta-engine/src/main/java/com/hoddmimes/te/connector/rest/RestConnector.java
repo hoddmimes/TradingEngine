@@ -103,8 +103,8 @@ public class RestConnector extends ConnectorBase implements Runnable
 	@Override
 	public void run() {
 		try {
-			//System.setProperty("org.springframework.boot.logging.LoggingSystem", "none");
-			//System.setProperty("java.util.logging.SimpleFormatter.format", "");
+			System.setProperty("org.springframework.boot.logging.LoggingSystem", "none");
+			System.setProperty("java.util.logging.SimpleFormatter.format", "");
 
 			String args[] = new String[0];
 			SpringApplication tApplication = new SpringApplication(RestConnector.class);

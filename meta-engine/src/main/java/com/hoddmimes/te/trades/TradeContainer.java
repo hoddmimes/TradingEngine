@@ -26,6 +26,7 @@ public class TradeContainer
 	private SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private Logger mLog = LogManager.getLogger( TradeContainer.class);
 
+
 	public record MarketSymbol (int market, String symbol)
 	{
 		public String toString() {
@@ -46,6 +47,7 @@ public class TradeContainer
 
 		mConfiguration = AuxJson.navigateObject( pTeConfiguration,"TeConfiguration/tradeContainer/configuration");
 		loadTrades();
+
 		openTradelog();
 
 		TeAppCntx.getInstance().setTradeContainer( this );
@@ -58,13 +60,18 @@ public class TradeContainer
 	}
 
 	private void logTrade( TradeX pTrade ) {
-		mTradeLogger.write( pTrade.toJson().toString().getBytes(StandardCharsets.UTF_8));
+		mTradeLogger.write(pTrade.toJson().toString().getBytes(StandardCharsets.UTF_8));
 	}
 
 	private void openTradelog() {
+
+		TxLoggerConfigInterface tTxConfig = TxLoggerFactory.getConfiguration();
+		tTxConfig.setWriteStatistics( AuxJson.navigateBoolean(mConfiguration, "txStatistics"));
+		tTxConfig.setSyncDisabled(AuxJson.navigateBoolean(mConfiguration, "txSyncDisabled"));
 		mTradeLogger = TxLoggerFactory.getWriter(
 				AuxJson.navigateString(mConfiguration, "txlogDir"),
 				AuxJson.navigateString(mConfiguration, "txlogName"));
+
 
 	}
 
@@ -106,7 +113,8 @@ public class TradeContainer
 
 	public BdxTrade addTrade(InternalTrade pInternalTrade) {
 		TradeX tTrade = new TradeX( pInternalTrade);
-		mTradeLogger.write( tTrade.toJson().toString().getBytes(StandardCharsets.UTF_8));
+		mTradeLogger.write(tTrade.toJson().toString().getBytes(StandardCharsets.UTF_8));
+
 		toTrades( tTrade );
 		updateTradePrice(  tTrade );
 		return updateBdxTrade( tTrade );

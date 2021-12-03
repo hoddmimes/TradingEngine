@@ -73,14 +73,18 @@ public class MessageLogger extends Thread
 
     }
 
-    public void logResponseMessage(RequestContext pRequestContext, MessageInterface pMessage) {
+    public void logResponseMessage(RequestContext pRequestContext, MessageInterface pMessage, long pTxExecTime) {
         mMsgLogQueue.add( String.format("%24s [RESP (%04d)] sid: %-20s account: %-12s %s",
                 SDF.format( System.currentTimeMillis()),
-                pRequestContext.getExecTimeUsec(),
+                pTxExecTime,
                 pRequestContext.getSessionContext().getSessionId(),
                 pRequestContext.getAccountId(),
                 pMessage.toJson().toString()));
 
+    }
+
+    public void logResponseMessage(RequestContext pRequestContext, MessageInterface pMessage) {
+        logResponseMessage( pRequestContext, pMessage,  pRequestContext.getExecTimeUsec() );
     }
 
 

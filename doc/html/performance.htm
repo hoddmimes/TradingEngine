@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang=&quoten&quot>
+<head>
+    <head>
+        <link rel=&quotstylesheet&quot href=&quotte.css&quot/>
+        <meta http-equiv=&quotCache-Control&quot content=&quotno-cache, no-store, must-revalidate&quot />
+        <meta http-equiv=&quotPragma&quot content=&quotno-cache&quot />
+        <meta http-equiv=&quotExpires&quot content=&quot0&quot />
+    </head>
+    <link rel="stylesheet" href="te.css"/>
+    <title>TE Performance Characteristics</title>
+</head>
+<body>
+<p id="contentheader">TE Performance Characteristics</p>
+<p>
+    The <i>Trading Engine</i> software is designed with pragmatism and performance in mind.
+    Below a number of early performance observations could be found. The have not been analyst in depth
+    and as always there are room for improvements.</br></br>
+    The current implementation offers a REST / WEB Socket interface for integrating client with the market place service.
+    This is a pragmatic approach offloading a bit of complexity when it commes to client development and client integration.
+    However HTTP and WEB socket is not the most efficient protocols when it low latency. Besides the overhead the WEB Sockets
+    is a point-to-point mechanism implementating a batch mechanism of messages sent out which affects the turnaround time
+    for broadcasts. Whatever this can be tweaked is currently not looked into.
+    </br></br>
+    The TE and its proptocol can easily be changed to an alternative transport mechanism such as raw tcp/ip which likely
+    will improve the latency, especially for dissemination of unsolicited messages from the market place to clients.
+    </br></br>
+
+    <b>Early Test</b></br>
+    An early test has been executed where a windows 7 machine has been hosting the TE ssolution.
+    <ul>
+        <li>Machine: windows 7, i7 3930K, 6 cores, 12 threads. 16 GB</li>
+        <li>Java, OpenJDK 17.</li>
+    </ul>
+<p>
+    The script executed (repeatly) was eseentially insert 8 buy order, insert a sell order matching the 8 buy orders and
+    then a delete of the remaining sell order.
+
+<span id=&quotcodediv&quot>
+    <p>
+</br>
+&lt;Execution repeat=&quot300&quot txRate=&quot300&quot txDistribution=&quotPoisson&quot&gt;</br>
+    &emsp;&lt;AddOrderRequest instrument=&quot1:APPL&quot price=&quot99.50&quot volume=&quot10&quot operation=&quotBUY&quot  tag=&quotorder3&quot/&gt;</br>
+    &emsp;&lt;AddOrderRequest instrument=&quot1:APPL&quot price=&quot99.00&quot volume=&quot10&quot operation=&quotBUY&quot  tag=&quotorder3&quot/&gt;</br>
+    &emsp;&lt;AddOrderRequest instrument=&quot1:APPL&quot price=&quot99.25&quot volume=&quot10&quot operation=&quotBUY&quot  tag=&quotorder3&quot/&gt;</br>
+    &emsp;&lt;AddOrderRequest instrument=&quot1:APPL&quot price=&quot99.00&quot volume=&quot10&quot operation=&quotBUY&quot  tag=&quotorder3&quot/&gt;</br>
+    &emsp;&lt;AddOrderRequest instrument=&quot1:APPL&quot price=&quot99.50&quot volume=&quot10&quot operation=&quotBUY&quot  tag=&quotorder3&quot/&gt;</br>
+    &emsp;&lt;AddOrderRequest instrument=&quot1:APPL&quot price=&quot99.25&quot volume=&quot10&quot operation=&quotBUY&quot  tag=&quotorder3&quot/&gt;</br>
+    &emsp;&lt;AddOrderRequest instrument=&quot1:APPL&quot price=&quot99.75&quot volume=&quot10&quot operation=&quotBUY&quot  tag=&quotorder3&quot/&gt;</br>
+    &emsp;&lt;AddOrderRequest instrument=&quot1:APPL&quot price=&quot98.00&quot volume=&quot100&quot operation=&quotSELL&quot tag=&quotorderXX&quot/&gt;</br>
+    &emsp;&lt;DeleteOrderRequest tag=&quotorderXX&quot/&gt;</br>
+&lt;/Execution&gt;</br>
+</span>
+</p>
+
+<a href="TE-performance.html"><p id="hilink">Summary of early perfomance test execute 2020-12-03</p></a>

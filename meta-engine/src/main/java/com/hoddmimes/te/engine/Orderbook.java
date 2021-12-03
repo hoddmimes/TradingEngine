@@ -49,12 +49,14 @@ public class Orderbook
         catch( Exception e ) {
             return StatusMessageBuilder.error("invalid order", pOrder.getUserRef(), e);
         }
+        pRqstCntx.timestamp("validate order");
 
         if (pOrder.getSide() == Order.Side.BUY) {
             return matchBook( mSellSide, pOrder, pRqstCntx);
         } else {
             return matchBook( mBuySide, pOrder, pRqstCntx);
         }
+
     }
 
     public void updateBBO() {
@@ -300,6 +302,7 @@ public class Orderbook
             }
         }
 
+
         tOrderListItr = mSellSide.values().iterator();
         while( tOrderListItr.hasNext() && (tRemovedOrder == null)) {
             LinkedList<Order> tOrderList = tOrderListItr.next();
@@ -321,7 +324,9 @@ public class Orderbook
         pRqstCntx.timestamp("remove deleted order from book");
         if (tRemovedOrder != null) {
             mEngineCallbackIf.orderRemoved( tRemovedOrder, pRqstCntx.getSessionContext(), ++mSeqNo );
+            pRqstCntx.timestamp("order remove callback");
             mEngineCallbackIf.orderbookChanged( mSymbol.getId() );
+            pRqstCntx.timestamp("order change callback");
             DeleteOrderResponse tResponse = new DeleteOrderResponse();
             tResponse.setOrderId( Long.toHexString(tRemovedOrder.getOrderId()));
             tResponse.setRef(pUserRef);
@@ -364,9 +369,9 @@ public class Orderbook
             Iterator<Order> tItr = tOrderList.iterator();
             while (tItr.hasNext()) {
                 Order tBookOrder = tItr.next();
-                pRqstCntx.timestamp("find orderbook");
+                pRqstCntx.timestamp("find price level");
                 if (pNewOrder.match(tBookOrder)) {
-                    pRqstCntx.timestamp("match orderbook");
+                    pRqstCntx.timestamp("match first order on price level");
                     int tMatchedSize = Math.min(tBookOrder.getQuantity(), pNewOrder.getQuantity());
                     mLastTradePrice = tBookOrder.getPrice();
                     mLastTradeTime = System.currentTimeMillis();
@@ -405,14 +410,16 @@ public class Orderbook
         }
 
         mEngineCallbackIf.orderbookChanged( mSymbol.getId() );
+        pRqstCntx.timestamp("orderbook change callback");
         updateBBO();
+        pRqstCntx.timestamp("update BBO");
 
         AddOrderResponse tResponse = new AddOrderResponse();
         tResponse.setInserted( (pNewOrder.getQuantity() > 0) ? true : false );
         tResponse.setMatched( tTotMatched );
         tResponse.setOrderId( Long.toHexString(pNewOrder.getOrderId()));
         tResponse.setRef(pNewOrder.getUserRef());
-        pRqstCntx.timestamp("build order response");
+        pRqstCntx.timestamp("build order response (Add Order Complete)");
         return tResponse;
     }
 

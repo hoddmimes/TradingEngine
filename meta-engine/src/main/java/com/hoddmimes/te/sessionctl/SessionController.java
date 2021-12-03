@@ -47,6 +47,8 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 	private MessageFactory mMessageFactory;
 	private long mTraceExecTimeLimitUsec;
 	private boolean mTraceExecTimeVerbose;
+	private boolean mTraceExecTimeOff;
+
 
 	public SessionController( JsonObject pTeConfigurationFile ) throws IOException
 	{
@@ -73,6 +75,11 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 		mSchemaValidator = new JsonSchemaValidator(tSchemaSource);
 		mTraceExecTimeLimitUsec = AuxJson.navigateLong(mConfiguration, "traceExecutionTimeLimitUsec", -1L);
 		mTraceExecTimeVerbose = AuxJson.navigateBoolean(mConfiguration, "traceExecutionTimeVerbose", false);
+		mTraceExecTimeOff = AuxJson.navigateBoolean(mConfiguration, "traceExecutionTimeOff", true);
+
+		if (mTraceExecTimeOff) {
+			AuxTimestamp.disable();
+		}
 
 		mIsMessageLoggerEnabled = AuxJson.navigateBoolean(mConfiguration,"messageLoggerEnabled", true);
 		mMessageLoggerFlushMode = MessageLogger.FlushMode.valueOf( AuxJson.navigateString(mConfiguration,"messageLoggerFlushMode", "NONE"));
@@ -214,6 +221,8 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 
 	public  MessageInterface connectorMessage(String pSessionId, RequestMsgInterface pRqstMsg) {
 		SessionCntxInterface tSessionCntx = null;
+		long tTxStartTime = (System.nanoTime() / 1000L);
+
 
 		if ((pRqstMsg.getRef().isEmpty()) || (pRqstMsg.getRef().get().length() == 0)) {
 			mLog.warn("message ref-id is empty, session-id: " + pSessionId);
@@ -283,16 +292,29 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 			}
 		}
 
-		tRequestContext.timestamp((pRqstMsg.getMessageName() + " completed"));
-		tRequestContext.traceExecTime(mTraceExecTimeLimitUsec, mTraceExecTimeVerbose, mLog);
+
+
 
 		if (tResponseMessage == null) {
+			tRequestContext.traceExecTime(mTraceExecTimeLimitUsec, mTraceExecTimeVerbose, mLog);
 			mLog.fatal("response message not set in \"connectorMessage\"");
 			throw new RuntimeException("response message not set in \"connectorMessage\"");
 		}
 		if (mMsgLogger != null) {
-			mMsgLogger.logResponseMessage( tRequestContext, tResponseMessage);
+			if (mTraceExecTimeOff) {
+				long tTxExecTime = (System.nanoTime() / 1000L) - tTxStartTime;
+				mMsgLogger.logResponseMessage(tRequestContext, tResponseMessage, tTxExecTime);
+			} else {
+				mMsgLogger.logResponseMessage(tRequestContext, tResponseMessage);
+			}
 		}
+		tRequestContext.timestamp("message to message logger");
+		tRequestContext.timestamp((pRqstMsg.getMessageName() + " COMPLETE"));
+		if (mTraceExecTimeOff) {
+			tRequestContext.traceExecTime(mTraceExecTimeLimitUsec, mTraceExecTimeVerbose, mLog);
+		}
+
+
 		return tResponseMessage;
 	}
 

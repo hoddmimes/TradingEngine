@@ -130,13 +130,14 @@ public class WebSocketHandler extends TextWebSocketHandler implements Subscripti
     @Override
     public void distributorUpdate(String pSubjectName, EngineBdxInterface pBdxMessage, Object pCallbackParameter) {
         WebSocketSessionCntx tWssCntx = (WebSocketSessionCntx) pCallbackParameter;
+
         try {
             sendMsgToClient( tWssCntx, pBdxMessage.toJson().toString());
         }
         catch( IOException ie) {
             mLog.warn("failed to send wss message to " + tWssCntx.toString());
             synchronized ( mSessions ) {
-                mSessions.remove(mSessions.remove(tWssCntx.mWsSession.getId()));
+                mSessions.remove(tWssCntx.mWsSession.getId());
             }
             mLog.warn("ws session " + tWssCntx.toString() + " removed");
         }

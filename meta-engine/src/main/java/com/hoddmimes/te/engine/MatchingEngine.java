@@ -64,6 +64,7 @@ public class MatchingEngine implements MatchingEngineCallback
 
 	MessageInterface processAddOrder(AddOrderRequest pAddOrderRequest, RequestContextInterface pRequestContext ) {
 		Orderbook tOrderbook = mOrderbooks.get(pAddOrderRequest.getSid().get());
+		pRequestContext.timestamp("retrieve orderbook");
 		if (tOrderbook == null) {
 			mLog.warn("orderbook " + pAddOrderRequest.getSid().get() + " does not exists " + pRequestContext);
 			return  StatusMessageBuilder.error("orderbook " + pAddOrderRequest.getSid().get() + " does not exists", pAddOrderRequest.getRef().get());
@@ -71,9 +72,11 @@ public class MatchingEngine implements MatchingEngineCallback
 		if (!mInstrumentContainer.isOpen( pAddOrderRequest.getSid().get())) {
 			return  StatusMessageBuilder.error("orderbook " + pAddOrderRequest.getSid().get() + " is not open for trading", pAddOrderRequest.getRef().get());
 		}
+		pRequestContext.timestamp("is orderbook open");
 
 		synchronized (tOrderbook) {
 			Order tOrder = new Order(pRequestContext.getAccountId(), pAddOrderRequest);
+			pRequestContext.timestamp("create order");
 
 			MessageInterface tMsg = tOrderbook.addOrder(tOrder, pRequestContext);
 			return tMsg;
