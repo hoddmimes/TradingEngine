@@ -1,3 +1,20 @@
+/*
+ * Copyright (c)  Hoddmimes Solution AB 2021.
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hoddmimes.te.engine;
 
 
@@ -17,7 +34,7 @@ import java.util.*;
 public class Orderbook
 {
     private Logger                              mLog;
-    private SymbolX mSymbol;
+    private SymbolX                              mSymbol;
     private TreeMap<Double,LinkedList<Order>>   mBuySide;
     private TreeMap<Double,LinkedList<Order>>   mSellSide;
     private MatchingEngineCallback              mEngineCallbackIf;
@@ -37,7 +54,7 @@ public class Orderbook
         mLastTradePrice = 0L;
         mEngineCallbackIf = pEngineCallbackIf;
         mPriceLevels = null;
-        mBBO = new BdxBBO().setSid( mSymbol.getId());
+        mBBO = new BdxBBO().setSid( mSymbol.getSid().get());
     }
 
     public int getMarketId() {
@@ -61,7 +78,7 @@ public class Orderbook
 
     public void updateBBO() {
         Iterator<Order> tItr = null;
-        BdxBBO bbo = new BdxBBO().setSid( mSymbol.getId());
+        BdxBBO bbo = new BdxBBO().setSid( mSymbol.getSid().get());
         if (mBuySide.size() > 0) {
             bbo.setBid( mBuySide.firstKey());
             int tBuyQty = 0;
@@ -88,7 +105,7 @@ public class Orderbook
     }
 
     public String getSymbolId() {
-        return mSymbol.getId();
+        return mSymbol.getSid().get();
     }
 
     public MessageInterface amendOrder( long pOrderId, AmendOrderRequest pAmendRqst, RequestContextInterface pRqstCntx ) {
@@ -136,7 +153,7 @@ public class Orderbook
                 tOrderToAmend.setQuantity(tNewVolume);
                 tOrderToAmend.setPrice(tNewPrice);
 
-                mEngineCallbackIf.orderbookChanged(mSymbol.getId());
+                mEngineCallbackIf.orderbookChanged(mSymbol.getSid().get());
                 mEngineCallbackIf.orderModified(tOrderToAmend, pRqstCntx.getSessionContext(), ++mSeqNo);
                 tAmendRsp = new AmendOrderResponse();
                 return tAmendRsp.setInserted(false).setOrderId(Long.toHexString(tOrderToAmend.getOrderId())).
@@ -157,7 +174,7 @@ public class Orderbook
             return tAmendRsp.setInserted(false).setOrderId(Long.toHexString(tOrderToAmend.getOrderId())).
                     setRef(pAmendRqst.getRef().get()).setMatched(0);
         } else {
-            AddOrderRequest tAddOrderRqst = new AddOrderRequest().setPrice(tPrice).setRef(pAmendRqst.getRef().get()).setQuantity(tVolume).setSid(this.mSymbol.getId()).setSide(tSide);
+            AddOrderRequest tAddOrderRqst = new AddOrderRequest().setPrice(tPrice).setRef(pAmendRqst.getRef().get()).setQuantity(tVolume).setSid(this.mSymbol.getSid().get()).setSide(tSide);
             Order tNewOrder = new Order(pRqstCntx.getAccountId(), tAddOrderRqst);
 
             MessageInterface tResponse = this.addOrder(tNewOrder, pRqstCntx);
@@ -172,6 +189,37 @@ public class Orderbook
                     setRef(pAmendRqst.getRef().get()).setMatched(tAddOrderRsp.getMatched().get());
         }
     }
+
+    List<OwnOrder> getOrdersForAccount( String pAccount ) {
+        List<OwnOrder> tAccountOrders = new ArrayList<>();
+
+        Iterator<LinkedList<Order>> tOrderListItr = mBuySide.values().iterator();
+        while (tOrderListItr.hasNext()) {
+            LinkedList<Order> tOrderList = tOrderListItr.next();
+            Iterator<Order> tItr = tOrderList.iterator();
+            while (tItr.hasNext()) {
+                Order tOrder = tItr.next();
+                if (tOrder.getAccountId().toUpperCase().contentEquals(pAccount)) {
+                    tAccountOrders.add(tOrder.toOwnOrder());
+                }
+            }
+        }
+
+        tOrderListItr = mSellSide.values().iterator();
+        while (tOrderListItr.hasNext()) {
+            LinkedList<Order> tOrderList = tOrderListItr.next();
+            Iterator<Order> tItr = tOrderList.iterator();
+            while (tItr.hasNext()) {
+                Order tOrder = tItr.next();
+                if (tOrder.getAccountId().toUpperCase().contentEquals(pAccount)) {
+                    tAccountOrders.add(tOrder.toOwnOrder());
+                }
+            }
+        }
+
+        return tAccountOrders;
+    }
+
 
 
 
@@ -240,7 +288,7 @@ public class Orderbook
         return bbo;
     }
 
-    public int deleteOrders( String pUserRef, RequestContextInterface pRqstCntx ) {
+    public int deleteOrders( String pUserRef, String pAccountId, RequestContextInterface pRqstCntx ) {
          int tOrdersDeleted = 0;
 
         Iterator<LinkedList<Order>> tOrderListItr = mBuySide.values().iterator();
@@ -249,11 +297,11 @@ public class Orderbook
             Iterator<Order> tItr = tOrderList.iterator();
             while( tItr.hasNext() ) {
                 Order tOrder = tItr.next();
-                if (tOrder.getAccountId().contentEquals( pRqstCntx.getAccountId())) {
+                if (tOrder.getAccountId().contentEquals( pAccountId )) {
                     tItr.remove();
                     tOrdersDeleted++;
                     mEngineCallbackIf.orderRemoved( tOrder, pRqstCntx.getSessionContext(), ++mSeqNo );
-                    mEngineCallbackIf.orderbookChanged( mSymbol.getId() );
+                    mEngineCallbackIf.orderbookChanged( mSymbol.getSid().get() );
                     if (tOrderList.size() == 0) {
                         tOrderListItr.remove();
                     }
@@ -267,11 +315,11 @@ public class Orderbook
             Iterator<Order> tItr = tOrderList.iterator();
             while( tItr.hasNext() ) {
                 Order tOrder = tItr.next();
-                if (tOrder.getAccountId().contentEquals( pRqstCntx.getAccountId())) {
+                if (tOrder.getAccountId().contentEquals( pAccountId )) {
                     tItr.remove();
                     tOrdersDeleted++;
                     mEngineCallbackIf.orderRemoved( tOrder, pRqstCntx.getSessionContext(), ++mSeqNo );
-                    mEngineCallbackIf.orderbookChanged( mSymbol.getId() );
+                    mEngineCallbackIf.orderbookChanged( mSymbol.getSid().get()  );
                     if (tOrderList.size() == 0) {
                         tOrderListItr.remove();
                     }
@@ -325,7 +373,7 @@ public class Orderbook
         if (tRemovedOrder != null) {
             mEngineCallbackIf.orderRemoved( tRemovedOrder, pRqstCntx.getSessionContext(), ++mSeqNo );
             pRqstCntx.timestamp("order remove callback");
-            mEngineCallbackIf.orderbookChanged( mSymbol.getId() );
+            mEngineCallbackIf.orderbookChanged( mSymbol.getSid().get()  );
             pRqstCntx.timestamp("order change callback");
             DeleteOrderResponse tResponse = new DeleteOrderResponse();
             tResponse.setOrderId( Long.toHexString(tRemovedOrder.getOrderId()));
@@ -353,6 +401,41 @@ public class Orderbook
     }
 
 
+    public InternalTrade revertTrade( ContainerTrade pTrade,  RequestContextInterface pRqstCntx ) {
+        // Reverse
+        Order tBuyOrder = new Order( pTrade.getSeller().get(),
+                                     pTrade.getSid().get(),
+                                     pTrade.getPrice().get(),
+                                     pTrade.getQuantity().get(),
+                                     Order.Side.BUY,
+                                     "reverse",
+                                     System.currentTimeMillis());
+
+        tBuyOrder.setOrderId( pTrade.getSellerOrderId().get());
+
+        Order tSellOrder = new Order( pTrade.getBuyer().get(),
+                pTrade.getSid().get(),
+                pTrade.getPrice().get(),
+                pTrade.getQuantity().get(),
+                Order.Side.SELL,
+                "reverse",
+                System.currentTimeMillis());
+
+        tSellOrder.setOrderId( pTrade.getBuyerOrderId().get());
+
+
+
+        InternalTrade tInternalTrade = new InternalTrade(
+                pTrade.getSid().get(),
+                mSymbol.getMarketId().get(),
+                pTrade.getPrice().get(),
+                pTrade.getQuantity().get(),
+                tBuyOrder, tSellOrder);
+
+        mEngineCallbackIf.trade(tInternalTrade, pRqstCntx.getSessionContext());
+        return tInternalTrade;
+    }
+
 
     private MessageInterface matchBook(TreeMap<Double,LinkedList<Order>> pBook, Order pNewOrder, RequestContextInterface pRqstCntx ) {
         int tTotMatched = 0;
@@ -373,10 +456,13 @@ public class Orderbook
                 if (pNewOrder.match(tBookOrder)) {
                     pRqstCntx.timestamp("match first order on price level");
                     int tMatchedSize = Math.min(tBookOrder.getQuantity(), pNewOrder.getQuantity());
+                    if (tMatchedSize == 0) {
+                        System.out.println("Zero");
+                    }
                     mLastTradePrice = tBookOrder.getPrice();
                     mLastTradeTime = System.currentTimeMillis();
 
-                    mEngineCallbackIf.trade(new InternalTrade( mSymbol.getId(), mSymbol.getMarketId().get(), tBookOrder.getPrice(), tMatchedSize, pNewOrder, tBookOrder), pRqstCntx.getSessionContext());
+                    mEngineCallbackIf.trade(new InternalTrade( mSymbol.getSid().get() , mSymbol.getMarketId().get(), tBookOrder.getPrice(), tMatchedSize, pNewOrder, tBookOrder), pRqstCntx.getSessionContext());
                     pRqstCntx.timestamp("create and process trade");
 
                     tBookOrder.setQuantity(tBookOrder.getQuantity() - tMatchedSize);
@@ -409,7 +495,7 @@ public class Orderbook
             pRqstCntx.timestamp("new order matched");
         }
 
-        mEngineCallbackIf.orderbookChanged( mSymbol.getId() );
+        mEngineCallbackIf.orderbookChanged( mSymbol.getSid().get()  );
         pRqstCntx.timestamp("orderbook change callback");
         updateBBO();
         pRqstCntx.timestamp("update BBO");
@@ -426,7 +512,7 @@ public class Orderbook
     public BdxPriceLevel buildPriceLevelBdx( int pLevels ) {
         BdxPriceLevel tBdx = new BdxPriceLevel();
         tBdx.setLevels( pLevels );
-        tBdx.setSid( mSymbol.getId());
+        tBdx.setSid(mSymbol.getSid().get() );
         tBdx.addBuySide( buildPriceLevelSide( this.mBuySide, pLevels ));
         tBdx.addSellSide( buildPriceLevelSide( this.mSellSide, pLevels ));
         return tBdx;
@@ -454,7 +540,7 @@ public class Orderbook
     public QueryOrderbookResponse orderbookSnapshot( QueryOrderbookRequest pRqst ) {
         QueryOrderbookResponse tResponse = new QueryOrderbookResponse();
         tResponse.setRef( pRqst.getRef().get());
-        tResponse.setSid( mSymbol.getId());
+        tResponse.setSid( mSymbol.getSid().get() );
         tResponse.setObSeqNo( this.mSeqNo );
 
 

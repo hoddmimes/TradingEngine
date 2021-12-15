@@ -1,3 +1,20 @@
+/*
+ * Copyright (c)  Hoddmimes Solution AB 2021.
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hoddmimes.te.instrumentctl;
 
 import com.google.gson.JsonObject;
@@ -26,29 +43,10 @@ public class SymbolX extends Symbol
 
 
 	public  boolean isOpen() {
-		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
-
-		if (!super.getClosed().isEmpty()) {
-			if (super.getClosed().get()) {
-				return false;
-			}
+		if (!super.getSuspended().isEmpty()) {
+			return super.getSuspended().get();
 		}
-
-		if (mMarket.getClosed().get()) {
-			return false;
-		}
-
-		if (mMarket.getMarketOpen().get().contentEquals("00:00") && mMarket.getMarketClose().get().contentEquals("00:00")) {
-			return true;
-		}
-		String tNowStr = sdf.format( System.currentTimeMillis());
-
-		if ((mMarket.getMarketClose().get().compareTo(tNowStr) > 0) && (mMarket.getMarketOpen().get().compareTo(tNowStr) <= 0)) {
-			return true;
-		}
-
-		return false;
-
+		return (!mMarket.isClosed());
 	}
 
 
@@ -68,17 +66,6 @@ public class SymbolX extends Symbol
 	}
 
 
-	public boolean isEnabled() {
-		if (!super.getEnabled().isEmpty()) {
-			if (!super.getEnabled().get()) {
-				return false;
-			}
-		}
-		if (!mMarket.getEnabled().get()) {
-			return false;
-		}
-		return true;
-	}
 
 	public void validate( double pPrice, double pLastKnownTradingPrice ) throws Exception {
 		// Validate that price is a multiple of the tick size

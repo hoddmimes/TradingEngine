@@ -1,3 +1,20 @@
+/*
+ * Copyright (c)  Hoddmimes Solution AB 2021.
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hoddmimes.te.trades;
 
 import com.google.gson.JsonObject;
@@ -6,8 +23,13 @@ import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
+import com.hoddmimes.te.common.interfaces.TeMgmtServices;
 import com.hoddmimes.te.engine.InternalTrade;
 import com.hoddmimes.te.engine.Order;
+import com.hoddmimes.te.management.service.MgmtCmdCallbackInterface;
+import com.hoddmimes.te.management.service.MgmtComponentInterface;
+import com.hoddmimes.te.messages.MgmtMessageRequest;
+import com.hoddmimes.te.messages.MgmtMessageResponse;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
 import com.hoddmimes.te.sessionctl.RequestContext;
@@ -16,15 +38,16 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TradeContainer
+public class TradeContainer implements MgmtCmdCallbackInterface
 {
 	private SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private Logger mLog = LogManager.getLogger( TradeContainer.class);
+
+
+
 
 
 	public record MarketSymbol (int market, String symbol)
@@ -35,7 +58,7 @@ public class TradeContainer
 	}
 
 	private JsonObject mConfiguration;
-	private ConcurrentHashMap<Integer,ConcurrentHashMap<String,TradeX>>         mTrades;
+	private ConcurrentHashMap<Integer, List<TradeX>>         mTrades;
 	private ConcurrentHashMap<Integer,ConcurrentHashMap<String, TradePriceX>>   mTradePrices;
 	private ConcurrentHashMap<Integer,ConcurrentHashMap<String, BdxTrade>>      mBdxTrade;
 	private TxLoggerWriterInterface mTradeLogger;
@@ -51,6 +74,7 @@ public class TradeContainer
 		openTradelog();
 
 		TeAppCntx.getInstance().setTradeContainer( this );
+		MgmtComponentInterface tMgmt = TeAppCntx.getInstance().getMgmtService().registerComponent( TeMgmtServices.TradeData, 0, this );
 	}
 
 
@@ -76,12 +100,14 @@ public class TradeContainer
 	}
 
 	private void toTrades( TradeX pTrade ) {
-		ConcurrentHashMap<String, TradeX> tTrdMap = mTrades.get( pTrade.getMarketId());
-		if (tTrdMap == null) {
-			tTrdMap = new ConcurrentHashMap<>();
-			mTrades.put( pTrade.getMarketId().get(), tTrdMap);
+		List<TradeX> tTrdLst = mTrades.get( pTrade.getMarketId().get());
+		if (tTrdLst == null) {
+			tTrdLst = new LinkedList<>();
+			mTrades.put( pTrade.getMarketId().get(), tTrdLst);
 		}
-		tTrdMap.put( pTrade.getSid().get(), pTrade);
+		synchronized( tTrdLst ) {
+			tTrdLst.add( pTrade);
+		}
 	}
 
 
@@ -150,36 +176,37 @@ public class TradeContainer
 		QueryOwnTradesResponse tRspMsg = new QueryOwnTradesResponse();
 		tRspMsg.setRef( pRequest.getRef().get());
 
-		ConcurrentHashMap<String,TradeX> tTrdMktMap = mTrades.get( pRequest.getMarketId().get());
-		if (tTrdMktMap == null) {
+		List<TradeX> tTrdLst = mTrades.get( pRequest.getMarketId().get());
+		if (tTrdLst == null) {
+			tRspMsg.setTrades( new ArrayList<>());
 			return tRspMsg;
 		}
-		Iterator<TradeX> tItr = tTrdMktMap.values().iterator();
-		while( tItr.hasNext() ) {
-			TradeX trd = tItr.next();
-			if (trd.getBuyer().get().contentEquals(pRequestContext.getAccountId())) {
-				OwnTrade ot = new OwnTrade();
-				ot.setOrderId(Long.toHexString(trd.getBuyerOrderId().get()));
-				ot.setPrice( trd.getPrice().get());
-				ot.setTime( SDF.format( trd.getTradeTime().get()));
-				ot.setSid( trd.getSid().get());
-				ot.setTradeId( Long.toHexString( trd.getTradeId().get()));
-				ot.setQuantity( trd.getQuantity().get());
-				ot.setSide(Order.Side.BUY.name());
-				ot.setOrderRef( trd.getBuyerOrderRef().get());
-				tRspMsg.addTrades( ot );
-			}
-			if (trd.getSeller().get().contentEquals(pRequestContext.getAccountId())) {
-				OwnTrade ot = new OwnTrade();
-				ot.setOrderId(Long.toHexString(trd.getSellerOrderId().get()));
-				ot.setPrice( trd.getPrice().get());
-				ot.setTime( SDF.format( trd.getTradeTime().get()));
-				ot.setSid( trd.getSid().get());
-				ot.setTradeId( Long.toHexString( trd.getTradeId().get()));
-				ot.setQuantity( trd.getQuantity().get());
-				ot.setSide(Order.Side.SELL.name());
-				ot.setOrderRef( trd.getSellerOrderRef().get());
-				tRspMsg.addTrades( ot );
+		synchronized( tTrdLst ) {
+			for (TradeX trd : tTrdLst) {
+				if (trd.getBuyer().get().contentEquals(pRequestContext.getAccountId())) {
+					OwnTrade ot = new OwnTrade();
+					ot.setOrderId(Long.toHexString(trd.getBuyerOrderId().get()));
+					ot.setPrice(trd.getPrice().get());
+					ot.setTime(SDF.format(trd.getTradeTime().get()));
+					ot.setSid(trd.getSid().get());
+					ot.setTradeId(Long.toHexString(trd.getTradeId().get()));
+					ot.setQuantity(trd.getQuantity().get());
+					ot.setSide(Order.Side.BUY.name());
+					ot.setOrderRef(trd.getBuyerOrderRef().get());
+					tRspMsg.addTrades(ot);
+				}
+				if (trd.getSeller().get().contentEquals(pRequestContext.getAccountId())) {
+					OwnTrade ot = new OwnTrade();
+					ot.setOrderId(Long.toHexString(trd.getSellerOrderId().get()));
+					ot.setPrice(trd.getPrice().get());
+					ot.setTime(SDF.format(trd.getTradeTime().get()));
+					ot.setSid(trd.getSid().get());
+					ot.setTradeId(Long.toHexString(trd.getTradeId().get()));
+					ot.setQuantity(trd.getQuantity().get());
+					ot.setSide(Order.Side.SELL.name());
+					ot.setOrderRef(trd.getSellerOrderRef().get());
+					tRspMsg.addTrades(ot);
+				}
 			}
 		}
 		return tRspMsg;
@@ -232,6 +259,24 @@ public class TradeContainer
 	}
 
 
+	@Override
+	public MgmtMessageResponse mgmtRequest(MgmtMessageRequest pMgmtRequest) {
+		if (pMgmtRequest instanceof MgmtGetTradesRequest) {
+			return getTradesForMgmt((MgmtMessageRequest) pMgmtRequest);
+		}
+		throw new RuntimeException("Unknown Mgmt request : " + pMgmtRequest.getMessageName());
+	}
 
-
+	MgmtGetTradesResponse getTradesForMgmt(MgmtMessageRequest pMgmtRequest) {
+		MgmtGetTradesResponse tRsp = new MgmtGetTradesResponse().setRef( pMgmtRequest.getRef().get());
+		Iterator<List<TradeX>> tMktItr = mTrades.values().iterator();
+		while( tMktItr.hasNext()) {
+			List<TradeX> tTrdLst = tMktItr.next();
+			synchronized ( tTrdLst) {
+				List<ContainerTrade> tList = new ArrayList<ContainerTrade>( tTrdLst );
+				tRsp.addTrades(tList);
+			}
+		}
+		return tRsp;
+	}
 }

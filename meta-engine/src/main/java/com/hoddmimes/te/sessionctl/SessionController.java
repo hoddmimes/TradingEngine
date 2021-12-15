@@ -1,3 +1,20 @@
+/*
+ * Copyright (c)  Hoddmimes Solution AB 2021.
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hoddmimes.te.sessionctl;
 
 
@@ -11,22 +28,29 @@ import com.hoddmimes.te.common.TeException;
 import com.hoddmimes.te.common.interfaces.AuthenticateInterface;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
-import com.hoddmimes.te.messages.EngineMsgInterface;
-import com.hoddmimes.te.messages.RequestMsgInterface;
-import com.hoddmimes.te.messages.StatusMessageBuilder;
+import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.management.service.MgmtCmdCallbackInterface;
+import com.hoddmimes.te.management.service.MgmtComponentInterface;
+import com.hoddmimes.te.messages.*;
 import com.hoddmimes.te.messages.generated.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.HTTP;
 import org.springframework.http.HttpStatus;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SessionController implements ConnectorInterface.ConnectorCallbackInterface
+public class SessionController implements ConnectorInterface.ConnectorCallbackInterface, MgmtCmdCallbackInterface
 {
 	public static final String INTERNAL_SESSION_ID = UUID.randomUUID().toString();
 
@@ -34,7 +58,7 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 
 	private AuthenticateInterface mAuthenticator = null;
 	private JsonObject mConfiguration = null;
-	private HashMap<String, SessionCntxInterface> mSessions = null;
+	private SessionCntxMapper mSessionMapper = null;
 	private SessionCntxInterface mInternalSession;
 
 	private boolean mIsMessageLoggerEnabled;
@@ -52,9 +76,9 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 
 	public SessionController( JsonObject pTeConfigurationFile ) throws IOException
 	{
-		mSessions = new HashMap<>();
+		mSessionMapper = new SessionCntxMapper();
 		mInternalSession = new SessionCntx("internal",INTERNAL_SESSION_ID);
-		mSessions.put(INTERNAL_SESSION_ID, mInternalSession);
+		mSessionMapper.add(mInternalSession);
 		loadConfiguration( pTeConfigurationFile );
 		mMessageFactory = new MessageFactory();
 		TeAppCntx.getInstance().setSessionController( this );
@@ -90,7 +114,7 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 			mMsgLogger = new MessageLogger( tFilename, mMessageLoggerFlushMode, mMessagerLoggerFlushInterval);
 			mLog.info("Create message log file \"" + mMsgLogger.getFilename() + "\"");
 		}
-
+		MgmtComponentInterface tMgmt = TeAppCntx.getInstance().getMgmtService().registerComponent( TeMgmtServices.SessionService, 0, this );
 	}
 
 	private void initializeAuthenticator() {
@@ -108,9 +132,7 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 	}
 
 	public boolean validateAuthId( String pAuthId ) {
-		synchronized( SessionController.class ) {
-			return mSessions.values().stream().anyMatch( s -> s.getApiAuthId().contentEquals( pAuthId ));
-		}
+		return mSessionMapper.validateApiAuthId( pAuthId );
 	}
 
 
@@ -122,26 +144,22 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 					StatusMessageBuilder.error(("Logon, account session id object for user " + pLogonRequest.getAccount().get() + " must not be null"), pLogonRequest.getRef().get()));
 		}
 
-		synchronized (SessionController.class) {
-			if (mSessions.containsKey(pSessionId)) {
-				return mSessions.get(pSessionId); // already signed in
-			}
-			if (mAuthenticator.logon(pLogonRequest.getAccount().get(), pLogonRequest.getPassword().get())) {
-				SessionCntxInterface tSessCntx = new SessionCntx(pLogonRequest.getAccount().get(), pSessionId);
-				mSessions.put(pSessionId, tSessCntx);
-				return tSessCntx;
-			}
+		SessionCntxInterface tSessCntx = mSessionMapper.getById( pSessionId );
+		if (tSessCntx != null) {
+				return tSessCntx; // already signed in
+		}
+		Account tAccount = mAuthenticator.logon(pLogonRequest.getAccount().get(), pLogonRequest.getPassword().get());
+		if (tAccount != null) {
+			tSessCntx = new SessionCntx(tAccount.getAccount().get(), pSessionId);
+			mSessionMapper.add( tSessCntx );
+			return tSessCntx;
 		}
 		mLog.warn("Unauthorized logon, account: " + pLogonRequest.getAccount().get() + " sessionid: " + pSessionId);
 		throw new TeException( HttpStatus.UNAUTHORIZED.value(),
 				StatusMessageBuilder.error("Unauthorized logon", pLogonRequest.getRef().get()));
 	}
 
-	public SessionCntxInterface getSessionContext( String pSessionId ) {
-		synchronized (SessionController.class) {
-			return mSessions.get(pSessionId);
-		}
-	}
+
 
 	private void validateRequest( String pJsonRqstMsgString ) throws Exception
 	{
@@ -155,11 +173,7 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 	 */
 
 	private SessionCntxInterface removeSession( String pSessionId ) {
-		SessionCntxInterface tSessCntx = null;
-		synchronized (SessionController.class) {
-			tSessCntx = mSessions.remove( pSessionId );
-		}
-		return tSessCntx;
+		return mSessionMapper.removeById( pSessionId );
 	}
 
 	@Override
@@ -173,20 +187,16 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 	}
 
 	@Override
-	public SessionCntxInterface getSessionCntx(String pSessionId) {
-		synchronized (SessionController.class) {
-			return mSessions.get(pSessionId);
-		}
+	public SessionCntxInterface getSessionContext(String pSessionId) {
+		return mSessionMapper.getById(pSessionId);
 	}
+
 	public SessionCntxInterface getSessionCntxByAuthId(String pApiAuthId) {
-		synchronized (SessionController.class) {
-			for( SessionCntxInterface sc : mSessions.values()) {
-				if (pApiAuthId.contentEquals(sc.getApiAuthId())) {
-					return sc;
-				}
-			}
-		}
-		return null;
+		return mSessionMapper.getSessionCntxByAuthId(pApiAuthId);
+	}
+
+	public List<SessionCntxInterface> getSessionContextByAccount(String pAccountId ) {
+		return mSessionMapper.getByAccount( pAccountId );
 	}
 
 	public MessageInterface validateMessage( String pJsonRqstMsgStr ) throws Exception
@@ -230,9 +240,7 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 		}
 		String tRef = pRqstMsg.getRef().get();
 
-		synchronized (SessionController.class) {
-			tSessionCntx = mSessions.get(pSessionId);
-		}
+		tSessionCntx = mSessionMapper.getById(pSessionId);
 		if (tSessionCntx == null) {
 			mLog.warn("session id : " + pSessionId.toString() + " is not valid any more");
 			return StatusMessageBuilder.error("session id : " + pSessionId + " is not valid any more", tRef);
@@ -340,5 +348,84 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 		mSessionCntx = this.logoninternal( tLogonRequest, pSessionId );
 		mLog.info("successfull logon: " + tUsrStr + " session id: " + pSessionId);
 		return tLogonRsp.setRef(tRef).setSessionAuthId( mSessionCntx.getApiAuthId());
+	}
+
+	@Override
+	public MgmtMessageResponse mgmtRequest(MgmtMessageRequest pMgmtRequest) {
+		if (pMgmtRequest instanceof MgmtGetLogMessagesRequest) {
+			return mgmtGetlogMsgData((MgmtGetLogMessagesRequest) pMgmtRequest );
+		}
+		throw new RuntimeException("mgmt request not supported " + pMgmtRequest.getMessageName());
+	}
+
+
+	private boolean matchName(Path pPath, String pDateStr ) {
+		Pattern tNamePatter = (pDateStr == null) ?
+				Pattern.compile("TeMessageLog-(.+)\\.json") :
+				Pattern.compile("TeMessageLog-" + pDateStr.replace('-','_') + "(.+)\\.json");
+		return tNamePatter.matcher(pPath.getFileName().toString()).matches();
+	}
+
+	private List<File> listMsgLogFiles( String pDateStr) {
+		String tLogDir = "./";
+		List<File> tMsgLogFiles = new ArrayList<>();
+		try {
+			String tFilename = AuxJson.navigateString(mConfiguration,"messageLoggerFile", "logs/TeMessageLoggger-%datetime%.log");
+			int tIdx = tFilename.lastIndexOf("/");
+			if ( tIdx >=1 ) { tLogDir = tFilename.substring(0, tIdx); }
+
+			Files.walk(Paths.get(tLogDir))
+					.filter(Files::isRegularFile)
+					.filter( file -> matchName( file , pDateStr ))
+					.forEach( file -> tMsgLogFiles.add( file.toFile()));
+		}
+		catch(IOException e) {
+			e.printStackTrace();
+		}
+		return tMsgLogFiles;
+	}
+
+	private MgmtGetLogMessagesResponse mgmtGetlogMsgData( MgmtGetLogMessagesRequest pRequest )
+	{
+
+		List<MsgLogEntry> tLogMessages = new ArrayList<>();
+		List<File> tMsgLogFiles = listMsgLogFiles( pRequest.getDateFilter().orElse( null ));
+		for( File tFile : tMsgLogFiles) {
+			if (!scanMsgLogFile(tFile, pRequest, tLogMessages)) {
+				break;
+			}
+		}
+
+		MgmtGetLogMessagesResponse tResponse = new MgmtGetLogMessagesResponse().setRef( pRequest.getRef().get());
+		tResponse.setLogMessages( tLogMessages );
+		return tResponse;
+	}
+
+	private boolean scanMsgLogFile( File pFile, MgmtGetLogMessagesRequest pRequest, List<MsgLogEntry> pMsgLogEntries ) {
+		MgmtMsgLogFilter tFilter = new MgmtMsgLogFilter( pRequest );
+		int tMaxLines = pRequest.getMaxLines().get();
+		String tLine;
+
+
+		try {
+			BufferedReader fp = new BufferedReader(new FileReader( pFile ));
+			while ((tLine = fp.readLine()) != null) {
+				MsgLogEntry tLogEntry = tFilter.match(tLine);
+				if (tLogEntry != null) {
+					pMsgLogEntries.add(tLogEntry);
+					if (pMsgLogEntries.size() >= tMaxLines) {
+						fp.close();
+						return false;
+					}
+				}
+			}
+			fp.close();
+		}
+		catch( IOException e) {
+			mLog.error("failed to open TE message log file ", e);
+			return false;
+		}
+
+		return true;
 	}
 }

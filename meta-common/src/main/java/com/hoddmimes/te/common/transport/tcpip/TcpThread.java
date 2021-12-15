@@ -1,3 +1,20 @@
+/*
+ * Copyright (c)  Hoddmimes Solution AB 2021.
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hoddmimes.te.common.transport.tcpip;
 
 import java.io.IOException;
@@ -21,8 +38,10 @@ public class TcpThread extends Thread
 	private Object 					mAppCntx;
 
 
+	public TcpThread(SocketChannel pChannel) {
+		this( pChannel, null);
+	}
 
-	
 	public TcpThread(SocketChannel pChannel, TcpThreadCallbackIf pCallbackIf) {
 		mChannel = pChannel;
 		mClosed = false;
@@ -81,8 +100,50 @@ public class TcpThread extends Thread
 		  catch( IOException e ) {}
 	  }
 	}
+
+	public synchronized byte[] transceive( byte[] pBuffer ) throws IOException {
+		if (mCallbackIf != null) {
+			throw new IOException("Thread was started in async mode, sync reads are not permitted");
+		}
+		send( pBuffer );
+		return read();
+	}
+
+	public synchronized byte[]  read() throws IOException {
+		if (mCallbackIf != null) {
+			throw new IOException("Thread was started in async mode, sync reads are not permitted");
+		}
+
+		ByteBuffer tHdr = ByteBuffer.allocate(8);
+		ByteBuffer tData = ByteBuffer.allocate(BUFFER_SIZE);
+		ByteBuffer tReadBuffer = null;
+		byte[] tBuffer;
+		int tSize;
+
+		// Read header
+		tHdr.clear();
+		while (tHdr.position() < 8) {
+			mChannel.read(tHdr);
+		}
+
+		tHdr.flip();
+		if (tHdr.getInt() != MAGIC_SIGN) {
+			throw new IOException("tcp/ip read, invalid magic sign");
+		}
+		tSize = tHdr.getInt();
+		tReadBuffer = ByteBuffer.allocate(tSize);
+		tReadBuffer.clear();
+		tReadBuffer.limit(tSize);
+		while (tReadBuffer.position() < tSize) {
+			mChannel.read(tReadBuffer);
+		}
+		tBuffer = new byte[tSize];
+		tReadBuffer.flip();
+		tReadBuffer.get(tBuffer);
+		return tBuffer;
+	}
 	
-	public void send( byte[] pBuffer ) throws IOException
+	public synchronized void send( byte[] pBuffer ) throws IOException
 	{
 		ByteBuffer bb = ByteBuffer.allocate( pBuffer.length + 8);
 		bb.putInt( MAGIC_SIGN );
@@ -95,6 +156,10 @@ public class TcpThread extends Thread
 	}
 	
 	public void run() {
+		if (mCallbackIf == null) {
+			return;
+		}
+
 		ByteBuffer tHdr = ByteBuffer.allocate(8);
 		ByteBuffer tData = ByteBuffer.allocate( BUFFER_SIZE );
 		ByteBuffer tReadBuffer = null;

@@ -1,3 +1,21 @@
+
+/*
+ * Copyright (c)  Hoddmimes Solution AB 2021.
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hoddmimes.te.management.gui.table;
 
 import javax.swing.*;
@@ -5,11 +23,12 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.List;
 
 public class TableModel<T> extends AbstractTableModel
 {
-    List<T> mObjects = null;
+    LinkedList<T> mObjects = null;
     ColumnModel mTableColumnModel = null;
     ObjectRenderer mCellRenderer = new ObjectRenderer();
     HeaderRender mHeaderRender = new HeaderRender();
@@ -18,7 +37,7 @@ public class TableModel<T> extends AbstractTableModel
 
 
     public TableModel(Class<T> pObjectClass ) {
-        mObjects = new ArrayList<>();
+        mObjects = new LinkedList<>();
         mRenderCallback = null;
 
         mTableAttributeHandle = new TableAttributeHandler(pObjectClass );
@@ -28,6 +47,9 @@ public class TableModel<T> extends AbstractTableModel
     }
 
 
+    public void remove( T pObject ) {
+        mObjects.remove( pObject );
+    }
 
     public void remove( int pRow ) {
        if (pRow < mObjects.size()) {
@@ -93,9 +115,13 @@ public class TableModel<T> extends AbstractTableModel
     }
 
     public List<T> getObjects() {
-        return mObjects;
+        List<T> tList = new LinkedList<>( mObjects );
+        return tList;
     }
 
+    public T getObjectsAtRow( int pRow ) {
+       return mObjects.get( pRow );
+    }
 
     T getObjectAtRow( int pRow  ) {
         if ((pRow >= 0) && (pRow < mObjects.size())) {

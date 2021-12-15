@@ -1,19 +1,34 @@
-import com.hoddmimes.jaux.txlogger.*;
-import com.hoddmimes.jsontransform.MessageInterface;
-import com.hoddmimes.te.common.AuxJson;
-import com.hoddmimes.te.messages.generated.PriceLevel;
 
+/*
+ * Copyright (c)  Hoddmimes Solution AB 2021.
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.regex.Pattern;
+
 
 public class Test extends Thread {
 		Integer x;
@@ -24,13 +39,43 @@ public class Test extends Thread {
 	}
 
 
+
+
 	private void test() {
-		Integer v1 = null,v2 = 15;
+		List<Foo> tList = new ArrayList<>();
+		tList.add( new Foo(1,"Author"));
+		tList.add( new Foo(1,"Fedor"));
+		tList.add( new Foo(1,"Burt"));
+		tList.add( new Foo(1,"Xmen"));
+		tList.add( new Foo(1,"Cesar"));
+		tList.add( new Foo(1,"Kantor"));
+		tList.add( new Foo(1,"David"));
 
-		if (v1 == x) {
-			System.out.println("Same 1");
-		}
-
-
+		int tValue = Collections.binarySearch( tList, new Foo(1,"Kantor"), new FooSorter());
+		System.out.println( String.valueOf( tValue ));
 	}
+
+
+	class Foo {
+		int intValue;
+		String strValue;
+
+		Foo( int pInt, String pString ) {
+			intValue = pInt;
+			strValue = pString;
+		}
+	}
+
+	class FooSorter implements Comparator<Foo>
+	{
+		@Override
+		public int compare(Foo o1, Foo o2) {
+			return o1.strValue.compareTo(o2.strValue);
+		}
+	}
+
+
+
 }
+
+

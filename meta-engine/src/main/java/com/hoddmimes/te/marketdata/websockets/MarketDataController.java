@@ -1,3 +1,20 @@
+/*
+ * Copyright (c)  Hoddmimes Solution AB 2021.
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hoddmimes.te.marketdata.websockets;
 
 
@@ -21,7 +38,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 @EnableWebSocket
 public class MarketDataController extends MarketDataBase implements WebSocketConfigurer, Runnable
 {
-    public record BdxQueueItem( EngineBdxInterface mBdx, SessionCntxInterface mSessCntx){}
+    public record BdxQueueItem( EngineBdxInterface mBdx, String mAccountId){}
 
 
     WebSocketHandler mWebSocketHandler;
@@ -46,9 +63,9 @@ public class MarketDataController extends MarketDataBase implements WebSocketCon
 
 
     @Override
-    public void queueBdxPrivate(SessionCntxInterface pSessionCntx, EngineBdxInterface pBdx) {
+    public void queueBdxPrivate(String pAccountId, EngineBdxInterface pBdx) {
         try {
-            mBdxQueue.put( new BdxQueueItem( pBdx, pSessionCntx ));
+            mBdxQueue.put( new BdxQueueItem( pBdx, pAccountId ));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -65,8 +82,8 @@ public class MarketDataController extends MarketDataBase implements WebSocketCon
     }
 
     @Override
-    protected void sendPrivateBdx(SessionCntxInterface pSessionCntxInterface, EngineBdxInterface pBdx) {
-        mWebSocketHandler.sendPrivateBdx( pSessionCntxInterface, pBdx);
+    protected void sendPrivateBdx(String pAccountId, EngineBdxInterface pBdx) {
+        mWebSocketHandler.sendPrivateBdx( pAccountId, pBdx);
     }
 
     @Override
@@ -75,10 +92,10 @@ public class MarketDataController extends MarketDataBase implements WebSocketCon
     }
 
     private void sendBdx( BdxQueueItem pBdxQueueItem) {
-        if (pBdxQueueItem.mSessCntx == null) {
+        if (pBdxQueueItem.mAccountId == null) {
             sendPublicBdx( pBdxQueueItem.mBdx );
         } else {
-            sendPrivateBdx( pBdxQueueItem.mSessCntx, pBdxQueueItem.mBdx);
+            sendPrivateBdx( pBdxQueueItem.mAccountId, pBdxQueueItem.mBdx);
         }
     }
 

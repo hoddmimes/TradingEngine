@@ -1,3 +1,20 @@
+/*
+ * Copyright (c)  Hoddmimes Solution AB 2021.
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hoddmimes.te.management.gui;
 
 import com.google.gson.JsonArray;
@@ -27,7 +44,7 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 	JTextField mAccountTxt;
 	JPasswordField mPasswordField;
 	JPasswordField mPasswordConfirmField;
-	JCheckBox mEnabledChkBox;
+	JCheckBox mSuspendedChkBox;
 	int mSelectedRow = -1;
 
 	JButton mCreatBtn;
@@ -104,6 +121,8 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 		}
 	}
 	private void updateAccount() {
+		boolean tUpdatePassword = false;
+
 		String tUsername = mAccountTxt.getText();
 		if (tUsername.isEmpty() || tUsername.isBlank()) {
 			JOptionPane.showMessageDialog(this,
@@ -113,23 +132,41 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 			return;
 		}
 		String tPassword = mPasswordField.getText();
-		if (tUsername.isEmpty() || tUsername.isBlank()) {
+		if (tPassword.isEmpty() || tPassword.isBlank()) {
 			JOptionPane.showMessageDialog(this,
-					"Account must not be empty or blank",
+					"Password must not be empty or blank",
 					"Invalid account",
 					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
+		String tPasswordConfirm = mPasswordConfirmField.getText();
+		if ((!tPasswordConfirm.isEmpty()) && (!tPasswordConfirm.isBlank())) {
+			tUpdatePassword = true;
+			if (!tPasswordConfirm.contentEquals( tPassword)) {
+				JOptionPane.showMessageDialog(this,
+						"Confirm password must not be same as password",
+						"Invalid Password",
+						JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+		}
+
+
+
 		JsonObject jUser = getJsonUser( tUsername );
-		jUser.addProperty("password", AccountX.hashPassword(tPassword));
-		jUser.addProperty( "enabled", mEnabledChkBox.isSelected());
+		if (tUpdatePassword) {
+			jUser.addProperty("password", AccountX.hashPassword(tUsername.toUpperCase() + tPassword));
+		}
+		jUser.addProperty( "suspended", mSuspendedChkBox.isSelected());
 
 	    // Update table model
 		java.util.List<AccountEntry> tTableUsers =  mAccountTableModel.getObjects();
 		for( AccountEntry ue : tTableUsers) {
 			if (ue.mAccount.contentEquals( tUsername )) {
-				ue.mPassword = AccountX.hashPassword(tPassword);
-				ue.mEnabled = String.valueOf( mEnabledChkBox.isSelected());
+				if (tUpdatePassword) {
+					ue.mPassword = AccountX.hashPassword(tUsername.toUpperCase() + tPassword);
+				}
+				ue.mSuspended = String.valueOf( mSuspendedChkBox.isSelected());
 				mAccountTableModel.fireTableDataChanged();
 				break;
 			}
@@ -177,13 +214,13 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 
 		com.hoddmimes.te.messages.generated.Account tAccount = new com.hoddmimes.te.messages.generated.Account();
 		tAccount.setAccount( tUsername );
-		tAccount.setPassword( AccountX.hashPassword( tPassword ));
-		tAccount.setEnabled( mEnabledChkBox.isSelected());
+		tAccount.setPassword( AccountX.hashPassword( tUsername.toUpperCase() + tPassword ));
+		tAccount.setSuspended( mSuspendedChkBox.isSelected());
 
 		JsonArray jUsrArr = jAccounts.get("accounts").getAsJsonArray();
 		jUsrArr.add( tAccount.toJson() );
 
-		mAccountTableModel.addEntry(new AccountEntry( tUsername, tAccount.getPassword().get(), tAccount.getEnabled().get()));
+		mAccountTableModel.addEntry(new AccountEntry( tUsername, tAccount.getPassword().get(), tAccount.getSuspended().get()));
 
 		saveUsers();
 	}
@@ -266,13 +303,13 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 		JsonArray tUsrArr = jAccounts.get("accounts").getAsJsonArray();
 		for (int i = 0; i < tUsrArr.size(); i++) {
 			JsonObject u = tUsrArr.get(i).getAsJsonObject();
-			AccountEntry ue = new AccountEntry(u.get("account").getAsString(), u.get("password").getAsString(), u.get("enabled").getAsBoolean());
+			AccountEntry ue = new AccountEntry(u.get("account").getAsString(), u.get("password").getAsString(), u.get("suspended").getAsBoolean());
 			mAccountTableModel.addEntry( ue );
 		}
 
 
 
-		mTable = new Table(mAccountTableModel, new Dimension(mAccountTableModel.getPreferedWith(), 140), this);
+		mTable = new Table(mAccountTableModel, new Dimension(mAccountTableModel.getPreferedWith() + 20, 220), this);
 		mTable.setBackground(Color.white);
 
 		JPanel tTablePanel = new JPanel();
@@ -346,11 +383,11 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 
 		cb.gridx = 0; cb.gridy++;
 		cb.insets = new Insets(10,10,10,10);
-		mEnabledChkBox = new JCheckBox("Enabled");
-		mEnabledChkBox.setSelected( true );
-		mEnabledChkBox.setFont( DEFAULT_FONT );
-		mEnabledChkBox.setPreferredSize(new Dimension(150,22));
-		tInPanel.add( mEnabledChkBox, cb );
+		mSuspendedChkBox = new JCheckBox("Suspended");
+		mSuspendedChkBox.setSelected( false );
+		mSuspendedChkBox.setFont( DEFAULT_FONT );
+		mSuspendedChkBox.setPreferredSize(new Dimension(150,22));
+		tInPanel.add(mSuspendedChkBox, cb );
 
 		tRootPanel.add( tInPanel, BorderLayout.SOUTH);
 		return tRootPanel;
@@ -429,7 +466,7 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 			mTable.setSelectedRow( pRow );
 			mAccountTxt.setText( pAccountEntry.mAccount);
 			mPasswordField.setText( pAccountEntry.mPassword);
-			mEnabledChkBox.setSelected( Boolean.parseBoolean( pAccountEntry.mEnabled));
+			mSuspendedChkBox.setSelected( Boolean.parseBoolean( pAccountEntry.mSuspended));
 			mUpdateBtn.setEnabled( true );
 			mDeleteBtn.setEnabled( true );
 			mCreatBtn.setEnabled( false );
@@ -445,7 +482,7 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 			mCreatBtn.setEnabled( true );
 			mAccountTxt.setText("");
 			mPasswordField.setText("");
-			mEnabledChkBox.setSelected(true);
+			mSuspendedChkBox.setSelected(true);
 			mAccountTxt.setEditable( true );
 			//mAccountTableModel.doubleClickedClear();
 			mSelectedRow = -1;
@@ -482,13 +519,13 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 
 		public String mAccount;
 		public String mPassword;
-		public String mEnabled;
+		public String mSuspended;
 
 
-		public AccountEntry(String pAccount, String pPassword, boolean pEnabled ) {
+		public AccountEntry(String pAccount, String pPassword, boolean pSuspended ) {
 			mAccount = pAccount;
 			mPassword = pPassword;
-			mEnabled = String.valueOf( pEnabled );
+			mSuspended = String.valueOf( pSuspended );
 		}
 
 
@@ -502,9 +539,9 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 			return mPassword;
 		}
 
-		@TableAttribute(header = "Enabled", column = 3, width = 65)
-		public String getEnabled() {
-			return mEnabled;
+		@TableAttribute(header = "Suspended", column = 3, width = 65)
+		public String getSuspended() {
+			return mSuspended;
 		}
 
 	}

@@ -18,7 +18,7 @@ plugins {
 
 group 'com.hoddmimes'
 version '1.0'
-def appVersion = "1.0";
+def appVersion = "1.0"
 
 
 repositories {
@@ -48,7 +48,7 @@ dependencies {
 
 }
 task buildFatJar (type: Jar ) {
-    archiveBaseName= 'te';
+    archiveBaseName= 'te'
     destinationDirectory = file("./build/libs/")
 
     from {

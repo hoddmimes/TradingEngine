@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Messages mongoSupport="false">
+   <Imports>
+       <Import path="com.hoddmimes.te.messages.*"/>
+   </Imports>
+
+
+    <Message name="MgmtStatusResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="isOk" type="boolean" mandatory="true"/>
+        <Attribute name="message" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtComponent" rootMessage="false">
+        <Attribute name="name" type="String" mandatory="true"/>
+        <Attribute name="port" type="int" mandatory="true"/>
+        <Attribute name="cretime" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtConfigurationBdx"  rootMessage="true">
+        <Attribute name="host" type="String" mandatory="true"/>
+        <Attribute name="components" type="MgmtComponent" list="array"/>
+    </Message>
+
+    <Message name="MgmtConfigurationPingBdx"  rootMessage="true">
+    </Message>
+
+    <Message name="MgmtGetMarketsRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetMarketsResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="markets" type="Market" list="array" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtSetMarketsRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="marketId" type="int" mandatory="true"/>
+        <Attribute name="hardClose" type="boolean" mandatory="true"/>
+        <Attribute name="preOpen" type="String"/>
+        <Attribute name="open" type="String"/>
+        <Attribute name="close" type="String"/>
+        <Attribute name="state" type="String"/>
+    </Message>
+
+    <Message name="MgmtSetMarketsResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="markets" type="Market" list="array" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetSymbolsRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="marketId" type="int" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetSymbolsResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="symbols" type="Symbol" list="array" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtSetSymbolRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="marketId" type="int" mandatory="true"/>
+        <Attribute name="suspended" type="boolean" mandatory="true"/>
+        <Attribute name="sid" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtSetSymbolResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="symbol" type="Symbol" mandatory="true"/>
+    </Message>
+
+
+    <Message name="MgmtGetAccountsRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetAccountsResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="configFile" type="String" mandatory="true"/>
+        <Attribute name="accounts" type="Account" list="array" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtSetAccountsRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="accountId" type="String" mandatory="true"/>
+        <Attribute name="suspended" type="boolean" mandatory="true"/>
+
+    </Message>
+
+    <Message name="MgmtSetAccountsResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="account" type="Account" mandatory="true"/>
+    </Message>
+
+
+
+    <Message name="MgmtGetAccountOrdersRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="accounts" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetAccountOrdersResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="orders" type="OwnOrder" list="array" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtDeleteOrderRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="order" type="OwnOrder" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtDeleteOrderResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="deleted" type="boolean" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtDeleteAllOrdersRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="account" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtDeleteAllOrdersResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="deleted" type="int" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetTradesRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetTradesResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="trades" type="ContainerTrade" list="array" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtRevertTradeRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="trade" type="ContainerTrade" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtRevertTradeResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="revertedTrades" type="ContainerTrade" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetLogMessagesRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="accountFilter" type="String"/>
+        <Attribute name="timeFilter" type="String"/>
+        <Attribute name="msgFilter" type="String"/>
+        <Attribute name="dateFilter" type="String"/>
+        <Attribute name="maxLines" type="int"/>
+    </Message>
+
+    <Message name="MsgLogEntry" rootMessage="false">
+        <Attribute name="timeStamp" type="long" mandatory="true"/>
+        <Attribute name="account" type="String" mandatory="true"/>
+        <Attribute name="logMsg" type="String"/>
+    </Message>
+
+    <Message name="MgmtGetLogMessagesResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="logMessages" type="MsgLogEntry" list="array"/>
+    </Message>
+
+    <Message name="MgmtAddAccountRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="accountId" type="String"/>
+        <Attribute name="hashedPassword" type="String"/>
+        <Attribute name="suspended" type="boolean"/>
+    </Message>
+
+    <Message name="MgmtAddAccountResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="account" type="Account"/>
+        <Attribute name="isAddded" type="boolean"/>
+        <Attribute name="statusMessage" type="String"/>
+    </Message>
+
+    <Message name="MgmtUpdateAccountRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="accountId" type="String"/>
+        <Attribute name="hashedPassword" type="String"/>
+        <Attribute name="suspended" type="boolean"/>
+    </Message>
+
+    <Message name="MgmtUpdateAccountResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="account" type="Account"/>
+        <Attribute name="isUpdated" type="boolean"/>
+    </Message>
+
+
+
+    <Message name="MgmtDeleteAccountRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="account" type="Account"/>
+    </Message>
+
+    <Message name="MgmtDeleteAccountResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="isDeleted" type="boolean"/>
+    </Message>
+
+
+
+
+</Messages>

@@ -2,7 +2,9 @@
   "baseWss": {"uri": "wss://localhost:8883/marketdata"},
   "requests" : [
     { "method" : "POST", "endpoint" :  "logon", "body" : {"account":"test", "password":"test","ref" : "sr-71"}},
-    { "method" : "POST", "endpoint" :  "marketdata", "body":  {"command":"ADD", "subject" :  "/BdxBBO/..."}},
+    { "method" : "POST", "endpoint" :  "marketdata", "body":  {"command":"ADD", "topic" :  "/BdxBBO/..."}},
+    { "method" : "POST", "endpoint" :  "marketdata", "body":  {"command":"ADD", "topic" :  "/BdxOwnOrderbookChange/..."}},
+    { "method" : "POST", "endpoint" :  "marketdata", "body":  {"command":"ADD", "topic" :  "/BdxOwnTrade/..."}},
 
     { "method" : "GET", "endpoint" :  "queryMarkets" },
     { "method" : "GET", "endpoint" :  "querySymbols/1" },
@@ -48,7 +50,7 @@
     { "method" : "POST", "endpoint" : "addOrder", "body" : {"sid":"1:AMZN","price":99.30,"quantity": 94,"side":"BUY","ref" : "0038"}},
     { "method" : "POST", "endpoint" : "addOrder", "body" : {"sid":"1:AMZN","price":99.80,"quantity": 85,"side":"BUY","ref" : "0039"}},
     { "method" : "POST", "endpoint" : "addOrder", "body" : {"sid":"1:AMZN","price":99.60,"quantity": 83,"side":"BUY","ref" : "0040"}},
-    { "method" : "POST", "endpoint" : "addOrder", "body" : {"sid":"1:AMZN","price":100.10,"quantity": 86,"side":"SELL","ref" : "0041"}},
+    { "method" : "POST", "endpoint" : "addOrder", "body" : {"sid":"1:AMZN","price":100.80,"quantity": 11,"side":"BUY","ref" : "0041"}},
     { "method" : "POST", "endpoint" : "addOrder", "body" : {"sid":"1:AMZN","price":100.50,"quantity": 89,"side":"SELL","ref" : "0042"}},
     { "method" : "POST", "endpoint" : "addOrder", "body" : {"sid":"1:AMZN","price":100.30,"quantity": 91,"side":"SELL","ref" : "0043"}},
     { "method" : "POST", "endpoint" : "addOrder", "body" : {"sid":"1:AMZN","price":100.30,"quantity": 80,"side":"SELL","ref" : "0044"}},

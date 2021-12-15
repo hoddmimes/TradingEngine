@@ -29,6 +29,7 @@
       "requestCacheSize":100
     },
     "instrumentContainerConfiguration" : {
+      "startState" : "normal",
       "dataStore" : "configuration/InstrumentDefinitions.json"
     },
     "connectorConfiguration": {
@@ -53,6 +54,11 @@
     },
     "matchinEngine": {
 
+    },
+    "management" : {
+      "localAddress" : "192.168.42.100",
+      "groupPort" : 3939,
+      "groupAddress" : "224.20.20.20"
     }
   }
 }

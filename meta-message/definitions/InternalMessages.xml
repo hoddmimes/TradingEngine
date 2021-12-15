@@ -8,7 +8,7 @@
     <Message name="Account" rootMessage="false">
         <Attribute name="account" type="String" mandatory="true" />
         <Attribute name="password" type="String" mandatory="true"/>
-        <Attribute name="enabled" type="boolean" mandatory="true"/>
+        <Attribute name="suspended" type="boolean" mandatory="true"/>
     </Message>
 
 
@@ -72,12 +72,13 @@
         <Attribute name="id" type="int" mandatory="true"/>
         <Attribute name="name" type="String" mandatory="true"/>
         <Attribute name="description" type="String" mandatory="true"/>
+        <Attribute name="marketPreOpen" type="String" mandatory="true"/>
         <Attribute name="marketOpen" type="String" mandatory="true"/>
         <Attribute name="marketClose" type="String" mandatory="true"/>
         <Attribute name="minPricePctChg" type="double" mandatory="true"/>
         <Attribute name="maxPricePctChg" type="double" mandatory="true"/>
         <Attribute name="enabled" type="boolean" mandatory="true"/>
-        <Attribute name="closed" type="boolean" mandatory="true"/>
+        <Attribute name="state" type="String" mandatory="false"/> <!-- will be set as part of the initial load -->
     </Message>
 
     <Message name="Symbol" rootMessage="false">
@@ -88,8 +89,7 @@
         <Attribute name="tickSize" type="double" mandatory="true"/>
         <Attribute name="minPricePctChg" type="double"/>
         <Attribute name="maxPricePctChg" type="double"/>
-        <Attribute name="enabled" type="boolean"/>
-        <Attribute name="closed" type="boolean"/>
+        <Attribute name="suspended" type="boolean"/>
     </Message>
 
 </Messages>

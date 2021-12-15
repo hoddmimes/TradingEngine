@@ -1,0 +1,92 @@
+{
+  "baseHttp": {
+    "uri": "https://localhost:8883/te/"
+  },
+  "baseWss": {
+    "uri": "wss://localhost:8883/marketdata"
+  },
+  "clients": [
+    {
+      "account": "joshua",
+      "password": "test",
+      "broadcast": true
+    },
+    {
+      "account": "donald",
+      "password": "test",
+      "broadcast": false
+    },
+    {
+      "account": "snoppy",
+      "password": "test",
+      "broadcast": false
+    },
+    {
+      "account": "arthur",
+      "password": "test",
+      "broadcast": false
+    },
+    {
+      "account": "elvis",
+      "password": "test",
+      "broadcast": false
+    },
+    {
+      "account": "winston",
+      "password": "test",
+      "broadcast": false
+    },
+    {
+      "account": "franklin",
+      "password": "test",
+      "broadcast": false
+    },
+    {
+      "account": "hannes",
+      "password": "test",
+      "broadcast": false
+    },
+    {
+      "account": "vinci",
+      "password": "test",
+      "broadcast": false
+    },
+    {
+      "account": "grace",
+      "password": "test",
+      "broadcast": false
+    }
+  ],
+  "instruments": [
+    {
+      "sid": "1:AMZN",
+      "refPrice": 3419
+    },
+    {
+      "sid": "1:FB",
+      "refPrice": 327
+    },
+    {
+      "sid": "1:TSLA",
+      "refPrice": 988
+    },
+    {
+      "sid": "1:XOM",
+      "refPrice": 62
+    },
+    {
+      "sid": "2:BTC",
+      "refPrice": 433
+    },
+    {
+      "sid": "2:ETH",
+      "refPrice": 4011
+    }
+  ],
+  "execution": {
+    "orders": 400,
+    "matchingRateOneTo": 6
+  }
+}
+
+
