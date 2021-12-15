@@ -205,6 +205,23 @@
         <Attribute name="isDeleted" type="boolean"/>
     </Message>
 
+    <Message name="MgmtStatEntry" rootMessage="false">
+        <Attribute name="attribute" type="String" mandatory="true"/>
+        <Attribute name="value" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtQueryStatisticsRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtQueryStatisticsResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="statistics" type="MgmtStatEntry" list="array"/>
+    </Message>
+
+
+
+
 
 
 

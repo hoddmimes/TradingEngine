@@ -568,6 +568,20 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
+            case "MgmtQueryStatisticsRequest":
+            {
+            	MgmtQueryStatisticsRequest tMessage = new MgmtQueryStatisticsRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtQueryStatisticsResponse":
+            {
+            	MgmtQueryStatisticsResponse tMessage = new MgmtQueryStatisticsResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
             default:
               return null;
 		}	

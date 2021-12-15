@@ -64,6 +64,8 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 	OrderPanel mOrderPanel;
 	TradePanel mTradePanel;
 	MsglogPanel mMsglogPanel;
+	StatisticsPanel mStatisticsPanel;
+
 
 	IpmgSubscriber mIpmgSubscriber;
 	IpmgPublisher mIpmgPublisher;
@@ -242,6 +244,7 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 		mOrderPanel = new OrderPanel( this );
 		mTradePanel = new TradePanel( this );
 		mMsglogPanel = new MsglogPanel( this );
+		mStatisticsPanel = new StatisticsPanel(this );
 
 		mTabbedPane.addTab("Configuration", mConfigPanel );
 		mTabbedPane.addTab("Markets", mMarketPanel);
@@ -250,6 +253,7 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 		mTabbedPane.addTab("Orders", mOrderPanel);
 		mTabbedPane.addTab("Trades", mTradePanel);
 		mTabbedPane.addTab("MsgLog", mMsglogPanel);
+		mTabbedPane.addTab("Statistics", mStatisticsPanel);
 
 		mTabbedPane.setFont( Management.DEFAULT_FONT );
 
