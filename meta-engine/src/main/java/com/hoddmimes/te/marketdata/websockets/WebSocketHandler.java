@@ -23,11 +23,17 @@ import com.google.gson.JsonSyntaxException;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
+import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.management.RateItem;
+import com.hoddmimes.te.management.RateStatistics;
+import com.hoddmimes.te.management.service.MgmtCmdCallbackInterface;
+import com.hoddmimes.te.management.service.MgmtComponentInterface;
 import com.hoddmimes.te.marketdata.SubscriptionFilter;
 import com.hoddmimes.te.marketdata.SubscriptionUpdateCallbackIf;
 import com.hoddmimes.te.messages.EngineBdxInterface;
-import com.hoddmimes.te.messages.generated.SubscriptionRequest;
-import com.hoddmimes.te.messages.generated.SubscriptionResponse;
+import com.hoddmimes.te.messages.MgmtMessageRequest;
+import com.hoddmimes.te.messages.MgmtMessageResponse;
+import com.hoddmimes.te.messages.generated.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.web.socket.CloseStatus;
@@ -38,16 +44,26 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
-public class WebSocketHandler extends TextWebSocketHandler implements SubscriptionUpdateCallbackIf {
+public class WebSocketHandler extends TextWebSocketHandler implements SubscriptionUpdateCallbackIf, MgmtCmdCallbackInterface {
     private Logger mLog = LogManager.getLogger(WebSocketHandler.class);
     private ConcurrentHashMap<String, WebSocketSessionCntx> mSessions;
 
+    private RateItem mRateBdx;
+    private AtomicLong mBdxTotalBBO , mBdxTotalPriceLevel , mBdxTotalTrade;
 
     public WebSocketHandler()
     {
+        mBdxTotalBBO = new AtomicLong(0);
+        mBdxTotalTrade = new AtomicLong(0);
+        mBdxTotalPriceLevel =new AtomicLong(0);
+        mRateBdx = RateStatistics.getInstance().addRateItem("BBO broadcast");
         mSessions = new ConcurrentHashMap<>();
+        MgmtComponentInterface tMgmt = TeAppCntx.getInstance().getMgmtService().registerComponent( TeMgmtServices.MarketData, 0, this );
     }
 
 
@@ -75,8 +91,18 @@ public class WebSocketHandler extends TextWebSocketHandler implements Subscripti
 
             // ADD subscription
             if (tCommand.contentEquals("ADD")) {
+
+
                 String tSubject = tSubScr.getTopic().orElse(null);
                 if (tSubject == null) { throw new JsonSyntaxException("topic not specified"); }
+
+                Pattern tTopicPattern = Pattern.compile("^[/[^/]+]+");
+                Matcher m = tTopicPattern.matcher( tSubject );
+                if (!m.matches()) {
+                    throw new IOException("Invalid topic syntax");
+                }
+
+
                 tWsSessionCntx.mFilter.add( tSubject, this, tWsSessionCntx );
                 tSubscrRsp = new SubscriptionResponse().setIsOk(true).setMessage("successfully added filter : " + tSubject );
 
@@ -123,7 +149,7 @@ public class WebSocketHandler extends TextWebSocketHandler implements Subscripti
 
     private void sendMsgToClient( WebSocketSessionCntx pWssCntx, String pMessage  ) throws IOException
     {
-            pWssCntx.mWsSession.sendMessage( new TextMessage(  pMessage ) );
+        pWssCntx.mWsSession.sendMessage( new TextMessage(  pMessage ) );
     }
 
 
@@ -153,9 +179,22 @@ public class WebSocketHandler extends TextWebSocketHandler implements Subscripti
         }
     }
 
+    private void updateBdxStatistics( EngineBdxInterface pBdxMessage ) {
+        mRateBdx.increment();
+        if (pBdxMessage instanceof BdxBBO) {
+            mBdxTotalBBO.incrementAndGet();
+        } else if (pBdxMessage instanceof BdxPriceLevel) {
+            mBdxTotalPriceLevel.incrementAndGet();
+        } else if (pBdxMessage instanceof BdxTrade) {
+            mBdxTotalTrade.incrementAndGet();
+        }
+    }
+
     @Override
     public void distributorUpdate(String pSubjectName, EngineBdxInterface pBdxMessage, Object pCallbackParameter) {
         WebSocketSessionCntx tWssCntx = (WebSocketSessionCntx) pCallbackParameter;
+
+        updateBdxStatistics( pBdxMessage );
 
         try {
             sendMsgToClient( tWssCntx, pBdxMessage.toJson().toString());
@@ -218,8 +257,43 @@ public class WebSocketHandler extends TextWebSocketHandler implements Subscripti
         }
     }
 
+    private MgmtQueryMarketDataResponse mgmtGetMarketDataSetup(MgmtQueryMarketDataRequest pMgmtRequest) {
+        MgmtQueryMarketDataResponse tRsp = new MgmtQueryMarketDataResponse().setRef( pMgmtRequest.getRef().get());
+        tRsp.addCounters( new MgmtStatEntry().setAttribute("Total BBO broadcast").setValue( String.valueOf(mBdxTotalBBO.get())));
+        tRsp.addCounters( new MgmtStatEntry().setAttribute("Total Price Level broadcast").setValue( String.valueOf(mBdxTotalPriceLevel.get())));
+        tRsp.addCounters( new MgmtStatEntry().setAttribute("Total Trade broadcast").setValue( String.valueOf(mBdxTotalTrade.get())));
+        tRsp.addCounters( mRateBdx.get1SecMaxStat());
+        tRsp.addCounters( mRateBdx.get10SecMaxStat());
+        tRsp.addCounters( mRateBdx.get60SecMaxStat());
+
+        synchronized ( mSessions ) {
+            Iterator<WebSocketSessionCntx> tItr = mSessions.values().iterator();
+            while( tItr.hasNext() ) {
+                WebSocketSessionCntx wsc = tItr.next();
+                if ((wsc.mFilter != null) && (wsc.mFilter.getActiveSubscriptions() > 0) && (wsc.mHttpSessionCntx != null)) {
+                   List<String> tTopicList =  wsc.mFilter.getActiveSubscriptionsStrings();
+                   for( String tTopic : tTopicList ) {
+                       MgmtTropicEntry mse = new MgmtTropicEntry()
+                               .setAccount( wsc.mHttpSessionCntx.getAccount())
+                               .setSessionId(wsc.mHttpSessionCntx.getSessionId())
+                               .setTopic( tTopic );
+                       tRsp.addSubscriptions( mse );
+                   }
+
+                }
+            }
+        }
+        return tRsp;
+    }
 
 
+    @Override
+    public MgmtMessageResponse mgmtRequest(MgmtMessageRequest pMgmtRequest) {
+        if (pMgmtRequest instanceof MgmtQueryMarketDataRequest) {
+            return mgmtGetMarketDataSetup((MgmtQueryMarketDataRequest) pMgmtRequest);
+        }
+        throw new RuntimeException("Unknown Mgmt request : " + pMgmtRequest.getMessageName());
+    }
 
 
     class WebSocketSessionCntx

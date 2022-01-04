@@ -582,6 +582,62 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
+            case "MgmtQueryActiveSessionsRequest":
+            {
+            	MgmtQueryActiveSessionsRequest tMessage = new MgmtQueryActiveSessionsRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtQueryActiveSessionsResponse":
+            {
+            	MgmtQueryActiveSessionsResponse tMessage = new MgmtQueryActiveSessionsResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtQueryMatcherRequest":
+            {
+            	MgmtQueryMatcherRequest tMessage = new MgmtQueryMatcherRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtQueryMatcherResponse":
+            {
+            	MgmtQueryMatcherResponse tMessage = new MgmtQueryMatcherResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtQueryTradeRequest":
+            {
+            	MgmtQueryTradeRequest tMessage = new MgmtQueryTradeRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtQueryTradeResponse":
+            {
+            	MgmtQueryTradeResponse tMessage = new MgmtQueryTradeResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtQueryMarketDataRequest":
+            {
+            	MgmtQueryMarketDataRequest tMessage = new MgmtQueryMarketDataRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtQueryMarketDataResponse":
+            {
+            	MgmtQueryMarketDataResponse tMessage = new MgmtQueryMarketDataResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
             default:
               return null;
 		}	

@@ -256,8 +256,11 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 		mTabbedPane.addTab("Statistics", mStatisticsPanel);
 
 		mTabbedPane.setFont( Management.DEFAULT_FONT );
+		mTabbedPane.setPreferredSize( new Dimension(800,650));
+
 
 		tRootPanel.add( mTabbedPane, BorderLayout.CENTER);
+		mTabbedPane.setPreferredSize( new Dimension(860,580));
 
 		mTabbedPane.addChangeListener(new ChangeListener() {
 			@Override
@@ -281,6 +284,9 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 				}
 				if (c instanceof MsglogPanel) {
 					((MsglogPanel) c).loadAccountData();
+				}
+				if (c instanceof StatisticsPanel) {
+					((StatisticsPanel) c).loadStatisticsData();
 				}
 				tabPane.setSelectedComponent(c);
 			}

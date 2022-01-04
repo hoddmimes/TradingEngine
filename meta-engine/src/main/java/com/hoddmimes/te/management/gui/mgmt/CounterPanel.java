@@ -19,56 +19,57 @@ package com.hoddmimes.te.management.gui.mgmt;
 
 import com.hoddmimes.te.messages.generated.MgmtStatEntry;
 
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import java.awt.*;
 
 
-public class ServiceStatisticsPanel extends JPanel
+public class CounterPanel extends JPanel
 {
 	JScrollPane mScrollPane;
-	JPanel      mStatPane;
 	JPanel      mTitlePanel;
-	JPanel      mStatPanel;
+	JPanel      mCounterPanel;
 
 
-	ServiceStatisticsPanel( String pTitle ) {
+	CounterPanel( List<MgmtStatEntry> pStatElements, boolean pUseScrollPanel ) {
 		this.setLayout( new BorderLayout());
-		mTitlePanel = createTitlePane( pTitle );
 
-		this.add( mTitlePanel , BorderLayout.NORTH);
-		this.add( createStatPane(), BorderLayout.CENTER);
-
-		List<MgmtStatEntry> tList = new ArrayList<>();
-		tList.add( new MgmtStatEntry().setAttribute("Attribute foo bar ").setValue("66"));
-		tList.add( new MgmtStatEntry().setAttribute("Attribute foo bar 01 ").setValue("123452"));
-		tList.add( new MgmtStatEntry().setAttribute("Attribute foo bar 02").setValue("kalle"));
-		tList.add( new MgmtStatEntry().setAttribute("Attribute foo bar 03").setValue("51432"));
-		tList.add( new MgmtStatEntry().setAttribute("Attribute foo bar 04").setValue("77635"));
-		loadStatistics( tList );
+		this.setBorder( new EtchedBorder(3));
+		this.add( createStatPane( pUseScrollPanel ), BorderLayout.CENTER);
+		if (pStatElements != null) {
+			loadStatistics(pStatElements);
+		}
 	}
 
-	private JPanel createStatPane() {
+	CounterPanel(boolean pUseScrollPanel ) {
+		this( null, pUseScrollPanel );
+	}
+
+	private JPanel createStatPane( boolean pUseScrollPanel) {
 		JPanel tRootPane = new JPanel( new BorderLayout());
-		mStatPane = new JPanel (new GridBagLayout());
+		tRootPane.setBorder(new EmptyBorder(6,0,6,0));
+		mCounterPanel = new JPanel (new GridBagLayout());
 
-		mScrollPane = new JScrollPane( mStatPane );
-		mScrollPane.setVerticalScrollBarPolicy( ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-		mScrollPane.setPreferredSize(new Dimension(this.getWidth(), (this.getHeight() - mTitlePanel.getHeight())));
-
-		tRootPane.add( mScrollPane, BorderLayout.CENTER );
+		if (pUseScrollPanel) {
+			mScrollPane = new JScrollPane(mCounterPanel);
+			mScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+			mScrollPane.setPreferredSize(new Dimension(this.getWidth(), (this.getHeight() - mTitlePanel.getHeight())));
+			tRootPane.add( mScrollPane, BorderLayout.CENTER );
+		} else {
+			tRootPane.add(mCounterPanel, BorderLayout.CENTER );
+		}
 		return tRootPane;
 	}
 
-	private void loadStatistics( List<MgmtStatEntry> pStatistics ) {
-		int tEntries = mStatPane.getComponentCount();
+	public void loadStatistics( List<MgmtStatEntry> pStatistics ) {
+		int tEntries = mCounterPanel.getComponentCount();
 
 		// Remove all old entries
-		for( int i = tEntries; i > 0; i-- ) {
-			mStatPane.remove(i);
+		for( int i = tEntries - 1; i >= 0; i-- ) {
+			mCounterPanel.remove(i);
 		}
 
 		GridBagConstraints gc = new GridBagConstraints();
@@ -78,39 +79,10 @@ public class ServiceStatisticsPanel extends JPanel
 		gc.insets = new Insets(1,10,1, 10 );
 
 		for( MgmtStatEntry se : pStatistics ) {
-			mStatPane.add( new StatEntry( se ), gc );
+			mCounterPanel.add( new StatEntry( se ), gc );
 			gc.gridy++;
 		}
 	}
-
-
-
-	private JPanel createTitlePane(String pTitle) {
-		JPanel tRootPanel = new JPanel(new GridBagLayout());
-		tRootPanel.setBackground(BasePanel.PANEL_BACKGROUND);
-
-		GridBagConstraints gc = new GridBagConstraints();
-		gc.gridx = gc.gridy = 0;
-		gc.insets = new Insets(3, 10, 3, 10);
-		gc.fill = GridBagConstraints.HORIZONTAL;
-
-		JPanel tContentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-		tContentPanel.setBackground(BasePanel.PANEL_BACKGROUND);
-		tContentPanel.setBorder(new EtchedBorder(3));
-
-		JLabel tLabel = new JLabel(pTitle);
-		tLabel.setFont(new Font("Arial", Font.BOLD, 14));
-		tLabel.setBackground(BasePanel.PANEL_BACKGROUND);
-		tContentPanel.add(tLabel);
-		tRootPanel.add(tContentPanel);
-		return tRootPanel;
-	}
-
-
-
-
-
-
 
 
 	class StatEntry extends JPanel {

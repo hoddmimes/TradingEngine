@@ -68,8 +68,11 @@ public class TradingEngine
 		}
 	}
 
+	public void setTestMode() {
+		TeAppCntx.getInstance().setTestMode();
+	}
 
-	private void initialize() {
+	 void initialize() {
 		mLog.info("current working dir: " + currentWorkingDirURI());
 
 		// Setup Management Service
@@ -133,6 +136,9 @@ public class TradingEngine
 			mLog.fatal("fatail to declare and run connector ( " + mConnector.getClass().getSimpleName() + "), reason:  " + e.getMessage(), e );
 			System.exit(-1);
 		}
+		synchronized (this) {
+			this.notifyAll();
+		}
 	}
 
 	private void setupMgmtService() {
@@ -154,7 +160,7 @@ public class TradingEngine
 		return false;
 	}
 
-	private void parsePargument( String pArgs[]) {
+	 void parsePargument( String pArgs[]) {
 		if (pArgs.length == 0) {
 			mLog.error("configuration URI source program argument is missing");
 			System.exit(-1);

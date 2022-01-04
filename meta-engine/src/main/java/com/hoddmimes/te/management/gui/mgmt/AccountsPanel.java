@@ -92,11 +92,5 @@ public class AccountsPanel extends BasePanel
 
 
 
-	class AccountSort implements Comparator<Account>
-	{
-		@Override
-		public int compare(Account A1, Account A2) {
-			return A1.getAccount().get().compareTo( A2.getAccount().get());
-		}
-	}
+
 }

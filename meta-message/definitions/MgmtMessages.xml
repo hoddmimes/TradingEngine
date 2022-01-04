@@ -219,10 +219,96 @@
         <Attribute name="statistics" type="MgmtStatEntry" list="array"/>
     </Message>
 
+    <Message name="MgmtQueryActiveSessionsRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtActiveSession" rootMessage="false">
+        <Attribute name="account" type="String" mandatory="true"/>
+        <Attribute name="sessionId" type="String" mandatory="true"/>
+        <Attribute name="creationTime" type="long" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtQueryActiveSessionsResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="sysStarTime" type="long" />
+        <Attribute name="sessionCounters" type="MgmtStatEntry" list="array"/>
+        <Attribute name="sessions" type="MgmtActiveSession" list="array"/>
+    </Message>
 
 
 
+    <Message name="MgmtQueryMatcherRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtSymbolMatcherEntry" rootMessage="false">
+        <Attribute name="sid" type="String" mandatory="true"/>
+        <Attribute name="orders" type="int" mandatory="true"/>
+        <Attribute name="executions" type="int" mandatory="true"/>
+        <Attribute name="buyOrders" type="int" mandatory="true"/>
+        <Attribute name="sellOrders" type="int" mandatory="true"/>
+        <Attribute name="buyPrice" type="double" mandatory="true"/>
+        <Attribute name="sellPrice" type="double" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtQueryMatcherResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="matcherCounters" type="MgmtStatEntry" list="array"/>
+        <Attribute name="sids" type="MgmtSymbolMatcherEntry" list="array"/>
+    </Message>
 
 
+    <Message name="MgmtQueryTradeRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtMarketTradeEntry" rootMessage="false">
+        <Attribute name="marketId" type="int" mandatory="true"/>
+        <Attribute name="market" type="String" mandatory="true"/>
+        <Attribute name="trades" type="int" mandatory="true"/>
+        <Attribute name="volume" type="int" mandatory="true"/>
+        <Attribute name="turnover" type="double" mandatory="true"/>
+        <code>
+            public void update( int pTrades, int pVolume, double pTurnover ) {
+                mTrades = (mTrades == null) ? pTrades : (pTrades + mTrades);
+                mVolume = (mVolume == null) ? pVolume : (pVolume + mVolume);
+                mTurnover = (mTurnover == null) ? pTurnover : (pTurnover + mTurnover);
+            }
+        </code>
+    </Message>
+
+    <Message name="MgmtSymbolTradeEntry" rootMessage="false">
+        <Attribute name="sid" type="String" mandatory="true"/>
+        <Attribute name="trades" type="int" mandatory="true"/>
+        <Attribute name="volume" type="int" mandatory="true"/>
+        <Attribute name="turnover" type="double" mandatory="true"/>
+        <Attribute name="averagePrice" type="double" mandatory="true"/>
+        <Attribute name="minPrice" type="double" mandatory="true"/>
+        <Attribute name="maxPrice" type="double" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtQueryTradeResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="markets" type="MgmtMarketTradeEntry" list="array"/>
+        <Attribute name="sids" type="MgmtSymbolTradeEntry" list="array"/>
+    </Message>
+
+
+    <Message name="MgmtQueryMarketDataRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtTropicEntry" rootMessage="false">
+        <Attribute name="account" type="String" mandatory="true"/>
+        <Attribute name="sessionId" type="String" mandatory="true"/>
+        <Attribute name="topic" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtQueryMarketDataResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="counters" type="MgmtStatEntry" list="array"/>
+        <Attribute name="subscriptions" type="MgmtTropicEntry" list="array"/>
+    </Message>
 
 </Messages>

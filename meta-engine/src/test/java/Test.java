@@ -27,11 +27,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Pattern;
 
 
-public class Test extends Thread {
-		Integer x;
+public class Test {
+
 
 	public static void main(String[] args) {
 		Test t = new Test();
@@ -42,37 +43,10 @@ public class Test extends Thread {
 
 
 	private void test() {
-		List<Foo> tList = new ArrayList<>();
-		tList.add( new Foo(1,"Author"));
-		tList.add( new Foo(1,"Fedor"));
-		tList.add( new Foo(1,"Burt"));
-		tList.add( new Foo(1,"Xmen"));
-		tList.add( new Foo(1,"Cesar"));
-		tList.add( new Foo(1,"Kantor"));
-		tList.add( new Foo(1,"David"));
 
-		int tValue = Collections.binarySearch( tList, new Foo(1,"Kantor"), new FooSorter());
-		System.out.println( String.valueOf( tValue ));
 	}
 
 
-	class Foo {
-		int intValue;
-		String strValue;
-
-		Foo( int pInt, String pString ) {
-			intValue = pInt;
-			strValue = pString;
-		}
-	}
-
-	class FooSorter implements Comparator<Foo>
-	{
-		@Override
-		public int compare(Foo o1, Foo o2) {
-			return o1.strValue.compareTo(o2.strValue);
-		}
-	}
 
 
 

@@ -17,19 +17,21 @@
 
 package com.hoddmimes.te.trades;
 
+import java.util.List;
 import com.google.gson.JsonObject;
 import com.hoddmimes.jaux.txlogger.*;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
-import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
 import com.hoddmimes.te.common.interfaces.TeMgmtServices;
 import com.hoddmimes.te.engine.InternalTrade;
 import com.hoddmimes.te.engine.Order;
+import com.hoddmimes.te.instrumentctl.MarketX;
 import com.hoddmimes.te.management.service.MgmtCmdCallbackInterface;
 import com.hoddmimes.te.management.service.MgmtComponentInterface;
 import com.hoddmimes.te.messages.MgmtMessageRequest;
 import com.hoddmimes.te.messages.MgmtMessageResponse;
+import com.hoddmimes.te.messages.SID;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
 import com.hoddmimes.te.sessionctl.RequestContext;
@@ -37,6 +39,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.charset.StandardCharsets;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,10 +49,6 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 	private SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private Logger mLog = LogManager.getLogger( TradeContainer.class);
 
-
-
-
-
 	public record MarketSymbol (int market, String symbol)
 	{
 		public String toString() {
@@ -58,19 +57,25 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 	}
 
 	private JsonObject mConfiguration;
-	private ConcurrentHashMap<Integer, List<TradeX>>         mTrades;
-	private ConcurrentHashMap<Integer,ConcurrentHashMap<String, TradePriceX>>   mTradePrices;
+	private ConcurrentHashMap<Integer, List<TradeX>>                        mTradesByMkt;
+	private ConcurrentHashMap<String, List<TradeX>>                         mTradesBySid;
+
+	private ConcurrentHashMap<Integer,ConcurrentHashMap<String, TradePriceX>>   mTradePricesMap;
+
 	private ConcurrentHashMap<Integer,ConcurrentHashMap<String, BdxTrade>>      mBdxTrade;
 	private TxLoggerWriterInterface mTradeLogger;
 
 	public TradeContainer( JsonObject pTeConfiguration ) {
-		mTrades = new ConcurrentHashMap<>();
-		mTradePrices = new ConcurrentHashMap<>();
+		mTradesByMkt = new ConcurrentHashMap<>();
+		mTradesBySid = new ConcurrentHashMap<>();
+		mTradePricesMap = new ConcurrentHashMap<>();
 		mBdxTrade = new ConcurrentHashMap<>();
 
 		mConfiguration = AuxJson.navigateObject( pTeConfiguration,"TeConfiguration/tradeContainer/configuration");
-		loadTrades();
 
+		if (!TeAppCntx.getInstance().getTestMode()) {
+			loadTrades();
+		}
 		openTradelog();
 
 		TeAppCntx.getInstance().setTradeContainer( this );
@@ -100,10 +105,22 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 	}
 
 	private void toTrades( TradeX pTrade ) {
-		List<TradeX> tTrdLst = mTrades.get( pTrade.getMarketId().get());
+
+		// Add trade by Market
+		List<TradeX> tTrdLst = mTradesByMkt.get( pTrade.getMarketId().get());
 		if (tTrdLst == null) {
 			tTrdLst = new LinkedList<>();
-			mTrades.put( pTrade.getMarketId().get(), tTrdLst);
+			mTradesByMkt.put( pTrade.getMarketId().get(), tTrdLst);
+		}
+		synchronized( tTrdLst ) {
+			tTrdLst.add( pTrade);
+		}
+
+		// Add trade by SID
+		tTrdLst = mTradesBySid.get( pTrade.getSid().get());
+		if (tTrdLst == null) {
+			tTrdLst = new LinkedList<>();
+			mTradesBySid.put( pTrade.getSid().get(), tTrdLst);
 		}
 		synchronized( tTrdLst ) {
 			tTrdLst.add( pTrade);
@@ -156,18 +173,29 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 			return StatusMessageBuilder.error("No such market (" + pRqstMsg.getMarketId().get() + ")", pRqstMsg.getRef().get());
 		}
 
-		ConcurrentHashMap<String,TradePriceX> tTrdPrcMap = mTradePrices.get( pRqstMsg.getMarketId().get());
-		if (tTrdPrcMap == null) {
-			tRspMsg.setTradePrices( new ArrayList<TradePrice>());
+
+
+		if (pRqstMsg.getSid().isPresent()) {
+			List<TradePrice> tTrdPrcLst = new ArrayList<>();
+
+			Iterator<ConcurrentHashMap<String, TradePriceX>> tMktItr = mTradePricesMap.values().iterator();
+			while (tMktItr.hasNext()) {
+				TradePriceX trdprc = tMktItr.next().get(pRqstMsg.getSid());
+				if (trdprc != null) {
+					tTrdPrcLst.add(trdprc);
+					break;
+				}
+			}
+			tRspMsg.setTradePrices(tTrdPrcLst);
 			return tRspMsg;
 		}
 
-		Iterator<TradePriceX> tItr = tTrdPrcMap.values().iterator();
-		while( tItr.hasNext() ) {
-			TradePriceX tp = tItr.next();
-			if (pRqstMsg.getSid().isEmpty() || (pRqstMsg.getSid().get().contentEquals( tp.getSid().get()))) {
-				tRspMsg.addTradePrices( tp );
-			}
+
+
+		ConcurrentHashMap<String, TradePriceX> tTrdPrcMap = mTradePricesMap.get(pRqstMsg.getMarketId().get());
+		Iterator<TradePriceX> tSidItr = tTrdPrcMap.values().iterator();
+		while( tSidItr.hasNext() ) {
+			tRspMsg.addTradePrices( tSidItr.next() );
 		}
 		return tRspMsg;
 	}
@@ -176,7 +204,7 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 		QueryOwnTradesResponse tRspMsg = new QueryOwnTradesResponse();
 		tRspMsg.setRef( pRequest.getRef().get());
 
-		List<TradeX> tTrdLst = mTrades.get( pRequest.getMarketId().get());
+		List<TradeX> tTrdLst = mTradesByMkt.get( pRequest.getMarketId().get());
 		if (tTrdLst == null) {
 			tRspMsg.setTrades( new ArrayList<>());
 			return tRspMsg;
@@ -244,10 +272,10 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 
 	private synchronized void updateTradePrice(  TradeX pTrade ) {
 
-		ConcurrentHashMap<String,TradePriceX> tTrdPrcMap = mTradePrices.get( pTrade.getMarketId());
+		ConcurrentHashMap<String,TradePriceX> tTrdPrcMap = mTradePricesMap.get( pTrade.getMarketId());
 		if (tTrdPrcMap == null) {
 			tTrdPrcMap = new ConcurrentHashMap<>();
-			mTradePrices.put( pTrade.getMarketId().get(), tTrdPrcMap);
+			mTradePricesMap.put( pTrade.getMarketId().get(), tTrdPrcMap);
 		}
 		TradePriceX tp = tTrdPrcMap.get( pTrade.getSid());
 		if (tp == null) {
@@ -264,12 +292,15 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 		if (pMgmtRequest instanceof MgmtGetTradesRequest) {
 			return getTradesForMgmt((MgmtMessageRequest) pMgmtRequest);
 		}
+		if (pMgmtRequest instanceof MgmtQueryTradeRequest) {
+			return getTradeStatisticsForMgmt((MgmtQueryTradeRequest) pMgmtRequest);
+		}
 		throw new RuntimeException("Unknown Mgmt request : " + pMgmtRequest.getMessageName());
 	}
 
 	MgmtGetTradesResponse getTradesForMgmt(MgmtMessageRequest pMgmtRequest) {
 		MgmtGetTradesResponse tRsp = new MgmtGetTradesResponse().setRef( pMgmtRequest.getRef().get());
-		Iterator<List<TradeX>> tMktItr = mTrades.values().iterator();
+		Iterator<List<TradeX>> tMktItr = mTradesByMkt.values().iterator();
 		while( tMktItr.hasNext()) {
 			List<TradeX> tTrdLst = tMktItr.next();
 			synchronized ( tTrdLst) {
@@ -279,4 +310,57 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 		}
 		return tRsp;
 	}
+
+	MgmtQueryTradeResponse getTradeStatisticsForMgmt(MgmtQueryTradeRequest pMgmtRequest) {
+		NumberFormat nf = NumberFormat.getInstance();
+		nf.setGroupingUsed(true);
+		nf.setMaximumFractionDigits(2);
+		nf.setMaximumFractionDigits(2);
+
+		MgmtQueryTradeResponse tRsp = new MgmtQueryTradeResponse().setRef( pMgmtRequest.getRef().get());
+
+		HashMap<Integer, MgmtMarketTradeEntry> tMarketStatMap = new HashMap<>();
+
+		Iterator<List<TradeX>> tSidItr = mTradesBySid.values().iterator();
+		while( tSidItr.hasNext()) {
+			List<TradeX> tTrdLst = tSidItr.next();
+			int tVolume = 0, tExecutions = 0;
+			double tMinPrice = Double.MAX_VALUE, tMaxPrice = 0, tAvgPrice = 0, tTurnover = 0;
+			String tSid = tTrdLst.get(0).getSid().get();
+			synchronized ( tTrdLst ) {
+				for (TradeX trd : tTrdLst) {
+					tAvgPrice = (tAvgPrice == 0) ? trd.getPrice().get() :
+							((tVolume * tAvgPrice) + (trd.getQuantity().get() * trd.getPrice().get())) / (tVolume + trd.getQuantity().get());
+
+					tVolume += trd.getQuantity().get();
+					tTurnover += trd.getQuantity().get() * trd.getPrice().get();
+					tExecutions++;
+					if (trd.getPrice().get() < tMinPrice) {
+						tMinPrice = trd.getPrice().get();
+					}
+					if (trd.getPrice().get() > tMaxPrice) {
+						tMaxPrice = trd.getPrice().get();
+					}
+				}
+
+				MgmtSymbolTradeEntry mst = new MgmtSymbolTradeEntry().setTrades(tExecutions).setSid(tSid).setAveragePrice(tAvgPrice)
+						.setMaxPrice(tMaxPrice).setMinPrice(tMinPrice).setTurnover(tTurnover).setVolume(tVolume);
+				tRsp.addSids(mst);
+
+				SID s = new SID(tSid);
+				MgmtMarketTradeEntry tMrktStat = tMarketStatMap.get(s.getMarket());
+				if (tMrktStat == null) {
+					MarketX tMarketX = TeAppCntx.getInstance().getInstrumentContainer().getMarket( s.getMarket());
+					tMrktStat = new MgmtMarketTradeEntry().setMarket( tMarketX.getName().get()).setMarketId( s.getMarket());
+					tMarketStatMap.put( s.getMarket(), tMrktStat);
+				}
+				tMrktStat.update( tExecutions, tVolume, tTurnover );
+			}
+		}
+		tRsp.setMarkets( tMarketStatMap.values().stream().toList() );
+		return tRsp;
+	}
+
+
+
 }

@@ -1,9 +1,10 @@
 package com.hoddmimes.te.messages;
 
+import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SID
+public class SID implements Comparator<SID>
 {
 	private String  mSID;
 	private int     mMarket;
@@ -50,5 +51,13 @@ public class SID
 	@Override
 	public String toString() {
 		return mSID;
+	}
+
+	@Override
+	public int compare(SID s1, SID s2) {
+		if (s1.mMarket != s2.mMarket){
+			return (s1.mMarket - s2.mMarket);
+		}
+		return s1.mSymbol.compareTo( s2.mSymbol );
 	}
 }

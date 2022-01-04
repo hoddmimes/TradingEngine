@@ -41,11 +41,17 @@ public class Orderbook
     private double                              mLastTradePrice;
     private long                                mLastTradeTime;
     private long                                mSeqNo;
-    private BdxPriceLevel                       mPriceLevels;
     private BdxBBO                              mBBO;
+    private int                                 mOrderCount;
+    private int                                 mExecutionCount;
+
+
 
     public Orderbook(SymbolX pSymbol, Logger pLogger, MatchingEngineCallback pEngineCallbackIf ) {
         mSeqNo = 0;
+        mOrderCount = 0;
+        mExecutionCount = 0;
+
         mSymbol = pSymbol;
         mBuySide = new TreeMap<>(new PriceComarator( Order.Side.BUY));
         mSellSide = new TreeMap<>(new PriceComarator( Order.Side.SELL));
@@ -53,7 +59,6 @@ public class Orderbook
         mLastTradePrice = 0.0d;
         mLastTradePrice = 0L;
         mEngineCallbackIf = pEngineCallbackIf;
-        mPriceLevels = null;
         mBBO = new BdxBBO().setSid( mSymbol.getSid().get());
     }
 
@@ -139,7 +144,7 @@ public class Orderbook
             }
         }
 
-        // If clean ammend update the existing order
+        // If clean amend update the existing order
         if (tCleanAmend) {
             int tNewVolume = (!pAmendRqst.getDeltaQuantity().isEmpty()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
             double tNewPrice = (!pAmendRqst.getPrice().isEmpty()) ? (pAmendRqst.getPrice().get()) : tOrderToAmend.getPrice();
@@ -151,10 +156,14 @@ public class Orderbook
                         setRef(pAmendRqst.getRef().get()).setMatched(0);
             } else {
                 tOrderToAmend.setQuantity(tNewVolume);
-                tOrderToAmend.setPrice(tNewPrice);
+                if (tOrderToAmend.getPrice() != tNewPrice) {
+                    tOrderToAmend.setPrice(tNewPrice);
+                    reshuffelOrder(tOrderToAmend);
+                }
 
                 mEngineCallbackIf.orderbookChanged(mSymbol.getSid().get());
                 mEngineCallbackIf.orderModified(tOrderToAmend, pRqstCntx.getSessionContext(), ++mSeqNo);
+                updateBBO();
                 tAmendRsp = new AmendOrderResponse();
                 return tAmendRsp.setInserted(false).setOrderId(Long.toHexString(tOrderToAmend.getOrderId())).
                         setRef(pAmendRqst.getRef().get()).setMatched(0);
@@ -189,6 +198,12 @@ public class Orderbook
                     setRef(pAmendRqst.getRef().get()).setMatched(tAddOrderRsp.getMatched().get());
         }
     }
+
+    private void reshuffelOrder( Order pOrder ) {
+        Order tOrder = removeOrderFromBooK(pOrder.getOrderId() );
+        addOrderToBook( tOrder );
+    }
+
 
     List<OwnOrder> getOrdersForAccount( String pAccount ) {
         List<OwnOrder> tAccountOrders = new ArrayList<>();
@@ -288,7 +303,8 @@ public class Orderbook
         return bbo;
     }
 
-    public int deleteOrders( String pUserRef, String pAccountId, RequestContextInterface pRqstCntx ) {
+
+    public int deleteOrders(  String pAccountId, RequestContextInterface pRqstCntx ) {
          int tOrdersDeleted = 0;
 
         Iterator<LinkedList<Order>> tOrderListItr = mBuySide.values().iterator();
@@ -300,8 +316,9 @@ public class Orderbook
                 if (tOrder.getAccountId().contentEquals( pAccountId )) {
                     tItr.remove();
                     tOrdersDeleted++;
-                    mEngineCallbackIf.orderRemoved( tOrder, pRqstCntx.getSessionContext(), ++mSeqNo );
-                    mEngineCallbackIf.orderbookChanged( mSymbol.getSid().get() );
+                    mEngineCallbackIf.orderRemoved(tOrder, pRqstCntx.getSessionContext(), ++mSeqNo);
+                    mEngineCallbackIf.orderbookChanged(mSymbol.getSid().get());
+
                     if (tOrderList.size() == 0) {
                         tOrderListItr.remove();
                     }
@@ -318,56 +335,60 @@ public class Orderbook
                 if (tOrder.getAccountId().contentEquals( pAccountId )) {
                     tItr.remove();
                     tOrdersDeleted++;
-                    mEngineCallbackIf.orderRemoved( tOrder, pRqstCntx.getSessionContext(), ++mSeqNo );
-                    mEngineCallbackIf.orderbookChanged( mSymbol.getSid().get()  );
+                    mEngineCallbackIf.orderRemoved(tOrder, pRqstCntx.getSessionContext(), ++mSeqNo);
+                    mEngineCallbackIf.orderbookChanged(mSymbol.getSid().get());
+
                     if (tOrderList.size() == 0) {
                         tOrderListItr.remove();
                     }
                 }
             }
         }
+
         updateBBO();
         return tOrdersDeleted;
     }
 
-    public  MessageInterface deleteOrder(long pOrderId, String pUserRef, RequestContextInterface pRqstCntx) {
-        Order tRemovedOrder = null;
+    private Order removeOrderFromBooK( long pOrderId ) {
 
         Iterator<LinkedList<Order>> tOrderListItr = mBuySide.values().iterator();
-        while( tOrderListItr.hasNext() && (tRemovedOrder == null)) {
+        while(tOrderListItr.hasNext()) {
             LinkedList<Order> tOrderList = tOrderListItr.next();
             Iterator<Order> tItr = tOrderList.iterator();
             while( tItr.hasNext() ) {
                 Order tOrder = tItr.next();
                 if (tOrder.getOrderId() == pOrderId) {
-                    tRemovedOrder = tOrder;
                     tItr.remove();
                     if (tOrderList.size() == 0) {
                         tOrderListItr.remove();
                     }
-                    break;
+                    return tOrder;
                 }
             }
         }
 
 
         tOrderListItr = mSellSide.values().iterator();
-        while( tOrderListItr.hasNext() && (tRemovedOrder == null)) {
+        while(tOrderListItr.hasNext()) {
             LinkedList<Order> tOrderList = tOrderListItr.next();
             Iterator<Order> tItr = tOrderList.iterator();
             while( tItr.hasNext() ) {
                 Order tOrder = tItr.next();
                 if (tOrder.getOrderId() == pOrderId) {
-                    tRemovedOrder = tOrder;
                     tItr.remove();
                     if (tOrderList.size() == 0) {
                         tOrderListItr.remove();
                     }
-                    break;
+                    return tOrder;
                 }
             }
         }
+        return null;
+    }
 
+    public  MessageInterface deleteOrder(long pOrderId, String pUserRef, RequestContextInterface pRqstCntx) {
+
+        Order tRemovedOrder = removeOrderFromBooK( pOrderId );
 
         pRqstCntx.timestamp("remove deleted order from book");
         if (tRemovedOrder != null) {
@@ -384,7 +405,7 @@ public class Orderbook
             return tResponse;
         } else {
             MessageInterface tMsg = StatusMessageBuilder.error("Order not deleted, order " + pOrderId +  " not found", pUserRef);
-            pRqstCntx.timestamp("buld delete order failure, not found");
+            pRqstCntx.timestamp("build delete order failure, not found");
             return tMsg;
         }
     }
@@ -441,7 +462,7 @@ public class Orderbook
         int tTotMatched = 0;
         boolean tEndOfMatch = false;
 
-
+        mOrderCount++;
 
         // Loop as long as we can match
         pRqstCntx.timestamp("Starting matching order");
@@ -456,9 +477,7 @@ public class Orderbook
                 if (pNewOrder.match(tBookOrder)) {
                     pRqstCntx.timestamp("match first order on price level");
                     int tMatchedSize = Math.min(tBookOrder.getQuantity(), pNewOrder.getQuantity());
-                    if (tMatchedSize == 0) {
-                        System.out.println("Zero");
-                    }
+
                     mLastTradePrice = tBookOrder.getPrice();
                     mLastTradeTime = System.currentTimeMillis();
 
@@ -468,6 +487,8 @@ public class Orderbook
                     tBookOrder.setQuantity(tBookOrder.getQuantity() - tMatchedSize);
                     pNewOrder.setQuantity(pNewOrder.getQuantity() - tMatchedSize);
                     tTotMatched += tMatchedSize;
+
+                    mExecutionCount++;
 
                     if (tBookOrder.getQuantity() == 0) {
                         mEngineCallbackIf.orderRemoved(tBookOrder,  pRqstCntx.getSessionContext(), ++mSeqNo);
@@ -566,6 +587,22 @@ public class Orderbook
     private void validateOrder(Order pNewOrder  ) throws Exception {
         // Validate Order Price
         mSymbol.validate(pNewOrder.getPrice(), mLastTradePrice );
+    }
+
+    MgmtSymbolMatcherEntry getStatistics() {
+        MgmtSymbolMatcherEntry sme = new MgmtSymbolMatcherEntry();
+        sme.setSid( this.mSymbol.getSid().get());
+        sme.setBuyOrders( mBuySide.size());
+        sme.setSellOrders( mSellSide.size());
+        sme.setOrders( mOrderCount );
+        sme.setExecutions( mExecutionCount );
+        if (mBuySide.size() > 0) {
+            sme.setBuyPrice( mBuySide.firstKey());
+        }
+        if (mSellSide.size() > 0) {
+            sme.setSellPrice( mSellSide.firstKey());
+        }
+        return sme;
     }
 
     static class PriceComarator implements Comparator<Double>

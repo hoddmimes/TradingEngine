@@ -34,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -314,6 +315,7 @@ public class MsglogPanel extends JPanel implements TableCallbackInterface {
 			mAccountComboBox.addItem(new AccountEntry(null));
 
 			List<Account> tAccLst = tAccountsResponse.getAccounts().get();
+			Collections.sort( tAccLst, new BasePanel.AccountSort());
 			for (int i = 0; i < tAccLst.size(); i++) {
 					mAccountComboBox.addItem( new AccountEntry( tAccLst.get(i) ));
 			}

@@ -28,6 +28,8 @@ import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
 import com.hoddmimes.te.common.interfaces.TeMgmtServices;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.instrumentctl.SymbolX;
+import com.hoddmimes.te.management.RateItem;
+import com.hoddmimes.te.management.RateStatistics;
 import com.hoddmimes.te.management.service.MgmtCmdCallbackInterface;
 import com.hoddmimes.te.management.service.MgmtComponent;
 import com.hoddmimes.te.management.service.MgmtComponentInterface;
@@ -41,10 +43,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackInterface
 {
@@ -55,17 +56,30 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 	private JsonObject                  mConfiguration;
 	private MarketDataInterface         mMarketDataDistributor;
 	private HashMap<String,Orderbook>   mOrderbooks;
+	private RateItem                    mOrderRate;
+
+	private AtomicInteger  mOrderCount;
+	private AtomicInteger  mDeleteCount;
+	private AtomicInteger  mAmendCount;
+
+
+
 
 
 	private boolean mIsEnabledPrivateFlow, mIsEnabledPriceLevelFlow, mIsEnabledTradeflow, mIsEnabledOrderbookChangeFlow;
 
 	public MatchingEngine(JsonObject pTeConfiguration, InstrumentContainer pInstrumentContainer, MarketDataInterface pMarketDataInterface) {
+		mAmendCount = new AtomicInteger(0);
+		mOrderCount = new AtomicInteger(0);
+		mDeleteCount = new AtomicInteger(0);
+
 		mInstrumentContainer = pInstrumentContainer;
 		mMarketDataDistributor = pMarketDataInterface;
 		mConfiguration = AuxJson.navigateObject(pTeConfiguration, "TeConfiguration/matchingEngineConfiguration");
 		initializeOrderbooks();
 		configureDataDistribution(AuxJson.navigateObject(pTeConfiguration, "TeConfiguration/marketDataConfiguration"));
 		MgmtComponentInterface tMgmt = TeAppCntx.getInstance().getMgmtService().registerComponent( TeMgmtServices.MatchingService, 0, this );
+		mOrderRate = RateStatistics.getInstance().addRateItem("Order rate");
 	}
 
 
@@ -102,12 +116,16 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 
 		synchronized (tOrderbook) {
 			Order tOrder = new Order(pRequestContext.getAccountId(), pAddOrderRequest);
+			mOrderRate.increment();
+			mOrderCount.incrementAndGet();
+
 			pRequestContext.timestamp("create order");
 
 			MessageInterface tMsg = tOrderbook.addOrder(tOrder, pRequestContext);
 			return tMsg;
 		}
 	}
+
 
 	MessageInterface processAmendOrder( AmendOrderRequest pAmendOrderRequest, RequestContextInterface pRequestContext) {
 		long tOrderId;
@@ -122,6 +140,7 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 		}
 
 		synchronized (tOrderbook) {
+			mAmendCount.incrementAndGet();
 			try {
 				tOrderId = Long.parseLong(pAmendOrderRequest.getOrderId().get(), 16);
 			} catch (NumberFormatException e) {
@@ -143,7 +162,7 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 		while(tItr.hasNext()) {
 			Orderbook ob = tItr.next();
 			synchronized (ob) {
-				tOrdersDeleted += ob.deleteOrders( pRequest.getRef().get(), pRequest.getAccount().get(),tRqstCntx );
+				tOrdersDeleted += ob.deleteOrders( pRequest.getAccount().get(),tRqstCntx );
 			}
 		}
 		return tOrdersDeleted;
@@ -177,6 +196,31 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 		}
 	}
 
+	MgmtQueryMatcherResponse mgmtGetStatisticals( MgmtQueryMatcherRequest pRequest ) {
+		MgmtQueryMatcherResponse tResponse = new MgmtQueryMatcherResponse().setRef( pRequest.getRef().get());
+		List<MgmtSymbolMatcherEntry> tSidLst = new ArrayList<>();
+
+		Iterator<Orderbook> tItr = mOrderbooks.values().iterator();
+		while(tItr.hasNext()) {
+			Orderbook ob = tItr.next();
+			synchronized (ob) {
+				tSidLst.add( ob.getStatistics());
+			}
+		}
+
+		List<MgmtStatEntry> tStatCounter = new ArrayList<>();
+		tStatCounter.add( new MgmtStatEntry().setAttribute("Total Orders Requests").setValue( String.valueOf( mOrderCount.get())));
+		tStatCounter.add( new MgmtStatEntry().setAttribute("Total Delete Requests").setValue( String.valueOf( mDeleteCount.get())));
+		tStatCounter.add( new MgmtStatEntry().setAttribute("Total Amend Requests").setValue( String.valueOf( mAmendCount.get())));
+		tStatCounter.add( mOrderRate.get1SecMaxStat());
+		tStatCounter.add( mOrderRate.get10SecMaxStat());
+		tStatCounter.add( mOrderRate.get60SecMaxStat());
+
+		tResponse.setMatcherCounters( tStatCounter );
+		tResponse.setSids( tSidLst );
+		return tResponse;
+	}
+
 	InternalTrade mgmtRevertTrade( MgmtRevertTradeRequest pRequest ) {
 		ContainerTrade tTrade = pRequest.getTrade().get();
 
@@ -202,12 +246,13 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 			mLog.warn("orderbook " + pDeleteOrderRequest.getSid().get() + " does not exists " + pRequestContext );
 			return StatusMessageBuilder.error("orderbook " + pDeleteOrderRequest.getSid().get() + " does not exists", pDeleteOrderRequest.getRef().get());
 		}
-		if (!mInstrumentContainer.isOpen( pDeleteOrderRequest.getSid().get())) {
-			return  StatusMessageBuilder.error("orderbook " + pDeleteOrderRequest.getSid().get() + " is not open for trading", pDeleteOrderRequest.getRef().get());
-		}
+		//if (!mInstrumentContainer.isOpen( pDeleteOrderRequest.getSid().get())) {
+		//	return  StatusMessageBuilder.error("orderbook " + pDeleteOrderRequest.getSid().get() + " is not open for trading", pDeleteOrderRequest.getRef().get());
+		//}
 
 		synchronized( tOrderbook ) {
 			try {
+				mDeleteCount.incrementAndGet();
 				tOrderId = Long.parseLong(pDeleteOrderRequest.getOrderId().get(), 16);
 			} catch (NumberFormatException e) {
 				mLog.warn("delete order, invalid order id " + pRequestContext);
@@ -247,7 +292,6 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 					(pDeleteOrdersRequest.getSid().isEmpty() || (pDeleteOrdersRequest.getSid().get().contentEquals( ob.getSymbolId())))) {
 					synchronized (ob) {
 						tOrdersDeleted += ob.deleteOrders(
-								pDeleteOrdersRequest.getRef().get(),
 								pRequestContext.getAccountId(),
 								pRequestContext);
 					}
@@ -412,6 +456,9 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 			MgmtRevertTradeResponse tResponse = new MgmtRevertTradeResponse().setRef( pMgmtRequest.getRef().get());
 			tResponse.setRevertedTrades( new TradeX( tTrade));
 			return tResponse;
+		}
+		if (pMgmtRequest instanceof MgmtQueryMatcherRequest) {
+			return  mgmtGetStatisticals((MgmtQueryMatcherRequest) pMgmtRequest);
 		}
 		throw new RuntimeException("no management entry for : " + pMgmtRequest.getMessageName());
 	}

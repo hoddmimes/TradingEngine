@@ -24,5 +24,7 @@ public interface TeMgmtServices
 	public static String TradeData = "TradetData";
 	public static String MatchingService = "Matcher";
 	public static String SessionService = "SessionController";
+	public static String MarketData = "MarketData";
+	public static String MarketDataConsilidator = "MarketDataConsilidator";
 
 }

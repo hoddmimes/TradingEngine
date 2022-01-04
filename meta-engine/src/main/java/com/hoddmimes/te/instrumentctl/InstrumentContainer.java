@@ -279,6 +279,7 @@ public class InstrumentContainer implements MgmtCmdCallbackInterface
 		return mMarkets.containsKey( pSID );
 	}
 
+	public MarketX getMarket( int pMarket ) { return mMarkets.get( pMarket ); }
 
 
    public SymbolX getSymbol(String pSymbolId ) {

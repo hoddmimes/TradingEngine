@@ -19,6 +19,11 @@ package com.hoddmimes.te.marketdata;
 
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
+import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.management.service.MgmtCmdCallbackInterface;
+import com.hoddmimes.te.management.service.MgmtComponentInterface;
+import com.hoddmimes.te.messages.MgmtMessageRequest;
+import com.hoddmimes.te.messages.MgmtMessageResponse;
 import com.hoddmimes.te.messages.generated.*;
 import com.hoddmimes.te.sessionctl.SessionController;
 import org.apache.logging.log4j.LogManager;
@@ -110,6 +115,7 @@ public class MarketDataConsilidator extends Thread
 			}
 		}
 	}
+
 }
 
 

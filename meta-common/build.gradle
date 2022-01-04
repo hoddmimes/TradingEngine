@@ -47,6 +47,3 @@ configurations {
     implementation.exclude module: 'spring-boot-starter-logging'
 }
 
-test {
-    useJUnitPlatform()
-}

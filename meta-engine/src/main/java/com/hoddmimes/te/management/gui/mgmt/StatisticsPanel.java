@@ -17,19 +17,12 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
-import com.hoddmimes.te.messages.generated.Account;
-import com.hoddmimes.te.messages.generated.MgmtGetAccountsRequest;
-import com.hoddmimes.te.messages.generated.MgmtGetAccountsResponse;
-import org.springframework.security.core.parameters.P;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import java.awt.*;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class StatisticsPanel extends BasePanel
 {
@@ -37,10 +30,10 @@ public class StatisticsPanel extends BasePanel
 
 
 	private JTabbedPane mTabbedPane;
-	private ServiceStatisticsPanel mSessionsPanel;
-	private ServiceStatisticsPanel mMatchingPanel;
-	private ServiceStatisticsPanel mTradePanel;
-	private ServiceStatisticsPanel mMarketDataPanel;
+	private StatSessionPanel mSessionsPanel;
+	private StatMatcherPanel mMatchingPanel;
+	private StatTradePanel mTradePanel;
+	private StatMarketDataPanel mMarketDataPanel;
 
 
 
@@ -52,10 +45,11 @@ public class StatisticsPanel extends BasePanel
 
 		mTabbedPane = new JTabbedPane();
 
-		mSessionsPanel = new ServiceStatisticsPanel( "Session Controller Statistics" );
-		mMatchingPanel = new ServiceStatisticsPanel( "Matching Statistics" );
-		mTradePanel = new ServiceStatisticsPanel( "Trades Statistics" );
-		mMarketDataPanel = new ServiceStatisticsPanel( "Market Data Statistics" );
+		mSessionsPanel = new StatSessionPanel( pServiceInterface );
+		mMatchingPanel = new StatMatcherPanel( pServiceInterface );
+
+		mTradePanel = new StatTradePanel( pServiceInterface );
+		mMarketDataPanel = new StatMarketDataPanel( pServiceInterface );
 
 
 		mTabbedPane.addTab("Session", mSessionsPanel );
@@ -65,6 +59,15 @@ public class StatisticsPanel extends BasePanel
 
 		this.add( mTabbedPane, BorderLayout.CENTER);
 		this.add( createButtonPanel(), BorderLayout.SOUTH);
+	}
+
+	public void loadStatisticsData() {
+		mSessionsPanel.refreshStatistics();
+		mMatchingPanel.refreshStatistics();
+		mTradePanel.refreshStatistics();
+		mMarketDataPanel.refreshStatistics();
+		this.revalidate();
+		this.repaint();
 	}
 
 	private JPanel mockPanel(String pText ) {
@@ -87,6 +90,16 @@ public class StatisticsPanel extends BasePanel
 		tRefreshButton.setBackground( BUTTON_BACKGROUND );
 		tRefreshButton.setFont( DEFAULT_FONT );
 		tContentPanel.add( tRefreshButton );
+
+		tRefreshButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				mSessionsPanel.refreshStatistics();
+				mMatchingPanel.refreshStatistics();
+				mTradePanel.refreshStatistics();
+				mMarketDataPanel.refreshStatistics();
+			}
+		});
 
 		GridBagConstraints gc = new GridBagConstraints();
 		gc.gridx = gc.gridy = 0;

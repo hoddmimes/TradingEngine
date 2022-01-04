@@ -33,6 +33,7 @@ import java.awt.event.ActionListener;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -193,6 +194,7 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 			}
 
 			List<Account> tAccLst = tAccountsResponse.getAccounts().get();
+			Collections.sort( tAccLst, new BasePanel.AccountSort());
 			for (int i = 0; i < tAccLst.size(); i++) {
 				mAccountComboBox.addItem(new AccountEntry(tAccLst.get(i)));
 			}

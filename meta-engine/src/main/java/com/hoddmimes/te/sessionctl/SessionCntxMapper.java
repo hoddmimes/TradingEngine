@@ -18,19 +18,20 @@
 package com.hoddmimes.te.sessionctl;
 
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
+import com.hoddmimes.te.messages.generated.MgmtActiveSession;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SessionCntxMapper
 {
 	private ConcurrentHashMap<String, SessionCntxInterface>        mIdSessions;
 	private ConcurrentHashMap<String, List<SessionCntxInterface>>  mAccountSessions;
+	private AtomicInteger mMaxSessions;
 
 	public SessionCntxMapper() {
+		mMaxSessions = new AtomicInteger(0);
 		mIdSessions = new ConcurrentHashMap<>();
 		mAccountSessions = new ConcurrentHashMap<>();
 	}
@@ -38,6 +39,9 @@ public class SessionCntxMapper
 
 	public synchronized void add(SessionCntxInterface pSessCntx ) {
 		mIdSessions.put(pSessCntx.getSessionId(), pSessCntx);
+		if (mIdSessions.size() > mMaxSessions.get()) {
+			mMaxSessions.set(mIdSessions.size());
+		}
 		List<SessionCntxInterface> tAccSessionList = mAccountSessions.get( pSessCntx.getAccount() );
 		if (tAccSessionList == null) {
 			tAccSessionList = new LinkedList<>();
@@ -71,6 +75,25 @@ public class SessionCntxMapper
 			mAccountSessions.remove(tSessionCntx.getAccount());
 		}
 		return tSessionCntx;
+	}
+
+	public synchronized List<MgmtActiveSession> getActiveSessions() {
+		List<MgmtActiveSession> tSessions = new ArrayList<>();
+		Iterator<SessionCntxInterface> tItr = mIdSessions.values().iterator();
+		while(tItr.hasNext()) {
+			SessionCntxInterface tSess = tItr.next();
+			MgmtActiveSession tActiveSess = new MgmtActiveSession();
+			tActiveSess.setSessionId( tSess.getSessionId());
+			tActiveSess.setAccount( tSess.getAccount());
+			tActiveSess.setCreationTime( tSess.getSessionStartTimeBin());
+			tSessions.add( tActiveSess );
+			return tSessions;
+		}
+		return tSessions;
+	}
+
+	public int getMaxSessions() {
+		return mMaxSessions.get();
 	}
 
 	public synchronized boolean removeByAccount( String pAccountId ) {

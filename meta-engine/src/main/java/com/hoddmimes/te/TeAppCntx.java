@@ -43,6 +43,7 @@ public class TeAppCntx {
 	private JsonObject mTeConfiguration;
 	private Object mMarketDataDistributorMutex;
 	private MgmtFactory mMgmtFactory;
+	private boolean mTestMode;
 
 	private TeAppCntx() {
 		mMarketDataDistributorMutex = new Object();
@@ -53,6 +54,7 @@ public class TeAppCntx {
 		setTeConfiguration(null);
 		setMarketDataDistributor(null);
 		setTradeContainer(null);
+		mTestMode = false;
 	}
 
 	public static TeAppCntx getInstance() {
@@ -62,6 +64,14 @@ public class TeAppCntx {
 			}
 			return mInstance;
 		}
+	}
+
+	public void setTestMode() {
+		mTestMode = true;
+	}
+
+	public boolean getTestMode() {
+		return mTestMode;
 	}
 
 	public SessionCntxInterface getIntenalSessionContext() {

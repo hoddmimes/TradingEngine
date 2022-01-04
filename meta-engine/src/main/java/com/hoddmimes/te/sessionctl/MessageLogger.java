@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.IllegalFormatConversionException;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -90,12 +91,16 @@ public class MessageLogger extends Thread
     }
 
     public void logResponseMessage(RequestContext pRequestContext, MessageInterface pMessage, long pTxExecTime) {
-        mMsgLogQueue.add( String.format("[RESP (%04d)] sid: %-20s account: %-12s %s",
-                SDF.format( System.currentTimeMillis()),
-                pTxExecTime,
-                pRequestContext.getSessionContext().getSessionId(),
-                pRequestContext.getAccountId(),
-                pMessage.toJson().toString()));
+        try {
+            mMsgLogQueue.add(String.format("[RESP (%04d)] sid: %-20s account: %-12s %s",
+                    pTxExecTime,
+                    pRequestContext.getSessionContext().getSessionId(),
+                    pRequestContext.getAccountId(),
+                    pMessage.toJson().toString()));
+        }
+        catch( IllegalFormatConversionException fe) {
+            fe.printStackTrace();
+        }
 
     }
 

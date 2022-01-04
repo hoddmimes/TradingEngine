@@ -44,9 +44,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,9 +75,15 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 	private boolean mTraceExecTimeVerbose;
 	private boolean mTraceExecTimeOff;
 
+	private long mStartTime;
+	private AtomicInteger mRequestCount;
+	private AtomicInteger mFailureCount;
 
 	public SessionController( JsonObject pTeConfigurationFile ) throws IOException
 	{
+		mRequestCount = new AtomicInteger(0);
+		mFailureCount = new AtomicInteger(0);
+		mStartTime = System.currentTimeMillis();
 		mSessionMapper = new SessionCntxMapper();
 		mInternalSession = new SessionCntx("internal",INTERNAL_SESSION_ID);
 		mSessionMapper.add(mInternalSession);
@@ -209,23 +217,32 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 
 	@Override
 	public MessageInterface connectorMessage(String pSessionId, String pJsonRqstMsgStr) {
-
+		mRequestCount.incrementAndGet();
 		String tRef = AuxJson.getMessageRef(pJsonRqstMsgStr);
 
 		// Validate message syntax
 		try {
 			mSchemaValidator.validate(pJsonRqstMsgStr);
 		} catch (Exception e) {
+			mFailureCount.incrementAndGet();
 			return StatusMessageBuilder.error("Invalid request message syntax", tRef, e);
 		}
 
 		MessageInterface tRqstMsg = mMessageFactory.getMessageInstance(pJsonRqstMsgStr);
 		if (!(tRqstMsg instanceof RequestMsgInterface)) {
+			mFailureCount.incrementAndGet();
 			mLog.error("Request \"" + tRqstMsg.getMessageName() + "\" does not implement interface RequestMsgInterface");
 			throw new RuntimeException( "Request \"" + tRqstMsg.getMessageName() + "\" does not implement interface RequestMsgInterface");
 		}
 
-		return connectorMessage(pSessionId, (RequestMsgInterface) tRqstMsg );
+		MessageInterface tResponseMessage = connectorMessage(pSessionId, (RequestMsgInterface) tRqstMsg );
+		if (tResponseMessage instanceof StatusMessage) {
+			if (!((StatusMessage) tResponseMessage).getIsOk().get()) {
+				mFailureCount.incrementAndGet();
+			}
+		}
+
+		return tResponseMessage;
 	}
 
 
@@ -330,6 +347,7 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 	@Override
 	public LogonResponse logon(String pSessionId, String pJsonRqstMsgStr ) throws TeException
 	{
+		mRequestCount.incrementAndGet();
 		SessionCntxInterface mSessionCntx = null;
 		String tRef = AuxJson.getMessageRef( pJsonRqstMsgStr );
 		Pattern tAccountPattern = Pattern.compile("\"account\"\\s*:\\s*\"([^\"]+)\"");
@@ -340,20 +358,30 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 
 		try {mSchemaValidator.validate( pJsonRqstMsgStr );}
 		catch( Exception e) {
+			mFailureCount.incrementAndGet();
 			mLog.warn("Logon invalid message syntax: " + tUsrStr + " reason: " + e.getMessage());
 			throw new TeException(HttpStatus.BAD_REQUEST.value(), StatusMessageBuilder.error("Inavlid message syntax", tRef));
 		}
 
-		LogonRequest tLogonRequest = new LogonRequest( pJsonRqstMsgStr );
-		mSessionCntx = this.logoninternal( tLogonRequest, pSessionId );
-		mLog.info("successfull logon: " + tUsrStr + " session id: " + pSessionId);
-		return tLogonRsp.setRef(tRef).setSessionAuthId( mSessionCntx.getApiAuthId());
+		try {
+			LogonRequest tLogonRequest = new LogonRequest(pJsonRqstMsgStr);
+			mSessionCntx = this.logoninternal(tLogonRequest, pSessionId);
+			mLog.info("successfull logon: " + tUsrStr + " session id: " + pSessionId);
+			return tLogonRsp.setRef(tRef).setSessionAuthId(mSessionCntx.getApiAuthId());
+		}
+		catch( TeException te) {
+			mFailureCount.incrementAndGet();
+			throw te;
+		}
 	}
 
 	@Override
 	public MgmtMessageResponse mgmtRequest(MgmtMessageRequest pMgmtRequest) {
 		if (pMgmtRequest instanceof MgmtGetLogMessagesRequest) {
 			return mgmtGetlogMsgData((MgmtGetLogMessagesRequest) pMgmtRequest );
+		}
+		if (pMgmtRequest instanceof MgmtQueryActiveSessionsRequest) {
+			return mgmtGetActiveSessions((MgmtQueryActiveSessionsRequest) pMgmtRequest );
 		}
 		throw new RuntimeException("mgmt request not supported " + pMgmtRequest.getMessageName());
 	}
@@ -383,6 +411,21 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 			e.printStackTrace();
 		}
 		return tMsgLogFiles;
+	}
+
+	private MgmtQueryActiveSessionsResponse mgmtGetActiveSessions( MgmtQueryActiveSessionsRequest pRequest ) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		List<MgmtStatEntry> tStatCounter = new ArrayList<>();
+		MgmtQueryActiveSessionsResponse tResponse = new MgmtQueryActiveSessionsResponse().setRef( pRequest.getRef().get());
+
+		tStatCounter.add( new MgmtStatEntry().setAttribute("Max active session").setValue( String.valueOf(mSessionMapper.getMaxSessions())));
+		tStatCounter.add( new MgmtStatEntry().setAttribute("Request counter").setValue( String.valueOf( mRequestCount.get())));
+		tStatCounter.add( new MgmtStatEntry().setAttribute("Request failure counter").setValue( String.valueOf( mFailureCount.get())));
+
+		tResponse.setSysStarTime( mStartTime );
+		tResponse.addSessionCounters( tStatCounter );
+		tResponse.setSessions( mSessionMapper.getActiveSessions());
+		return tResponse;
 	}
 
 	private MgmtGetLogMessagesResponse mgmtGetlogMsgData( MgmtGetLogMessagesRequest pRequest )

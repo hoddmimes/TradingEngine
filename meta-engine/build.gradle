@@ -83,4 +83,5 @@ configurations {
 
 test {
     useJUnitPlatform()
+    jvmArgs  '-Djava.net.preferIPv4Stack=true'
 }
