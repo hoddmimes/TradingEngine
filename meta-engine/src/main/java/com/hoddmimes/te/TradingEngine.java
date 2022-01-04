@@ -57,6 +57,8 @@ public class TradingEngine
 
 	public static void main(String[] args) {
 		TradingEngine te = new TradingEngine();
+		te.mLog.info("Starting TE Engine " + Version.build);
+
 		te.parsePargument( args );
 
 		te.initialize();

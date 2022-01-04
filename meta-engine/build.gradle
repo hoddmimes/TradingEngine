@@ -17,8 +17,9 @@ plugins {
 }
 
 group 'com.hoddmimes'
-version '1.0'
-def appVersion = "1.0"
+version '1.1'
+def appVersion = "1.1"
+def versionFile = "src/main/java/com/hoddmimes/te/Version.java"
 
 
 repositories {
@@ -49,6 +50,35 @@ dependencies {
     testImplementation('org.junit.jupiter:junit-jupiter:5.8.2')
 
 }
+
+task createTEVersion() {
+
+    File dfh = new File( projectDir, versionFile );
+    dfh.delete();
+
+    def dateAndTime  = new Date().format('yyyy-MM-dd HH:mm:ss.SSS')
+    File fh = new File( projectDir, versionFile )
+    fh << "package com.hoddmimes.te;\n\n\n"
+    fh << "/*\n"
+    fh << "  ====================================================================================\n"
+    fh << " * Note: This file is automatically generate" +
+            " as part of the build process (i.e. build.gradle) \n"
+    fh << " * Do not change or edit this file\n"
+    fh << "  =====================================================================================\n"
+    fh << "*/\n\n"
+    fh << "public class Version\n"
+    fh << "{\n"
+    fh << "    private static final String cBuildDate = \"" + dateAndTime + "\";\n"
+    fh << "    public static final String build = \" Version: " + appVersion + " Built: \" + cBuildDate;\n"
+    fh << "}\n"
+
+    doLast {
+        println "Create Version file"
+    }
+}
+
+
+
 task buildFatJar (type: Jar ) {
     archiveBaseName= 'te'
     destinationDirectory = file("./build/libs/")
@@ -76,6 +106,7 @@ task buildFatJar (type: Jar ) {
 }
 
 
+compileJava.dependsOn( createTEVersion )
 build.finalizedBy(buildFatJar)
 
 configurations {

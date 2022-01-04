@@ -23,6 +23,7 @@
 hs_err_pid*
 
 
+**/Version.java
 build/**
 .idea/**
 .gradle/**

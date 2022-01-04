@@ -14,4 +14,4 @@ pushd ./
 cd $DIR/..
 pwd
 JAVA_SWITCHES="-Dlog4j.configurationFile=$DIR/../configuration/log4j2-te.xml -Djava.net.preferIPv4Stack=true"
-$_java $JAVA_SWITCHES -cp $DIR/../meta-engine/build/libs/te-1.0.jar com.hoddmimes.te.TradingEngine file:///$DIR/../configuration/TeConfiguration.json
+$_java $JAVA_SWITCHES -cp $DIR/../meta-engine/build/libs/te-1.1.jar com.hoddmimes.te.TradingEngine file:///$DIR/../configuration/TeConfiguration.json
