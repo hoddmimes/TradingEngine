@@ -46,6 +46,8 @@ dependencies {
     implementation project(':meta-message')
     implementation project(':meta-common')
 
+    testImplementation('org.junit.jupiter:junit-jupiter:5.8.2')
+
 }
 task buildFatJar (type: Jar ) {
     archiveBaseName= 'te'
@@ -80,8 +82,16 @@ configurations {
     implementation.exclude module: 'spring-boot-starter-logging'
 }
 
-
 test {
     useJUnitPlatform()
-    jvmArgs  '-Djava.net.preferIPv4Stack=true'
+
+    ignoreFailures = true
+
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+    }
+
+    jvmArgs "-Djava.net.preferIPv4Stack=true"
+    workingDir = "../"
+
 }

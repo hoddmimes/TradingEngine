@@ -33,6 +33,7 @@ import javax.websocket.EndpointConfig;
 import javax.websocket.Session;
 
 import java.io.IOException;
+import java.sql.SQLOutput;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -43,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+
 public class TETest implements TeWebsocketClient.WssCallback {
 	private static final String TE_HTTP_URI = "https://localhost:8883/te/";
 	private static final String TE_WSS_URI = "wss://localhost:8883/marketdata";
@@ -57,14 +59,21 @@ public class TETest implements TeWebsocketClient.WssCallback {
 
 	@BeforeAll
 	public void TeSetup() {
+		System.out.println("TesSetup");
+
 		System.setProperty("org.springframework.boot.logging.LoggingSystem", "none");
 		System.setProperty("java.util.logging.SimpleFormatter.format", "");
 
+
 		mBdxConditions = new LinkedList<>();
 
+
 		mTeThread = new TeThread();
+
 		mTeThread.start();
+
 		mTeThread.waitForTeToStart();
+
 	}
 
 	@AfterAll
@@ -77,6 +86,7 @@ public class TETest implements TeWebsocketClient.WssCallback {
 	@Test
 	@Order(1)
 	public void test_connect() throws Exception {
+
 		mHttpClient = new TeHttpClient( TE_HTTP_URI, false);
 		JsonObject jRsp = mHttpClient.post( toJsonString("{'account':'test', 'password': 'test','ref' : 'test-1'}"),"logon");
 		if (!jRsp.has("sessionAuthId")) {
@@ -468,3 +478,5 @@ public class TETest implements TeWebsocketClient.WssCallback {
 		}
 	}
 }
+
+
