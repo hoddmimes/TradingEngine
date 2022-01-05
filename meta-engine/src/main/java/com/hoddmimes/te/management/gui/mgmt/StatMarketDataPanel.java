@@ -28,6 +28,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -82,7 +83,8 @@ public class StatMarketDataPanel extends BasePanel {
 
 		mCounterPanel.loadStatistics( tResp.getCounters().get());
 		mTopicTableModel.clear();
-		List<MgmtTropicEntry> tTopicList = tResp.getSubscriptions().get();
+
+		List<MgmtTropicEntry> tTopicList = tResp.getSubscriptions().orElse( new ArrayList<>());
 		Collections.sort( tTopicList, new TopicSorter());
 
 		for( MgmtTropicEntry tTopicEntry : tTopicList ) {

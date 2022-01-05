@@ -119,6 +119,10 @@ public class TETest implements TeWebsocketClient.WssCallback {
 		bc = addBdxCondition("SubscriptionResponse", "{'key':'isOk','value':true}");
 		mWssClient.sendMessage( toJsonString("{'command':'ADD', 'topic' :  '/BdxOwnOrderbookChange/...'}"));
 		assertTrue( bc.matchConditionUntil(3000L), "subscription failed BdxOwnOrderbookChange/...");
+
+		bc = addBdxCondition("SubscriptionResponse", "{'key':'isOk','value':true}");
+		mWssClient.sendMessage( toJsonString("{'command':'ADD', 'topic' :  '/BdxOwnTrade/...'}"));
+		assertTrue( bc.matchConditionUntil(3000L), "subscription failed BdxOwnTrade/...");
 	}
 
 
@@ -168,10 +172,17 @@ public class TETest implements TeWebsocketClient.WssCallback {
 	@Order(6)
 	public void test_match_order() throws IOException {
 		try {
+			BdxCondition bc1 = addBdxCondition("BdxTrade", BdxCondition.condition("last",100.0), BdxCondition.condition("totQuantity",10));
+			BdxCondition bc2 = addBdxCondition("BdxOwnTrade", BdxCondition.condition("orderRef","test-6"), BdxCondition.condition("price",100.0));
+			BdxCondition bc3 = addBdxCondition("BdxOwnTrade", BdxCondition.condition("orderRef","test-6"), BdxCondition.condition("price",100.0));
+
 			JsonObject jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':99.00,'quantity': 10, 'side':'SELL','ref' : 'test-6'}", "addOrder");
 			assertTrue( jRspMsg.has("matched"));
 			assertTrue( (jRspMsg.get("matched").getAsInt() == 10), "Invalid matched volume");
-			//System.out.println(jRspMsg);
+			assertTrue( bc1.matchConditionUntil(2000L));
+			assertTrue( bc2.matchConditionUntil(2000L));
+			assertTrue( bc3.matchConditionUntil(2000L));
+
 		}
 		catch( TeRequestException te ) {
 			assertTrue( false, te.toJson().toString());
