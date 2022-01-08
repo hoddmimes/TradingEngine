@@ -52,22 +52,19 @@ public class SymbolX extends Symbol
 
 
 
-	private boolean isTickSizeAligned( double pPrice ) {
+	private boolean isTickSizeAligned( long pPrice ) {
 		if (super.getTickSize().get() == 0) {
 			return true;
 		}
-		BigDecimal tPrice = new BigDecimal( Double.toString( pPrice));
-		double  r = tPrice.subtract(tPrice.divideToIntegralValue(new BigDecimal("1.0"))).doubleValue();
 
-		int x = (int) (r * 1000.0d);
-		int y = (int) (super.getTickSize().get() * 1000.0d);
-
-		return ((x % y) == 0);
+		long tRest = pPrice - ((pPrice / 10000) * 10000);
+		long tTickSize =  super.getTickSize().get();
+		return ((tRest % tTickSize) == 0);
 	}
 
 
 
-	public void validate( double pPrice, double pLastKnownTradingPrice ) throws Exception {
+	public void validate( long pPrice, long pLastKnownTradingPrice ) throws Exception {
 		// Validate that price is a multiple of the tick size
 		if (!isTickSizeAligned( pPrice )) {
 			throw new Exception("order price is not tick size aligned");
@@ -76,14 +73,16 @@ public class SymbolX extends Symbol
 		if (!super.getMinPricePctChg().isEmpty()) {
 			if ((super.getMinPricePctChg().get() != 0.0d) && (pLastKnownTradingPrice != 0)) {
 				double p = (super.getMinPricePctChg().get() / 100.0d);
-				if (pPrice < (pLastKnownTradingPrice - (pLastKnownTradingPrice * p))) {
+				long tCompPrice = (long) ((double) pLastKnownTradingPrice - ((double) pLastKnownTradingPrice * p));
+				if (pPrice < tCompPrice) {
 					throw new Exception("order price is outside (min) price limit " + super.getMinPricePctChg().get() + " %");
 				}
 			}
 		} else {
 			if ((mMarket.getMinPricePctChg().get() != 0.0d) && (pLastKnownTradingPrice != 0)) {
 				double p = (mMarket.getMinPricePctChg().get() / 100.0d);
-				if (pPrice < (pLastKnownTradingPrice - (pLastKnownTradingPrice * p))) {
+				long tCompPrice = (long) ((double) pLastKnownTradingPrice - ((double) pLastKnownTradingPrice * p));
+				if (pPrice < tCompPrice) {
 					throw new Exception("order price is outside (min) price limit " + mMarket.getMinPricePctChg().get() + " %");
 				}
 			}
@@ -92,14 +91,16 @@ public class SymbolX extends Symbol
 		if (!super.getMaxPricePctChg().isEmpty()) {
 			if ((super.getMaxPricePctChg().get() != 0.0d) && (pLastKnownTradingPrice != 0)) {
 				double p = (super.getMaxPricePctChg().get() / 100.0d);
-				if (pPrice > (pLastKnownTradingPrice + (pLastKnownTradingPrice * p))) {
+				long tCompPrice = (long) ((double) pLastKnownTradingPrice + ((double) pLastKnownTradingPrice * p));
+				if (pPrice > tCompPrice) {
 					throw new Exception("order price is outside (max) price limit " + super.getMaxPricePctChg().get() + " %");
 				}
 			}
 		} else {
 			if ((mMarket.getMaxPricePctChg().get() != 0.0d) && (pLastKnownTradingPrice != 0)) {
 				double p = (mMarket.getMaxPricePctChg().get() / 100.0d);
-				if (pPrice > (pLastKnownTradingPrice + (pLastKnownTradingPrice * p))) {
+				long tCompPrice = (long) ((double) pLastKnownTradingPrice + ((double) pLastKnownTradingPrice * p));
+				if (pPrice > tCompPrice) {
 					throw new Exception("order price is outside (max) price limit " + mMarket.getMaxPricePctChg().get() + " %");
 				}
 			}

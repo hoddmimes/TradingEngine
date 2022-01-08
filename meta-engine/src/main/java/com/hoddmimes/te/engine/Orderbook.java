@@ -37,7 +37,7 @@ public class Orderbook
     private OrderMapInterface                   mBuySide;
     private OrderMapInterface                   mSellSide;
     private MatchingEngineCallback              mEngineCallbackIf;
-    private double                              mLastTradePrice;
+    private long                                mLastTradePrice;
     private long                                mLastTradeTime;
     private long                                mSeqNo;
     private BdxBBO                              mBBO;
@@ -55,7 +55,6 @@ public class Orderbook
         mBuySide = new OrderMap( Order.Side.BUY );
         mSellSide = new OrderMap( Order.Side.SELL );
         mLog = pLogger;
-        mLastTradePrice = 0.0d;
         mLastTradePrice = 0L;
         mEngineCallbackIf = pEngineCallbackIf;
         mBBO = new BdxBBO().setSid( mSymbol.getSid().get());

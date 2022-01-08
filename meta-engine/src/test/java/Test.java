@@ -43,7 +43,7 @@ public class Test {
 
 
 	private void test() {
-
+		long l = (long) ((double) 100000L * 0.65d);
 	}
 
 
