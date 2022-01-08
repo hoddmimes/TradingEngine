@@ -248,8 +248,8 @@
         <Attribute name="executions" type="int" mandatory="true"/>
         <Attribute name="buyOrders" type="int" mandatory="true"/>
         <Attribute name="sellOrders" type="int" mandatory="true"/>
-        <Attribute name="buyPrice" type="double" mandatory="true"/>
-        <Attribute name="sellPrice" type="double" mandatory="true"/>
+        <Attribute name="buyPrice" type="long" mandatory="true"/>
+        <Attribute name="sellPrice" type="long" mandatory="true"/>
     </Message>
 
     <Message name="MgmtQueryMatcherResponse" implements="MgmtMessageResponse" rootMessage="true">
@@ -268,9 +268,9 @@
         <Attribute name="market" type="String" mandatory="true"/>
         <Attribute name="trades" type="int" mandatory="true"/>
         <Attribute name="volume" type="int" mandatory="true"/>
-        <Attribute name="turnover" type="double" mandatory="true"/>
+        <Attribute name="turnover" type="long" mandatory="true"/>
         <code>
-            public void update( int pTrades, int pVolume, double pTurnover ) {
+            public void update( int pTrades, int pVolume, long pTurnover ) {
                 mTrades = (mTrades == null) ? pTrades : (pTrades + mTrades);
                 mVolume = (mVolume == null) ? pVolume : (pVolume + mVolume);
                 mTurnover = (mTurnover == null) ? pTurnover : (pTurnover + mTurnover);
@@ -282,10 +282,10 @@
         <Attribute name="sid" type="String" mandatory="true"/>
         <Attribute name="trades" type="int" mandatory="true"/>
         <Attribute name="volume" type="int" mandatory="true"/>
-        <Attribute name="turnover" type="double" mandatory="true"/>
-        <Attribute name="averagePrice" type="double" mandatory="true"/>
-        <Attribute name="minPrice" type="double" mandatory="true"/>
-        <Attribute name="maxPrice" type="double" mandatory="true"/>
+        <Attribute name="turnover" type="long" mandatory="true"/>
+        <Attribute name="averagePrice" type="long" mandatory="true"/>
+        <Attribute name="minPrice" type="long" mandatory="true"/>
+        <Attribute name="maxPrice" type="long" mandatory="true"/>
     </Message>
 
     <Message name="MgmtQueryTradeResponse" implements="MgmtMessageResponse" rootMessage="true">

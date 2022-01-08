@@ -11,7 +11,7 @@
     -->
     <Message name="AddOrderRequest" implements="EngineMsgInterface" rootMessage="true">
         <Attribute name="sid" type="String" mandatory="true" />
-        <Attribute name="price" type="double" mandatory="true"/>
+        <Attribute name="price" type="long" mandatory="true"/>
         <Attribute name="quantity" type = "int" mandatory="true"/>
         <Attribute name="ref" type = "String" mandatory="true"/>
         <Attribute name="side" type="String" mandatory="true"/>
@@ -27,7 +27,7 @@
     <Message name="AmendOrderRequest" implements="EngineMsgInterface" rootMessage="true">
         <Attribute name="sid" type="String" mandatory="true" />
         <Attribute name="orderId" type="String" mandatory="true"/>
-        <Attribute name="price" type="double"/>
+        <Attribute name="price" type="long"/>
         <Attribute name="deltaQuantity" type = "int"/>
         <Attribute name="ref" type = "String" mandatory="true"/>
         <Attribute name="side" type="String" />
@@ -125,10 +125,10 @@
         <Attribute name="sid" type = "String"/>
         <Attribute name="quantity" type="int" />
         <Attribute name="time" type="String" />
-        <Attribute name="last" type="double" />
-        <Attribute name="open" type="double" />
-        <Attribute name="low" type="double" />
-        <Attribute name="high" type="double" />
+        <Attribute name="last" type="long" />
+        <Attribute name="open" type="long" />
+        <Attribute name="low" type="long" />
+        <Attribute name="high" type="long" />
     </Message>
 
 
@@ -160,8 +160,8 @@
 
     <Message name="BBO">
         <Attribute name="sid" type = "String"/>
-        <Attribute name="bid" type = "double"/>
-        <Attribute name="offer" type = "double"/>
+        <Attribute name="bid" type = "long"/>
+        <Attribute name="offer" type = "long"/>
         <Attribute name="bidQty" type = "int"/>
         <Attribute name="offerQty" type = "int"/>
     </Message>
@@ -194,7 +194,7 @@
         Broadcast related  messages
       ********************************************************************************* -->
     <Message name="Order">
-        <Attribute name="price" type="double"/>
+        <Attribute name="price" type="long"/>
         <Attribute name="quantity" type = "int"/>
         <Attribute name="orderId" type = "String"/>
         <Attribute name="side" type="String"/>
@@ -205,7 +205,7 @@
         <Attribute name="orderId" type = "String"/>
         <Attribute name="sid" type = "String"/>
         <Attribute name="action" type = "String"/> <!-- ADD, REMOVE, MODIFY -->
-        <Attribute name="price" type = "double"/>
+        <Attribute name="price" type = "long"/>
         <Attribute name="quantity" type = "int"/>
         <Attribute name="side" type = "String"/>
         <Attribute name="obSeqNo" type = "long"/>
@@ -221,7 +221,7 @@
     <Message name="OwnTrade" rootMessage="true">
         <Attribute name="orderId" type = "String"/>
         <Attribute name="sid" type = "String"/>
-        <Attribute name="price" type = "double"/>
+        <Attribute name="price" type = "long"/>
         <Attribute name="quantity" type = "int"/>
         <Attribute name="tradeId" type = "String"/>
         <Attribute name="time" type = "String"/>
@@ -233,7 +233,7 @@
     <Message name="BdxOwnTrade" implements="EngineBdxInterface"  rootMessage="true">
         <Attribute name="orderId" type = "String"/>
         <Attribute name="sid" type = "String"/>
-        <Attribute name="price" type = "double"/>
+        <Attribute name="price" type = "long"/>
         <Attribute name="quantity" type = "int"/>
         <Attribute name="tradeId" type = "String"/>
         <Attribute name="time" type = "String"/>
@@ -251,7 +251,7 @@
     <Message name="OwnOrder">
         <Attribute name="orderId" type = "String"/>
         <Attribute name="sid" type = "String"/>
-        <Attribute name="price" type = "double"/>
+        <Attribute name="price" type = "long"/>
         <Attribute name="quantity" type = "int"/>
         <Attribute name="side" type = "String"/>
         <Attribute name="ref" type = "String"/>
@@ -261,7 +261,7 @@
         <Attribute name="orderId" type = "String"/>
         <Attribute name="sid" type = "String"/>
         <Attribute name="action" type = "String"/> <!-- ADD, REMOVE, MODIFY -->
-        <Attribute name="price" type = "double"/>
+        <Attribute name="price" type = "long"/>
         <Attribute name="quantity" type = "int"/>
         <Attribute name="side" type = "String"/>
         <Attribute name="ref" type = "String"/>
@@ -278,11 +278,11 @@
     <!-- Public -->
     <Message name="BdxTrade" implements="EngineBdxInterface"  rootMessage="true">
         <Attribute name="sid" type = "String"/>
-        <Attribute name="last" type = "double"/>
+        <Attribute name="last" type = "long"/>
         <Attribute name="quantity" type = "int"/>
-        <Attribute name="open" type = "double"/>
-        <Attribute name="low" type = "double"/>
-        <Attribute name="high" type = "double"/>
+        <Attribute name="open" type = "long"/>
+        <Attribute name="low" type = "long"/>
+        <Attribute name="high" type = "long"/>
         <Attribute name="totQuantity" type = "int"/>
         <code>
             public String getSubjectName() {
@@ -295,8 +295,8 @@
     <!-- Public -->
     <Message name="BdxBBO" implements="EngineBdxInterface"  rootMessage="true">
         <Attribute name="sid" type = "String"/>
-        <Attribute name="bid" type = "double"/>
-        <Attribute name="offer" type = "double"/>
+        <Attribute name="bid" type = "long"/>
+        <Attribute name="offer" type = "long"/>
         <Attribute name="bidQty" type = "int"/>
         <Attribute name="offerQty" type = "int"/>
         <code>
@@ -326,7 +326,7 @@
     </Message>
 
     <Message name="PriceLevel">
-        <Attribute name="price" type="double"/>
+        <Attribute name="price" type="long"/>
         <Attribute name="quantity" type = "int"/>
 
         <code>

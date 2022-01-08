@@ -56,7 +56,7 @@ import com.google.gson.GsonBuilder;
 
             
                     private String mSid;
-                    private Double mPrice;
+                    private Long mPrice;
                     private Integer mQuantity;
                     private String mRef;
                     private String mSide;
@@ -79,11 +79,11 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mSid);
             }
         
-            public AddOrderRequest setPrice( Double pPrice ) {
+            public AddOrderRequest setPrice( Long pPrice ) {
             mPrice = pPrice;
             return this;
             }
-            public Optional<Double> getPrice() {
+            public Optional<Long> getPrice() {
               return  Optional.ofNullable(mPrice);
             }
         
@@ -132,7 +132,7 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mSid Type: String List: false
             tEncoder.add( "sid", mSid );
         
-            //Encode Attribute: mPrice Type: double List: false
+            //Encode Attribute: mPrice Type: long List: false
             tEncoder.add( "price", mPrice );
         
             //Encode Attribute: mQuantity Type: int List: false
@@ -155,8 +155,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mSid Type:String List: false
             mSid = tDecoder.readString("sid");
         
-            //Decode Attribute: mPrice Type:double List: false
-            mPrice = tDecoder.readDouble("price");
+            //Decode Attribute: mPrice Type:long List: false
+            mPrice = tDecoder.readLong("price");
         
             //Decode Attribute: mQuantity Type:int List: false
             mQuantity = tDecoder.readInteger("quantity");
@@ -196,7 +196,7 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setPrice( Double pValue ) {
+                        public Builder setPrice( Long pValue ) {
                         mInstance.setPrice( pValue );
                         return this;
                     }

@@ -20,7 +20,6 @@ package com.hoddmimes.te.engine;
 
 import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
-
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.interfaces.RequestContextInterface;
@@ -34,9 +33,9 @@ import java.util.*;
 public class Orderbook
 {
     private Logger                              mLog;
-    private SymbolX                              mSymbol;
-    private TreeMap<Double,LinkedList<Order>>   mBuySide;
-    private TreeMap<Double,LinkedList<Order>>   mSellSide;
+    private SymbolX                             mSymbol;
+    private OrderMapInterface                   mBuySide;
+    private OrderMapInterface                   mSellSide;
     private MatchingEngineCallback              mEngineCallbackIf;
     private double                              mLastTradePrice;
     private long                                mLastTradeTime;
@@ -53,8 +52,8 @@ public class Orderbook
         mExecutionCount = 0;
 
         mSymbol = pSymbol;
-        mBuySide = new TreeMap<>(new PriceComarator( Order.Side.BUY));
-        mSellSide = new TreeMap<>(new PriceComarator( Order.Side.SELL));
+        mBuySide = new OrderMap( Order.Side.BUY );
+        mSellSide = new OrderMap( Order.Side.SELL );
         mLog = pLogger;
         mLastTradePrice = 0.0d;
         mLastTradePrice = 0L;
@@ -85,22 +84,15 @@ public class Orderbook
         Iterator<Order> tItr = null;
         BdxBBO bbo = new BdxBBO().setSid( mSymbol.getSid().get());
         if (mBuySide.size() > 0) {
-            bbo.setBid( mBuySide.firstKey());
-            int tBuyQty = 0;
-
-            tItr = mBuySide.values().iterator().next().iterator();
-            while( tItr.hasNext() ) {
-                tBuyQty += tItr.next().getQuantity();
-            }
+            long tPrice = mBuySide.peek().getPrice();
+            bbo.setBid( tPrice );
+            int tBuyQty = mBuySide.getOrders().stream().filter( o -> (o.getPrice() == tPrice)).mapToInt( o -> o.getQuantity()).sum();
             bbo.setBidQty(tBuyQty);
         }
         if (mSellSide.size() > 0) {
-            bbo.setOffer( mSellSide.firstKey());
-            int tSellQty = 0;
-            tItr = mSellSide.values().iterator().next().iterator();
-            while( tItr.hasNext() ) {
-                tSellQty += tItr.next().getQuantity();
-            }
+            long tPrice = mSellSide.peek().getPrice();
+            bbo.setOffer( tPrice );
+            int tSellQty = mSellSide.getOrders().stream().filter( o -> (o.getPrice() == tPrice)).mapToInt( o -> o.getQuantity()).sum();
             bbo.setOfferQty(tSellQty);
         }
         if (!mBBO.same( bbo )) {
@@ -116,7 +108,7 @@ public class Orderbook
     public MessageInterface amendOrder( long pOrderId, AmendOrderRequest pAmendRqst, RequestContextInterface pRqstCntx ) {
         AmendOrderResponse tAmendRsp;
         // Check that there is something to amend
-        if (pAmendRqst.getSide().isEmpty() && pAmendRqst.getPrice().isEmpty() && pAmendRqst.getDeltaQuantity().isEmpty()) {
+        if (pAmendRqst.getSide().isPresent() && pAmendRqst.getPrice().isPresent() && pAmendRqst.getDeltaQuantity().isPresent()) {
             return StatusMessageBuilder.error("nothing to amend", pAmendRqst.getRef().get());
         }
 
@@ -129,13 +121,13 @@ public class Orderbook
         boolean tCleanAmend = true;
         // Only decreasing the volume will performe a clean amend, otherwise
         // the order is delete and a new one is created
-        if ((!pAmendRqst.getSide().isEmpty()) && (!pAmendRqst.getSide().get().contentEquals(tOrderToAmend.getSide().name()))) {
+        if ((!pAmendRqst.getSide().isPresent()) && (!pAmendRqst.getSide().get().contentEquals(tOrderToAmend.getSide().name()))) {
             tCleanAmend = false;
         }
-        if ((!pAmendRqst.getDeltaQuantity().isEmpty()) && (pAmendRqst.getDeltaQuantity().get() > 0)) {
+        if ((!pAmendRqst.getDeltaQuantity().isPresent()) && (pAmendRqst.getDeltaQuantity().get() > 0)) {
             tCleanAmend = false;
         }
-        if (!pAmendRqst.getPrice().isEmpty()) {
+        if (!pAmendRqst.getPrice().isPresent()) {
             if ((tOrderToAmend.getSide() == Order.Side.BUY) && (pAmendRqst.getPrice().get() > tOrderToAmend.getPrice())) {
                 tCleanAmend = false;
             }
@@ -146,8 +138,8 @@ public class Orderbook
 
         // If clean amend update the existing order
         if (tCleanAmend) {
-            int tNewVolume = (!pAmendRqst.getDeltaQuantity().isEmpty()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
-            double tNewPrice = (!pAmendRqst.getPrice().isEmpty()) ? (pAmendRqst.getPrice().get()) : tOrderToAmend.getPrice();
+            int tNewVolume = (!pAmendRqst.getDeltaQuantity().isPresent()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
+            long tNewPrice = (!pAmendRqst.getPrice().isPresent()) ? (pAmendRqst.getPrice().get()) : tOrderToAmend.getPrice();
 
             if (tNewVolume <= 0) {
                 this.deleteOrder(tOrderToAmend.getOrderId(), pAmendRqst.getRef().get(), pRqstCntx);
@@ -171,9 +163,9 @@ public class Orderbook
         }
 
         // Amend require the existing order to be deleted and possibly a new to be inserted
-        int tVolume = (!pAmendRqst.getDeltaQuantity().isEmpty()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
-        String tSide = (!pAmendRqst.getSide().isEmpty()) ? pAmendRqst.getSide().get() : tOrderToAmend.getSide().name();
-        double tPrice = (!pAmendRqst.getPrice().isEmpty()) ? pAmendRqst.getPrice().get() : tOrderToAmend.getPrice();
+        int tVolume = (!pAmendRqst.getDeltaQuantity().isPresent()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
+        String tSide = (!pAmendRqst.getSide().isPresent()) ? pAmendRqst.getSide().get() : tOrderToAmend.getSide().name();
+        long tPrice = (!pAmendRqst.getPrice().isPresent()) ? pAmendRqst.getPrice().get() : tOrderToAmend.getPrice();
 
         // Always delete the existing one
         this.deleteOrder(tOrderToAmend.getOrderId(), pAmendRqst.getRef().get(), pRqstCntx);
@@ -200,7 +192,7 @@ public class Orderbook
     }
 
     private void reshuffelOrder( Order pOrder ) {
-        Order tOrder = removeOrderFromBooK(pOrder.getOrderId() );
+        Order tOrder = removeOrderFromBook(pOrder.getOrderId() );
         addOrderToBook( tOrder );
     }
 
@@ -208,27 +200,19 @@ public class Orderbook
     List<OwnOrder> getOrdersForAccount( String pAccount ) {
         List<OwnOrder> tAccountOrders = new ArrayList<>();
 
-        Iterator<LinkedList<Order>> tOrderListItr = mBuySide.values().iterator();
-        while (tOrderListItr.hasNext()) {
-            LinkedList<Order> tOrderList = tOrderListItr.next();
-            Iterator<Order> tItr = tOrderList.iterator();
-            while (tItr.hasNext()) {
-                Order tOrder = tItr.next();
-                if (tOrder.getAccountId().toUpperCase().contentEquals(pAccount)) {
-                    tAccountOrders.add(tOrder.toOwnOrder());
-                }
+        Iterator<Order> tOrderItr = mBuySide.iterator();
+        while (tOrderItr.hasNext()) {
+            Order tOrder = tOrderItr.next();
+            if (tOrder.getAccountId().toUpperCase().contentEquals(pAccount)) {
+                tAccountOrders.add(tOrder.toOwnOrder());
             }
         }
 
-        tOrderListItr = mSellSide.values().iterator();
-        while (tOrderListItr.hasNext()) {
-            LinkedList<Order> tOrderList = tOrderListItr.next();
-            Iterator<Order> tItr = tOrderList.iterator();
-            while (tItr.hasNext()) {
-                Order tOrder = tItr.next();
-                if (tOrder.getAccountId().toUpperCase().contentEquals(pAccount)) {
-                    tAccountOrders.add(tOrder.toOwnOrder());
-                }
+        tOrderItr = mSellSide.iterator();
+        while (tOrderItr.hasNext()) {
+            Order tOrder = tOrderItr.next();
+            if (tOrder.getAccountId().toUpperCase().contentEquals(pAccount)) {
+                tAccountOrders.add(tOrder.toOwnOrder());
             }
         }
 
@@ -236,66 +220,26 @@ public class Orderbook
     }
 
 
+    private Order findOrder(long pOrderId) {
+        Iterator<Order> tOrderItr = (OrderId.isBuyOrder(pOrderId)) ? mBuySide.iterator() : mSellSide.iterator();
 
-
-    private Order findOrder( long pOrderId ) {
-
-        Iterator<LinkedList<Order>> tOrderListItr = mBuySide.values().iterator();
-        while( tOrderListItr.hasNext()) {
-            LinkedList<Order> tOrderList = tOrderListItr.next();
-            Iterator<Order> tItr = tOrderList.iterator();
-            while (tItr.hasNext()) {
-                Order tOrder = tItr.next();
-                if (tOrder.getOrderId() == pOrderId) {
-                    return tOrder;
-                }
+        while (tOrderItr.hasNext()) {
+            Order tOrder = tOrderItr.next();
+            if (tOrder.getOrderId() == pOrderId) {
+                return tOrder;
             }
         }
-
-        tOrderListItr = mSellSide.values().iterator();
-        while( tOrderListItr.hasNext()) {
-            LinkedList<Order> tOrderList = tOrderListItr.next();
-            Iterator<Order> tItr = tOrderList.iterator();
-            while (tItr.hasNext()) {
-                Order tOrder = tItr.next();
-                if (tOrder.getOrderId() == pOrderId) {
-                    return tOrder;
-                }
-            }
-        }
-
         return null;
-
     }
+
 
     public MessageInterface queryOwnOrders( String pRef, RequestContextInterface pRqstCntx) {
         InternalOwnOrdersResponse tRspMsg = new InternalOwnOrdersResponse();
-
-        Iterator<LinkedList<Order>> tOrderListItr = mBuySide.values().iterator();
-        while( tOrderListItr.hasNext()) {
-            LinkedList<Order> tOrderList = tOrderListItr.next();
-            Iterator<Order> tItr = tOrderList.iterator();
-            while( tItr.hasNext() ) {
-                Order tOrder = tItr.next();
-                if (tOrder.getAccountId().contentEquals( pRqstCntx.getAccountId())) {
-                    tRspMsg.addOrders( tOrder.toOwnOrder());
-                }
-            }
-        }
-
-        tOrderListItr = mSellSide.values().iterator();
-        while( tOrderListItr.hasNext()) {
-            LinkedList<Order> tOrderList = tOrderListItr.next();
-            Iterator<Order> tItr = tOrderList.iterator();
-            while( tItr.hasNext() ) {
-                Order tOrder = tItr.next();
-                if (tOrder.getAccountId().contentEquals( pRqstCntx.getAccountId())) {
-                    tRspMsg.addOrders( tOrder.toOwnOrder());
-                }
-            }
-        }
+        tRspMsg.setOrders( getOrdersForAccount(pRqstCntx.getAccountId()));
         return tRspMsg;
     }
+
+
 
     public BBO getBBO() {
         JsonObject jBBO = AuxJson.getMessageBody( mBBO.toJson() );
@@ -306,42 +250,27 @@ public class Orderbook
 
     public int deleteOrders(  String pAccountId, RequestContextInterface pRqstCntx ) {
          int tOrdersDeleted = 0;
+         Order tOrder;
 
-        Iterator<LinkedList<Order>> tOrderListItr = mBuySide.values().iterator();
-        while( tOrderListItr.hasNext()) {
-            LinkedList<Order> tOrderList = tOrderListItr.next();
-            Iterator<Order> tItr = tOrderList.iterator();
-            while( tItr.hasNext() ) {
-                Order tOrder = tItr.next();
-                if (tOrder.getAccountId().contentEquals( pAccountId )) {
-                    tItr.remove();
-                    tOrdersDeleted++;
-                    mEngineCallbackIf.orderRemoved(tOrder, pRqstCntx.getSessionContext(), ++mSeqNo);
-                    mEngineCallbackIf.orderbookChanged(mSymbol.getSid().get());
-
-                    if (tOrderList.size() == 0) {
-                        tOrderListItr.remove();
-                    }
-                }
+        Iterator<Order> tOrderItr = mBuySide.iterator();
+        while (tOrderItr.hasNext()) {
+            tOrder = tOrderItr.next();
+            if (tOrder.getAccountId().contentEquals( pAccountId )) {
+                tOrderItr.remove();
+                tOrdersDeleted++;
+                mEngineCallbackIf.orderRemoved(tOrder, pRqstCntx.getSessionContext(), ++mSeqNo);
+                mEngineCallbackIf.orderbookChanged(mSymbol.getSid().get());
             }
         }
 
-        tOrderListItr = mSellSide.values().iterator();
-        while( tOrderListItr.hasNext()) {
-            LinkedList<Order> tOrderList = tOrderListItr.next();
-            Iterator<Order> tItr = tOrderList.iterator();
-            while( tItr.hasNext() ) {
-                Order tOrder = tItr.next();
-                if (tOrder.getAccountId().contentEquals( pAccountId )) {
-                    tItr.remove();
-                    tOrdersDeleted++;
-                    mEngineCallbackIf.orderRemoved(tOrder, pRqstCntx.getSessionContext(), ++mSeqNo);
-                    mEngineCallbackIf.orderbookChanged(mSymbol.getSid().get());
-
-                    if (tOrderList.size() == 0) {
-                        tOrderListItr.remove();
-                    }
-                }
+        tOrderItr = mSellSide.iterator();
+        while (tOrderItr.hasNext()) {
+            tOrder = tOrderItr.next();
+            if (tOrder.getAccountId().contentEquals( pAccountId )) {
+                tOrderItr.remove();
+                tOrdersDeleted++;
+                mEngineCallbackIf.orderRemoved(tOrder, pRqstCntx.getSessionContext(), ++mSeqNo);
+                mEngineCallbackIf.orderbookChanged(mSymbol.getSid().get());
             }
         }
 
@@ -349,46 +278,13 @@ public class Orderbook
         return tOrdersDeleted;
     }
 
-    private Order removeOrderFromBooK( long pOrderId ) {
-
-        Iterator<LinkedList<Order>> tOrderListItr = mBuySide.values().iterator();
-        while(tOrderListItr.hasNext()) {
-            LinkedList<Order> tOrderList = tOrderListItr.next();
-            Iterator<Order> tItr = tOrderList.iterator();
-            while( tItr.hasNext() ) {
-                Order tOrder = tItr.next();
-                if (tOrder.getOrderId() == pOrderId) {
-                    tItr.remove();
-                    if (tOrderList.size() == 0) {
-                        tOrderListItr.remove();
-                    }
-                    return tOrder;
-                }
-            }
-        }
-
-
-        tOrderListItr = mSellSide.values().iterator();
-        while(tOrderListItr.hasNext()) {
-            LinkedList<Order> tOrderList = tOrderListItr.next();
-            Iterator<Order> tItr = tOrderList.iterator();
-            while( tItr.hasNext() ) {
-                Order tOrder = tItr.next();
-                if (tOrder.getOrderId() == pOrderId) {
-                    tItr.remove();
-                    if (tOrderList.size() == 0) {
-                        tOrderListItr.remove();
-                    }
-                    return tOrder;
-                }
-            }
-        }
-        return null;
+    private Order removeOrderFromBook(long pOrderId ) {
+        return (OrderId.isBuyOrder(pOrderId)) ? mBuySide.remove( pOrderId ) : mSellSide.remove( pOrderId );
     }
 
     public  MessageInterface deleteOrder(long pOrderId, String pUserRef, RequestContextInterface pRqstCntx) {
 
-        Order tRemovedOrder = removeOrderFromBooK( pOrderId );
+        Order tRemovedOrder = removeOrderFromBook( pOrderId );
 
         pRqstCntx.timestamp("remove deleted order from book");
         if (tRemovedOrder != null) {
@@ -412,15 +308,12 @@ public class Orderbook
 
 
     private void addOrderToBook( Order pOrder ) {
-        TreeMap<Double,LinkedList<Order>> tBookSide = (pOrder.getSide() == Order.Side.BUY) ? mBuySide : mSellSide;
-        LinkedList<Order> tOrderList = tBookSide.get(pOrder.getPrice());
-        if (tOrderList == null) {
-            tOrderList = new LinkedList<>();
-            tBookSide.put(pOrder.getPrice(), tOrderList);
+        if (pOrder.getSide() == Order.Side.BUY) {
+            mBuySide.add(pOrder);
+        } else {
+            mSellSide.add(pOrder);
         }
-        tOrderList.add( pOrder );
     }
-
 
     public InternalTrade revertTrade( ContainerTrade pTrade,  RequestContextInterface pRqstCntx ) {
         // Reverse
@@ -458,7 +351,7 @@ public class Orderbook
     }
 
 
-    private MessageInterface matchBook(TreeMap<Double,LinkedList<Order>> pBook, Order pNewOrder, RequestContextInterface pRqstCntx ) {
+    private MessageInterface matchBook(OrderMapInterface pBook, Order pNewOrder, RequestContextInterface pRqstCntx ) {
         int tTotMatched = 0;
         boolean tEndOfMatch = false;
 
@@ -466,13 +359,11 @@ public class Orderbook
 
         // Loop as long as we can match
         pRqstCntx.timestamp("Starting matching order");
-        Iterator<LinkedList<Order>> tOrderListItr = pBook.values().iterator();
+        Iterator<Order> tOrderItr = pBook.iterator();
 
-        while(tOrderListItr.hasNext() && (pNewOrder.getQuantity() > 0) && (!tEndOfMatch)) {
-            LinkedList<Order> tOrderList = tOrderListItr.next();
-            Iterator<Order> tItr = tOrderList.iterator();
-            while (tItr.hasNext()) {
-                Order tBookOrder = tItr.next();
+        while(tOrderItr.hasNext() && (pNewOrder.getQuantity() > 0) && (!tEndOfMatch)) {
+            while (tOrderItr.hasNext()) {
+                Order tBookOrder = tOrderItr.next();
                 pRqstCntx.timestamp("find price level");
                 if (pNewOrder.match(tBookOrder)) {
                     pRqstCntx.timestamp("match first order on price level");
@@ -492,10 +383,7 @@ public class Orderbook
 
                     if (tBookOrder.getQuantity() == 0) {
                         mEngineCallbackIf.orderRemoved(tBookOrder,  pRqstCntx.getSessionContext(), ++mSeqNo);
-                        tItr.remove();
-                        if (tOrderList.isEmpty()) {
-                            tOrderListItr.remove();  // remove prece level
-                        }
+                        tOrderItr.remove();
                         pRqstCntx.timestamp("remove matched order");
                     }
                 } else {
@@ -539,20 +427,31 @@ public class Orderbook
         return tBdx;
     }
 
-    private List<PriceLevel> buildPriceLevelSide(TreeMap<Double,LinkedList<Order>> pSide, int pMaxLevels ) {
+    private List<PriceLevel> buildPriceLevelSide(OrderMapInterface pSide, int pMaxLevels ) {
         int i = 0;
         ArrayList<PriceLevel> tPriceLevelList = new ArrayList<>();
-        Iterator<Map.Entry<Double,LinkedList<Order>>> tItrLevels = pSide.entrySet().stream().iterator();
-        while( (tItrLevels.hasNext()) && (i < pMaxLevels)) {
-            Map.Entry<Double,LinkedList<Order>> tPriceEntry = tItrLevels.next();
-            List<Order> tOrderList = tPriceEntry.getValue();
-            int tQuantity = 0;
-            for( Order tOrder : tOrderList) {
-                tQuantity += tOrder.getQuantity();
-            }
-            PriceLevel pl = new PriceLevel().setPrice(tPriceEntry.getKey()).setQuantity( tQuantity );
-            tPriceLevelList.add( pl );
-            i++;
+
+        if (pSide.size() == 0) {
+            return tPriceLevelList;
+        }
+
+        int tLevel = 0;
+        long tPrice = pSide.peek().getPrice();
+        int tQty = 0;
+        Iterator<Order> tOrderItr = pSide.iterator();
+
+        while( (tOrderItr.hasNext()) && (tLevel < pMaxLevels)) {
+           Order tOrder = tOrderItr.next();
+           if (tOrder.getPrice() == tPrice) {
+               tQty += tOrder.getQuantity();
+           } else {
+               // Price level shift
+               PriceLevel pl = new PriceLevel().setPrice(tPrice).setQuantity(tQty);
+               tPriceLevelList.add(pl);
+               tPrice = tOrder.getPrice();
+               tQty = tOrder.getQuantity();
+               tLevel++;
+           }
         }
         return tPriceLevelList;
     }
@@ -565,21 +464,15 @@ public class Orderbook
         tResponse.setObSeqNo( this.mSeqNo );
 
 
-        Iterator<LinkedList<Order>> tItrLevel = mBuySide.values().iterator();
-        while ( tItrLevel.hasNext() ) {
-            Iterator<Order> tItr = tItrLevel.next().iterator();
-            while( tItr.hasNext() ) {
-                Order o = tItr.next();;
+        Iterator<Order> tOrderItr = mBuySide.iterator();
+        while ( tOrderItr.hasNext() ) {
+                Order o = tOrderItr.next();
                 tResponse.addBuyOrders( o.toMsgOrder());
-            }
         }
-        tItrLevel = mSellSide.values().iterator();
-        while ( tItrLevel.hasNext() ) {
-            Iterator<Order> tItr = tItrLevel.next().iterator();
-            while( tItr.hasNext() ) {
-                Order o = tItr.next();;
+        tOrderItr = mSellSide.iterator();
+        while ( tOrderItr.hasNext() ) {
+                Order o = tOrderItr.next();;
                 tResponse.addSellOrders( o.toMsgOrder());
-            }
         }
         return tResponse;
     }
@@ -597,10 +490,10 @@ public class Orderbook
         sme.setOrders( mOrderCount );
         sme.setExecutions( mExecutionCount );
         if (mBuySide.size() > 0) {
-            sme.setBuyPrice( mBuySide.firstKey());
+            sme.setBuyPrice( mBuySide.peek().getPrice());
         }
         if (mSellSide.size() > 0) {
-            sme.setSellPrice( mSellSide.firstKey());
+            sme.setSellPrice( mSellSide.peek().getPrice());
         }
         return sme;
     }

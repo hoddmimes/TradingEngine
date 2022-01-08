@@ -290,7 +290,7 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 		}
 
 		public String toString() {
-			return "sid: " + mTrade.getSid().get() + " " + mTrade.getQuantity().get() + "@" + nbf.format( mTrade.getPrice().get()) +
+			return "sid: " + mTrade.getSid().get() + " " + mTrade.getQuantity().get() + "@" + PrcFmt.format( mTrade.getPrice().get()) +
 					" buyer: " + mTrade.getBuyer().get() + " seller: "+ mTrade.getSeller().get() + " time: " + sdfTime.format(mTrade.getTradeTime());
 		}
 
@@ -306,7 +306,7 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 
 		@TableAttribute(header = "Price", column = 3, width = 50)
 		public String getPrice() {
-			return nbf.format( mTrade.getPrice().get());
+			return PrcFmt.format( mTrade.getPrice().get());
 		}
 
 		@TableAttribute(header = "Quantity", column = 4, width = 70)

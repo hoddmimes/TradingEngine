@@ -6,7 +6,7 @@
     "contact": {
       "email": "par.bertilsson@yahoo.com"
     },
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "externalDocs": {
     "description": "TE WEB Socket Interface (description of the unsolicited broadcast flow published by the TE)",
@@ -775,8 +775,8 @@
             "description": "symbol id identifying the tradeable entity"
           },
           "price": {
-            "type": "number",
-            "format": "double"
+            "type": "integer",
+            "format": "int64"
           },
           "quantity": {
             "type": "integer",
@@ -883,9 +883,9 @@
             "type": "string"
           },
           "price": {
-            "type": "number",
-            "format": "double"
-          },
+            "type": "integer",
+            "format": "int64"
+          }
           "deltaQuantity": {
             "type": "integer",
             "format": "int32"
@@ -944,8 +944,8 @@
               "type": "string"
             },
             "tickSize": {
-              "type": "number",
-              "format": "double"
+              "type": "integer",
+              "format": "int64"
             },
             "closed": {
               "type": "boolean",
@@ -956,12 +956,12 @@
               "default": true
             },
             "minPricePctChg": {
-              "type": "number",
-              "format": "double"
+              "type": "integer",
+              "format": "int64"
             },
             "maxPricePctChg": {
-              "type": "number",
-              "format": "double"
+              "type": "integer",
+              "format": "int64"
             },
             "marketOpen": {
               "pattern": "^\\d{2}-\\d{2}$",
@@ -1004,16 +1004,16 @@
               "format": "int32"
             },
             "tickSize": {
-              "type": "number",
-              "format": "double"
+              "type": "integer",
+              "format": "int64"
             },
             "minPricePctChg": {
-              "type": "number",
-              "format": "double"
+              "type": "integer",
+              "format": "int64"
             },
             "maxPricePctChg": {
-              "type": "number",
-              "format": "double"
+              "type": "integer",
+              "format": "int64"
             },
             "enabled": {
               "type": "boolean",
@@ -1050,23 +1050,23 @@
               "description": "last trade time, yyyy-MM-dd HH:mm:ss.SSS"
             },
             "last": {
-              "type": "number",
-              "format": "double",
+              "type": "integer",
+              "format": "int64",
               "description": "last trade price"
             },
             "open": {
-              "type": "number",
-              "format": "double",
+              "type": "integer",
+              "format": "int64",
               "description": "open trade price"
             },
             "low": {
-              "type": "number",
-              "format": "double",
+              "type": "integer",
+              "format": "int64",
               "description": "lowest trade price during the day"
             },
             "high": {
-              "type": "number",
-              "format": "double",
+              "type": "integer",
+              "format": "int64",
               "description": "high trade price during the day"
             }
           }
@@ -1076,8 +1076,8 @@
         "type": "object",
         "properties": {
           "price": {
-            "type": "number",
-            "format": "double"
+            "type": "integer",
+            "format": "int64"
           },
           "quantity": {
             "type": "integer",
@@ -1099,8 +1099,8 @@
         "type": "object",
         "properties": {
           "price": {
-            "type": "number",
-            "format": "double"
+            "type": "integer",
+            "format": "int64"
           },
           "quantity": {
             "type": "integer",
@@ -1167,8 +1167,8 @@
               "type": "string"
             },
             "price": {
-              "type": "number",
-              "format": "double"
+              "type": "integer",
+              "format": "int64"
             },
             "quantity": {
               "type": "integer",
@@ -1199,8 +1199,8 @@
               "type": "string"
             },
             "price": {
-              "type": "number",
-              "format": "double"
+              "type": "integer",
+              "format": "int64"
             },
             "quantity": {
               "type": "integer",
@@ -1232,16 +1232,16 @@
               "type": "string"
             },
             "bid": {
-              "type": "number",
-              "format": "double"
+              "type": "integer",
+              "format": "int64"
             },
             "bidQty": {
               "type": "integer",
               "format": "int32"
             },
             "offer": {
-              "type": "number",
-              "format": "double"
+              "type": "integer",
+              "format": "int64"
             },
             "offerQty": {
               "type": "integer",

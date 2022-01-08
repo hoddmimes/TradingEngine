@@ -257,7 +257,7 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 			trd.setLast( pTrade.getPrice().get());
 			trd.setTotQuantity( pTrade.getQuantity().get());
 		} else {
-			double tPrice = pTrade.getPrice().get();
+			long tPrice = pTrade.getPrice().get();
 			trd.setTotQuantity((trd.getQuantity().get() + pTrade.getQuantity().get()));
 			trd.setLast( tPrice );
 			if (tPrice > trd.getHigh().get()) {
@@ -325,7 +325,7 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 		while( tSidItr.hasNext()) {
 			List<TradeX> tTrdLst = tSidItr.next();
 			int tVolume = 0, tExecutions = 0;
-			double tMinPrice = Double.MAX_VALUE, tMaxPrice = 0, tAvgPrice = 0, tTurnover = 0;
+			long tMinPrice = Long.MAX_VALUE, tMaxPrice = 0, tAvgPrice = 0, tTurnover = 0;
 			String tSid = tTrdLst.get(0).getSid().get();
 			synchronized ( tTrdLst ) {
 				for (TradeX trd : tTrdLst) {

@@ -65,7 +65,7 @@ with “/bar” and level two and four being whatever.</p>
 	   <span class="token string">"sid"</span> <span class="token punctuation">:</span> string
 	   <span class="token string">"orderId"</span> <span class="token punctuation">:</span> string
 	   <span class="token string">"action"</span> <span class="token punctuation">:</span> <span class="token function">string</span> <span class="token punctuation">(</span>ADD<span class="token punctuation">,</span>REMOVE<span class="token punctuation">,</span>MODIFY<span class="token punctuation">)</span>
-	   <span class="token string">"price"</span> <span class="token punctuation">:</span> double
+	   <span class="token string">"price"</span> <span class="token punctuation">:</span> long
 	   <span class="token string">"quantity"</span> <span class="token punctuation">:</span> integer 
 	   <span class="token string">"side"</span> <span class="token punctuation">:</span> <span class="token function">string</span> <span class="token punctuation">(</span>BUY<span class="token punctuation">,</span> SELL<span class="token punctuation">)</span>
 	   <span class="token string">"ref"</span> <span class="token punctuation">:</span> string
@@ -79,7 +79,7 @@ with “/bar” and level two and four being whatever.</p>
 	   <span class="token string">"sid"</span> <span class="token punctuation">:</span> string
 	   <span class="token string">"orderId"</span> <span class="token punctuation">:</span> string
 	   <span class="token string">"action"</span> <span class="token punctuation">:</span> <span class="token function">string</span> <span class="token punctuation">(</span>ADD<span class="token punctuation">,</span>REMOVE<span class="token punctuation">,</span>MODIFY<span class="token punctuation">)</span>
-	   <span class="token string">"price"</span> <span class="token punctuation">:</span> double
+	   <span class="token string">"price"</span> <span class="token punctuation">:</span> long
 	   <span class="token string">"quantity"</span> <span class="token punctuation">:</span> integer 
 	   <span class="token string">"side"</span> <span class="token punctuation">:</span> <span class="token function">string</span> <span class="token punctuation">(</span>BUY<span class="token punctuation">,</span> SELL<span class="token punctuation">)</span>
 	   <span class="token string">"obSeqNo"</span> <span class="token punctuation">:</span> long
@@ -91,7 +91,7 @@ with “/bar” and level two and four being whatever.</p>
 <pre class=" language-json"><code class="prism  language-json"> <span class="token punctuation">{</span> BdxOwnTrade<span class="token punctuation">:</span> <span class="token punctuation">{</span>
 	 <span class="token string">"sid"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
 	 <span class="token string">"orderId"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
-	 <span class="token string">"price"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+	 <span class="token string">"price"</span> <span class="token punctuation">:</span> long<span class="token punctuation">,</span>
 	 <span class="token string">"quantity"</span> <span class="token punctuation">:</span> integer<span class="token punctuation">,</span> 
 	 <span class="token string">"side"</span> <span class="token punctuation">:</span> <span class="token function">string</span> <span class="token punctuation">(</span>BUY<span class="token punctuation">,</span> SELL<span class="token punctuation">)</span><span class="token punctuation">,</span>
 	 <span class="token string">"time"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
@@ -105,8 +105,8 @@ with “/bar” and level two and four being whatever.</p>
 	 <span class="token string">"last"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
 	 <span class="token string">"quantity"</span> <span class="token punctuation">:</span> integer<span class="token punctuation">,</span> 
 	 <span class="token string">"open"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
-	 <span class="token string">"low"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
-	 <span class="token string">"high"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+	 <span class="token string">"low"</span> <span class="token punctuation">:</span> long<span class="token punctuation">,</span>
+	 <span class="token string">"high"</span> <span class="token punctuation">:</span> long<span class="token punctuation">,</span>
 	 <span class="token string">"time"</span> <span class="token punctuation">:</span> string<span class="token punctuation">,</span>
 	 <span class="token string">"totalQuantity"</span> <span class="token punctuation">:</span> integer 
  <span class="token punctuation">}</span>
@@ -117,11 +117,11 @@ with “/bar” and level two and four being whatever.</p>
 		<span class="token string">"sid"</span> <span class="token punctuation">:</span>  string<span class="token punctuation">,</span>  
 	    <span class="token string">"levels"</span> <span class="token punctuation">:</span> integer<span class="token punctuation">,</span> 
 	    <span class="token string">"buySide"</span> <span class="token punctuation">:</span> <span class="token punctuation">[</span> <span class="token punctuation">{</span>
-					    <span class="token string">"price"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+					    <span class="token string">"price"</span> <span class="token punctuation">:</span> long<span class="token punctuation">,</span>
 					    <span class="token string">"quantity"</span> <span class="token punctuation">:</span> integer
 					<span class="token punctuation">}</span> <span class="token punctuation">]</span><span class="token punctuation">,</span>
 		<span class="token string">"sellSide"</span> <span class="token punctuation">;</span> <span class="token punctuation">[</span> <span class="token punctuation">{</span>
-						<span class="token string">"price"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+						<span class="token string">"price"</span> <span class="token punctuation">:</span> long<span class="token punctuation">,</span>
 						<span class="token string">"quantity"</span> <span class="token punctuation">:</span> integer
 					 <span class="token punctuation">}</span> <span class="token punctuation">]</span>
 	<span class="token punctuation">}</span>
@@ -131,9 +131,9 @@ with “/bar” and level two and four being whatever.</p>
 <p><strong>Description:</strong> The Best Bid/Offer broadcast is is disseminated to connected <strong>wss</strong> clients when there is a change to the best Bid/Offer price or volume.</p>
 <pre class=" language-json"><code class="prism  language-json"> <span class="token punctuation">{</span> BdxBBO <span class="token punctuation">:</span> <span class="token punctuation">{</span>
 		<span class="token string">"sid"</span> <span class="token punctuation">:</span>  string<span class="token punctuation">,</span>  
-	    <span class="token string">"bid"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+	    <span class="token string">"bid"</span> <span class="token punctuation">:</span> long<span class="token punctuation">,</span>
 	    <span class="token string">"bidQty"</span> <span class="token punctuation">:</span> integer<span class="token punctuation">,</span>
-	    <span class="token string">"offer"</span> <span class="token punctuation">:</span> double<span class="token punctuation">,</span>
+	    <span class="token string">"offer"</span> <span class="token punctuation">:</span> long<span class="token punctuation">,</span>
 	    <span class="token string">"offerQty"</span> <span class="token punctuation">:</span> integer
 	<span class="token punctuation">}</span>
 <span class="token punctuation">}</span>

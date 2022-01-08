@@ -287,7 +287,7 @@ public class OrderPanel extends JPanel implements TableCallbackInterface {
 		}
 
 		public String toString() {
-			return "sid: " + mOrder.getSid().get() + " " + mOrder.getQuantity().get() + "@" + nbf.format( mOrder.getPrice().get()) +
+			return "sid: " + mOrder.getSid().get() + " " + mOrder.getQuantity().get() + "@" + PrcFmt.format( mOrder.getPrice().get()) +
 					" ref: " + mOrder.getRef().get() + " orderId: " + mOrder.getOrderId().get();
 		}
 
@@ -308,7 +308,7 @@ public class OrderPanel extends JPanel implements TableCallbackInterface {
 
 		@TableAttribute(header = "Price", column = 4, width = 50)
 		public String getPrice() {
-			return nbf.format( mOrder.getPrice().get());
+			return PrcFmt.format( mOrder.getPrice().get());
 		}
 
 		@TableAttribute(header = "Volume", column = 5, width = 70)

@@ -36,7 +36,7 @@ public class Order implements Comparable<Order>
 		return mSid;
 	}
 
-	public double getPrice() {
+	public long getPrice() {
 		return mPrice;
 	}
 
@@ -68,7 +68,7 @@ public class Order implements Comparable<Order>
 		mQuantity = pQuantity;
 	}
 
-	public void setPrice(double pPrice ) {
+	public void setPrice(long pPrice ) {
 		mPrice = pPrice;
 	}
 
@@ -78,7 +78,7 @@ public class Order implements Comparable<Order>
 	private static SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
 	private String     mSid;
-	private double     mPrice;
+	private long       mPrice;
 	private Side       mSide;
 	private int        mQuantity;
 	private long       mCreationTime;
@@ -183,28 +183,28 @@ public class Order implements Comparable<Order>
 		mSide = Side.valueOf( pAddOrderRequest.getSide().get().toUpperCase());
 		mUserRef = pAddOrderRequest.getRef().orElse(null);
 		mCreationTime = System.currentTimeMillis();
-		mOrderId = TXIDFactory.getId();
+		mOrderId = OrderId.get( mSide );
 		mAccountId = pUserId;
 	}
 
-	 Order( String pUserId,  String pSymbol, double pPrice, int pVolume, Side pSide, String pRef, long pCreationTime ) {
+	 Order( String pUserId,  String pSymbol, long pPrice, int pVolume, Side pSide, String pRef, long pCreationTime ) {
 		this.mSid = pSymbol;
 		this.mPrice = pPrice;
 		this.mQuantity = pVolume;
 		this.mSide = pSide;
 		this.mUserRef = pRef;
-		this.mOrderId = TXIDFactory.getId();
+		this.mOrderId = OrderId.get( mSide );
 		this.mAccountId = pUserId;
 		this.mCreationTime = pCreationTime;
 	}
 
-	private Order( String pUserId,  String pSymbol, double pPrice, int pVolume, Side pSide, String pRef, String pCreationTime  ) {
+	private Order( String pUserId,  String pSymbol, long pPrice, int pVolume, Side pSide, String pRef, String pCreationTime  ) {
 		this.mSid = pSymbol;
 		this.mPrice = pPrice;
 		this.mQuantity = pVolume;
 		this.mSide = pSide;
 		this.mUserRef = pRef;
-		mOrderId = TXIDFactory.getId();
+		mOrderId = OrderId.get( mSide );
 		this.mAccountId = pUserId;
 		try {
 			this.mCreationTime = SDF.parse( pCreationTime ).getTime();
@@ -235,13 +235,13 @@ public class Order implements Comparable<Order>
 		LinkedList<Order> tList = new LinkedList<>();
 
 
-		tList.add( new Order(null, "FOO", 10.07, 1, Side.BUY, "1", "2020-11-1 10:01:00.000"));
-		tList.add( new Order(null, "FOO", 10.4, 1, Side.BUY, "2", "2020-11-1 10:03:00.000"));
-		tList.add( new Order(null, "FOO", 10.4, 1, Side.BUY, "3", "2020-11-1 10:02:00.000"));
-		tList.add( new Order(null, "FOO", 10.23, 1, Side.BUY, "4", "2020-11-1 10:04:00.000"));
-		tList.add( new Order(null, "FOO", 10.14, 1, Side.BUY, "5", "2020-11-1 10:05:00.000"));
-		tList.add( new Order(null, "FOO", 10.61, 1, Side.BUY, "6", "2020-11-1 10:06:00.000"));
-		tList.add( new Order(null, "FOO", 10.52, 1, Side.BUY, "7", "2020-11-1 10:07:00.000"));
+		tList.add( new Order(null, "FOO", 100700, 1, Side.BUY, "1", "2020-11-1 10:01:00.000"));
+		tList.add( new Order(null, "FOO", 104000, 1, Side.BUY, "2", "2020-11-1 10:03:00.000"));
+		tList.add( new Order(null, "FOO", 104000, 1, Side.BUY, "3", "2020-11-1 10:02:00.000"));
+		tList.add( new Order(null, "FOO", 102300, 1, Side.BUY, "4", "2020-11-1 10:04:00.000"));
+		tList.add( new Order(null, "FOO", 101400, 1, Side.BUY, "5", "2020-11-1 10:05:00.000"));
+		tList.add( new Order(null, "FOO", 106100, 1, Side.BUY, "6", "2020-11-1 10:06:00.000"));
+		tList.add( new Order(null, "FOO", 105200, 1, Side.BUY, "7", "2020-11-1 10:07:00.000"));
 
 		Collections.sort( tList );
 		tList.stream().forEach( t -> System.out.println(t));
@@ -249,13 +249,13 @@ public class Order implements Comparable<Order>
 		tList.clear();
 		System.out.println("=============================================================");
 
-		tList.add( new Order(null, "FOO", 10.0, 1, Side.SELL, "1", "2020-11-1 10:01:00.000"));
-		tList.add( new Order(null, "FOO", 10.4, 1, Side.SELL, "2", "2020-11-1 10:03:00.000"));
-		tList.add( new Order(null, "FOO", 10.4, 1, Side.SELL, "3", "2020-11-1 10:02:00.000"));
-		tList.add( new Order(null, "FOO", 10.2, 1, Side.SELL, "4", "2020-11-1 10:04:00.000"));
-		tList.add( new Order(null, "FOO", 10.1, 1, Side.SELL, "5", "2020-11-1 10:05:00.000"));
-		tList.add( new Order(null, "FOO", 10.6, 1, Side.SELL, "6", "2020-11-1 10:06:00.000"));
-		tList.add( new Order(null, "FOO", 10.5, 1, Side.SELL, "7", "2020-11-1 10:07:00.000"));
+		tList.add( new Order(null, "FOO", 100000, 1, Side.SELL, "1", "2020-11-1 10:01:00.000"));
+		tList.add( new Order(null, "FOO", 104000, 1, Side.SELL, "2", "2020-11-1 10:03:00.000"));
+		tList.add( new Order(null, "FOO", 104000, 1, Side.SELL, "3", "2020-11-1 10:02:00.000"));
+		tList.add( new Order(null, "FOO", 102000, 1, Side.SELL, "4", "2020-11-1 10:04:00.000"));
+		tList.add( new Order(null, "FOO", 101000, 1, Side.SELL, "5", "2020-11-1 10:05:00.000"));
+		tList.add( new Order(null, "FOO", 106000, 1, Side.SELL, "6", "2020-11-1 10:06:00.000"));
+		tList.add( new Order(null, "FOO", 105000, 1, Side.SELL, "7", "2020-11-1 10:07:00.000"));
 
 		Collections.sort( tList );
 		tList.stream().forEach( t -> System.out.println(t));

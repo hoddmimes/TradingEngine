@@ -26,9 +26,6 @@ public class tstgen
 	Random mRandom;
 
 	public  tstgen() {
-		nfmt = NumberFormat.getNumberInstance( Locale.US );
-		nfmt.setMinimumFractionDigits(2);
-		nfmt.setMaximumFractionDigits(2);
 		mRandom = new Random();
 	}
 
@@ -49,39 +46,39 @@ public class tstgen
 
 
 
-	String order( String pSymbol, String pSide, double pPrice, int pQuantity ) {
-		return  "{ \"method\" : \"POST\", \"endpoint\" : \"addOrder\", \"body\" : {\"sid\":\"" + pSymbol + "\",\"price\":"  + nfmt.format(pPrice) +
+	String order( String pSymbol, String pSide, long pPrice, int pQuantity ) {
+		return  "{ \"method\" : \"POST\", \"endpoint\" : \"addOrder\", \"body\" : {\"sid\":\"" + pSymbol + "\",\"price\":"  + String.valueOf( pPrice ) +
 				",\"quantity\": " + pQuantity + ",\"side\":\"" + pSide + "\",\"ref\" : \"" + getnxtref() +"\"}},";
 	}
 
 	private void genOrders( String pSymbol, int pOrderCount )
 	{
-		double tPrice = 100;
+		long tPrice = 1000000;
 
 		// Buy Orders
 		for (int i = 0; i < pOrderCount; i++)
 		{
 			int qty = (mRandom.nextInt(20) + 80);
-			double price = (((mRandom.nextInt(9) * 0.1) + 0.1) * -1) + 100.0d;
+			long price = (((mRandom.nextLong(90) * 10) + 100) * -1) + 1000000L;
 			System.out.println( order( pSymbol, "BUY", price, qty ));
 		}
 		for (int i = 0; i < pOrderCount; i++)
 		{
 			int qty = (mRandom.nextInt(20) + 80);
-			double price = (((mRandom.nextInt(9) * 0.1) + 0.1) * 1) + 100.0d;
+			long price = (((mRandom.nextLong(90) * 10) + 100) * 1) + 1000000L;
 			System.out.println( order( pSymbol, "SELL", price, qty ));
 		}
 	}
 
 	private void genMatches( String pSymbol, int pMatches )
 	{
-		double tPrice = 100;
+		long tPrice = 1000000;
 		for (int i = 0; i < pMatches; i++)
 		{
 			int qty = (mRandom.nextInt(20) + 80);
 			System.out.println( order( pSymbol, "BUY", tPrice, qty ));
 			System.out.println( order( pSymbol, "SELL", tPrice, qty ));
-			tPrice -= 0.25;
+			tPrice -= 250;
 		}
 	}
 }

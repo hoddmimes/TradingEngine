@@ -155,7 +155,7 @@ public class TETest implements TeWebsocketClient.WssCallback {
 	public void test_add_order() throws IOException {
 		try {
 			BdxCondition bc1 = addBdxCondition( "BdxPriceLevel" );
-			JsonObject jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':100.00,'quantity': 444, 'side':'BUY','ref' : 'test-5'}", "addOrder");
+			JsonObject jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':1000000,'quantity': 444, 'side':'BUY','ref' : 'test-5'}", "addOrder");
 			assertTrue( jRspMsg.has("orderId"));
 			mOrderId =  jRspMsg.get("orderId").getAsString();
 			assertTrue( bc1.matchConditionUntil( 2000L ));
@@ -172,11 +172,11 @@ public class TETest implements TeWebsocketClient.WssCallback {
 	@Order(6)
 	public void test_match_order() throws IOException {
 		try {
-			BdxCondition bc1 = addBdxCondition("BdxTrade", BdxCondition.condition("last",100.0), BdxCondition.condition("totQuantity",10));
-			BdxCondition bc2 = addBdxCondition("BdxOwnTrade", BdxCondition.condition("orderRef","test-6"), BdxCondition.condition("price",100.0));
-			BdxCondition bc3 = addBdxCondition("BdxOwnTrade", BdxCondition.condition("orderRef","test-6"), BdxCondition.condition("price",100.0));
+			BdxCondition bc1 = addBdxCondition("BdxTrade", BdxCondition.condition("last",1000000), BdxCondition.condition("totQuantity",10));
+			BdxCondition bc2 = addBdxCondition("BdxOwnTrade", BdxCondition.condition("orderRef","test-6"), BdxCondition.condition("price",1000000));
+			BdxCondition bc3 = addBdxCondition("BdxOwnTrade", BdxCondition.condition("orderRef","test-6"), BdxCondition.condition("price",1000000));
 
-			JsonObject jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':99.00,'quantity': 10, 'side':'SELL','ref' : 'test-6'}", "addOrder");
+			JsonObject jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':990000,'quantity': 10, 'side':'SELL','ref' : 'test-6'}", "addOrder");
 			assertTrue( jRspMsg.has("matched"));
 			assertTrue( (jRspMsg.get("matched").getAsInt() == 10), "Invalid matched volume");
 			assertTrue( bc1.matchConditionUntil(2000L));
@@ -209,15 +209,15 @@ public class TETest implements TeWebsocketClient.WssCallback {
 			assertTrue(bc2.matchConditionUntil(2000L),"BdxOwnOrderbookChange action REMOVE is missing \n" + bc2.toString());
 
 			// Lower the price, existing order will be update
-			bc1 = addBdxCondition("BdxBBO", BdxCondition.condition("bidQty", 444), BdxCondition.condition("bid", 99.0));
-			jRspMsg = mHttpClient.post("{'sid':'1:AMZN','orderId' : '" + mOrderId + "', 'price': 99, 'ref' : 'test-7c'}", "amendOrder");
+			bc1 = addBdxCondition("BdxBBO", BdxCondition.condition("bidQty", 444), BdxCondition.condition("bid", 990000));
+			jRspMsg = mHttpClient.post("{'sid':'1:AMZN','orderId' : '" + mOrderId + "', 'price': 990000, 'ref' : 'test-7c'}", "amendOrder");
 			assertTrue(bc1.matchConditionUntil(2000L),"BBO with right quantity & price is missing \n" + bc1.toString());
 			assertTrue( mOrderId.contentEquals( jRspMsg.get("orderId").getAsString()),"OrderIds are not the same");
 
 			// Increase the price, should result in a new order
-			bc1 = addBdxCondition("BdxBBO", BdxCondition.condition("bidQty", 444), BdxCondition.condition("bid", 101.0));
+			bc1 = addBdxCondition("BdxBBO", BdxCondition.condition("bidQty", 444), BdxCondition.condition("bid", 1010000));
 			bc2 = addBdxCondition("BdxOwnOrderbookChange", BdxCondition.condition("action", "REMOVE"));
-			jRspMsg = mHttpClient.post("{'sid':'1:AMZN','orderId' : '" + mOrderId + "', 'price': 101, 'ref' : 'test-7d'}", "amendOrder");
+			jRspMsg = mHttpClient.post("{'sid':'1:AMZN','orderId' : '" + mOrderId + "', 'price': 1010000, 'ref' : 'test-7d'}", "amendOrder");
 			mOrderId = jRspMsg.get("orderId").getAsString(); // new orderId
 			assertTrue(bc1.matchConditionUntil(2000L),"BBO with right quantity & price is missing \n" + bc1.toString());
 			assertTrue(bc2.matchConditionUntil(2000L),"BdxOwnOrderbookChange action REMOVE is missing \n" + bc2.toString());
@@ -251,26 +251,26 @@ public class TETest implements TeWebsocketClient.WssCallback {
 		JsonObject jRspMsg = null;
 		try {
 			BdxCondition  bc1 = addBdxCondition("BdxBBO",
-					BdxCondition.condition("bid", 100.0),
-					BdxCondition.condition("offer", 101.0));
+					BdxCondition.condition("bid", 1000000),
+					BdxCondition.condition("offer", 1010000));
 
 
 			BdxCondition  bc2 = addBdxCondition("BdxPriceLevel",
 					BdxCondition.condition("sid", "1:AMZN"));
 
 
-			 jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':100.00,'quantity': 100, 'side':'BUY','ref' : 'test-9a'}", "addOrder");
+			 jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':1000000,'quantity': 100, 'side':'BUY','ref' : 'test-9a'}", "addOrder");
 			assertTrue(jRspMsg.has("orderId"));
-			 jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':99.0,'quantity': 99, 'side':'BUY','ref' : 'test-9b'}", "addOrder");
+			 jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':990000,'quantity': 99, 'side':'BUY','ref' : 'test-9b'}", "addOrder");
 			assertTrue(jRspMsg.has("orderId"));
-			 jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':98.00,'quantity': 98, 'side':'BUY','ref' : 'test-9c'}", "addOrder");
+			 jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':980000,'quantity': 98, 'side':'BUY','ref' : 'test-9c'}", "addOrder");
 			assertTrue(jRspMsg.has("orderId"));
 
-			jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':101.00,'quantity': 101, 'side':'SELL','ref' : 'test-9d'}", "addOrder");
+			jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':1010000,'quantity': 101, 'side':'SELL','ref' : 'test-9d'}", "addOrder");
 			assertTrue(jRspMsg.has("orderId"));
-			jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':102.0,'quantity': 102, 'side':'SELL','ref' : 'test-9f'}", "addOrder");
+			jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':1020000,'quantity': 102, 'side':'SELL','ref' : 'test-9f'}", "addOrder");
 			assertTrue(jRspMsg.has("orderId"));
-			jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':103.00,'quantity': 103, 'side':'SELL','ref' : 'test-9f'}", "addOrder");
+			jRspMsg = mHttpClient.post("{'sid':'1:AMZN','price':1030000,'quantity': 103, 'side':'SELL','ref' : 'test-9f'}", "addOrder");
 			assertTrue(jRspMsg.has("orderId"));
 
 			assertTrue(bc1.matchConditionUntil(2000L),"BBO bid/offer price not expected \n" + bc1.toString());
@@ -288,7 +288,7 @@ public class TETest implements TeWebsocketClient.WssCallback {
 		//System.out.println( jRspMsg.toString());
 		JsonObject jPrice = jRspMsg.get("tradePrices").getAsJsonArray().get(0).getAsJsonObject();
 		assertTrue( jPrice.get("quantity").getAsInt() == 10, "invalid quantity");
-		assertTrue( jPrice.get("last").getAsDouble() == 100.d, "invalid last price");
+		assertTrue( jPrice.get("last").getAsLong() == 1000000, "invalid last price");
 	}
 
 	@Test
@@ -304,17 +304,17 @@ public class TETest implements TeWebsocketClient.WssCallback {
 		assertTrue( jSellOrders.size() == 3);
 
 		JsonObject jBuy = jBuyOrders.get(0).getAsJsonObject();
-		assertTrue( jBuy.get("price").getAsDouble() == 100.0d);
+		assertTrue( jBuy.get("price").getAsLong() == 1000000L);
 		assertTrue( jBuy.get("quantity").getAsInt() == 100);
 		jBuy = jBuyOrders.get(2).getAsJsonObject();
-		assertTrue( jBuy.get("price").getAsDouble() == 98.0d);
+		assertTrue( jBuy.get("price").getAsLong() == 980000L);
 		assertTrue( jBuy.get("quantity").getAsInt() == 98);
 
 		JsonObject jSell = jSellOrders.get(0).getAsJsonObject();
-		assertTrue( jSell.get("price").getAsDouble() == 101.0d);
-		assertTrue( jSell.get("quantity").getAsInt() == 101);
+		assertTrue( jSell.get("price").getAsLong() == 1010000L);
+		assertTrue( jSell.get("quantity").getAsInt() == 101L);
 		jSell = jSellOrders.get(2).getAsJsonObject();
-		assertTrue( jSell.get("price").getAsDouble() == 103.0d);
+		assertTrue( jSell.get("price").getAsLong() == 1030000L);
 		assertTrue( jSell.get("quantity").getAsInt() == 103);
 
 	}
@@ -325,7 +325,7 @@ public class TETest implements TeWebsocketClient.WssCallback {
 		JsonObject jRspMsg = mHttpClient.get("queryPriceLevels/1");
 		//System.out.println( jRspMsg.toString());
 		JsonObject jTradePrice = jRspMsg.get("orderbooks").getAsJsonArray().get(0).getAsJsonObject().get("buySide").getAsJsonArray().get(0).getAsJsonObject();
-		assertTrue( jTradePrice.get("price").getAsDouble() == 100.0);
+		assertTrue( jTradePrice.get("price").getAsLong() == 1000000L);
 		assertTrue( jTradePrice.get("quantity").getAsInt() == 100);
 	}
 
@@ -336,7 +336,7 @@ public class TETest implements TeWebsocketClient.WssCallback {
 		JsonObject jRspMsg = mHttpClient.get("queryOwnTrades/1");
 		//System.out.println( jRspMsg.toString());
 		JsonObject jTrade = jRspMsg.get("trades").getAsJsonArray().get(0).getAsJsonObject().get("OwnTrade").getAsJsonObject();
-		assertTrue( jTrade.get("price").getAsDouble() == 100.0);
+		assertTrue( jTrade.get("price").getAsLong() == 1000000L);
 		assertTrue( jTrade.get("quantity").getAsInt() == 10);
 	}
 
@@ -348,22 +348,22 @@ public class TETest implements TeWebsocketClient.WssCallback {
 		JsonArray jOrderArray = jRspMsg.get("orders").getAsJsonArray();
 		assertTrue( jOrderArray.size() == 6);
 
-		double sPrice = 0, bPrice = 0;
+		long sPrice = 0, bPrice = 0;
 		int sQty = 0, bQty = 0;
 
 		for (int i = 0; i < jOrderArray.size(); i++) {
 			JsonObject jOrder = jOrderArray.get(i).getAsJsonObject();
 			if (jOrder.get("side").getAsString().contentEquals("SELL")) {
-				sPrice += jOrder.get("price").getAsDouble();
+				sPrice += jOrder.get("price").getAsLong();
 				sQty += jOrder.get("quantity").getAsInt();
 			} else {
-				bPrice += jOrder.get("price").getAsDouble();
+				bPrice += jOrder.get("price").getAsLong();
 				bQty += jOrder.get("quantity").getAsInt();
 			}
 		}
-		assertTrue( sPrice == 306.0 );
+		assertTrue( sPrice == 3060000L );
 		assertTrue( sQty == 306 );
-		assertTrue( bPrice == 297.0 );
+		assertTrue( bPrice == 2970000L );
 		assertTrue( bQty == 297 );
 
 	}
@@ -379,8 +379,8 @@ public class TETest implements TeWebsocketClient.WssCallback {
 			JsonObject jPrice = jBBOArr.get(i).getAsJsonObject();
 			if (jPrice.get("sid").getAsString().contentEquals("1:AMZN")) {
 				tSidFound = true;
-				assertTrue( jPrice.get("bid").getAsDouble() == 100.0);
-				assertTrue( jPrice.get("offer").getAsDouble() == 101.0);
+				assertTrue( jPrice.get("bid").getAsLong() == 1000000L);
+				assertTrue( jPrice.get("offer").getAsLong() == 1010000L);
 				assertTrue( jPrice.get("bidQty").getAsInt() == 100);
 				assertTrue( jPrice.get("offerQty").getAsInt() == 101);
 			}

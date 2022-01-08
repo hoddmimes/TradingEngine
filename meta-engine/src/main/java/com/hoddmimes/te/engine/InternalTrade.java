@@ -31,13 +31,13 @@ public class InternalTrade
     private int         mMarketId;
     private long        mTradeTime;
     private long        mTradeNo;
-    private double      mPrice;
+    private long        mPrice;
     private int         mQuantity;
     private Order       mBuyOrder;
     private Order       mSellOrder;
 
 
-    public InternalTrade(String pSid, int pMarketId, double pPrice, int pQuantity, Order pOrder1, Order pOrder2 ) {
+    public InternalTrade(String pSid, int pMarketId, long pPrice, int pQuantity, Order pOrder1, Order pOrder2 ) {
         mSid = pSid;
         mMarketId = pMarketId;
         mTradeTime = System.currentTimeMillis();
@@ -101,7 +101,7 @@ public class InternalTrade
         return mTradeNo;
     }
 
-    public double getPrice() {
+    public long getPrice() {
         return mPrice;
     }
 

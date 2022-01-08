@@ -62,7 +62,7 @@
         <Attribute name="sellerOrderId" type="long"/>
         <Attribute name="buyerOrderRef" type="String"/>
         <Attribute name="sellerOrderRef" type="String"/>
-        <Attribute name="price" type="double"/>
+        <Attribute name="price" type="long"/>
         <Attribute name="quantity" type="int"/>
         <Attribute name="tradeId" type="long"/>
         <Attribute name="tradeTime" type="long"/>
@@ -75,8 +75,8 @@
         <Attribute name="marketPreOpen" type="String" mandatory="true"/>
         <Attribute name="marketOpen" type="String" mandatory="true"/>
         <Attribute name="marketClose" type="String" mandatory="true"/>
-        <Attribute name="minPricePctChg" type="double" mandatory="true"/>
-        <Attribute name="maxPricePctChg" type="double" mandatory="true"/>
+        <Attribute name="minPricePctChg" type="long" mandatory="true"/>
+        <Attribute name="maxPricePctChg" type="long" mandatory="true"/>
         <Attribute name="enabled" type="boolean" mandatory="true"/>
         <Attribute name="state" type="String" mandatory="false"/> <!-- will be set as part of the initial load -->
     </Message>
@@ -86,9 +86,9 @@
         <Attribute name="name" type="String" mandatory="true"/>
         <Attribute name="description" type="String"/>
         <Attribute name="marketId" type="int" mandatory="true"/>
-        <Attribute name="tickSize" type="double" mandatory="true"/>
-        <Attribute name="minPricePctChg" type="double"/>
-        <Attribute name="maxPricePctChg" type="double"/>
+        <Attribute name="tickSize" type="long" mandatory="true"/>
+        <Attribute name="minPricePctChg" type="long"/>
+        <Attribute name="maxPricePctChg" type="long"/>
         <Attribute name="suspended" type="boolean"/>
     </Message>
 

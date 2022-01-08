@@ -58,7 +58,7 @@ import com.google.gson.GsonBuilder;
                     private String mOrderId;
                     private String mSid;
                     private String mAction;
-                    private Double mPrice;
+                    private Long mPrice;
                     private Integer mQuantity;
                     private String mSide;
                     private Long mObSeqNo;
@@ -97,11 +97,11 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mAction);
             }
         
-            public BdxOrderbookChange setPrice( Double pPrice ) {
+            public BdxOrderbookChange setPrice( Long pPrice ) {
             mPrice = pPrice;
             return this;
             }
-            public Optional<Double> getPrice() {
+            public Optional<Long> getPrice() {
               return  Optional.ofNullable(mPrice);
             }
         
@@ -156,7 +156,7 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mAction Type: String List: false
             tEncoder.add( "action", mAction );
         
-            //Encode Attribute: mPrice Type: double List: false
+            //Encode Attribute: mPrice Type: long List: false
             tEncoder.add( "price", mPrice );
         
             //Encode Attribute: mQuantity Type: int List: false
@@ -185,8 +185,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mAction Type:String List: false
             mAction = tDecoder.readString("action");
         
-            //Decode Attribute: mPrice Type:double List: false
-            mPrice = tDecoder.readDouble("price");
+            //Decode Attribute: mPrice Type:long List: false
+            mPrice = tDecoder.readLong("price");
         
             //Decode Attribute: mQuantity Type:int List: false
             mQuantity = tDecoder.readInteger("quantity");
@@ -241,7 +241,7 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setPrice( Double pValue ) {
+                        public Builder setPrice( Long pValue ) {
                         mInstance.setPrice( pValue );
                         return this;
                     }
