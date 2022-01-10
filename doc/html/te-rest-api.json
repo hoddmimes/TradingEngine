@@ -2,7 +2,7 @@
   "openapi": "3.0.1",
   "info": {
     "title": "Trading Engine",
-    "description": "This is a swagger representation of the TradeEngine API interface.",
+    "description": "This is a swagger representation of the TradeEngine API interface. <br /> <br /><i>Note! the price attribute are express as an integer and prices are / should be multiplied by a factor of 10000. </i>",
     "contact": {
       "email": "par.bertilsson@yahoo.com"
     },
@@ -776,7 +776,8 @@
           },
           "price": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "price is an integer, that are multiplied with a factor of 10000"
           },
           "quantity": {
             "type": "integer",
@@ -884,8 +885,9 @@
           },
           "price": {
             "type": "integer",
-            "format": "int64"
-          }
+            "format": "int64",
+            "description": "price is an integer, that are multiplied with a factor of 10000"
+          },
           "deltaQuantity": {
             "type": "integer",
             "format": "int32"
@@ -957,11 +959,13 @@
             },
             "minPricePctChg": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "description": "price is an integer, that are multiplied with a factor of 10000"
             },
             "maxPricePctChg": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "description": "price is an integer, that are multiplied with a factor of 10000"
             },
             "marketOpen": {
               "pattern": "^\\d{2}-\\d{2}$",
@@ -1009,11 +1013,13 @@
             },
             "minPricePctChg": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "description": "price is an integer, that are multiplied with a factor of 10000"
             },
             "maxPricePctChg": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "description": "price is an integer, that are multiplied with a factor of 10000"
             },
             "enabled": {
               "type": "boolean",
@@ -1052,22 +1058,22 @@
             "last": {
               "type": "integer",
               "format": "int64",
-              "description": "last trade price"
+              "description": "last trade price, that are multiplied with a factor of 10000"
             },
             "open": {
               "type": "integer",
               "format": "int64",
-              "description": "open trade price"
+              "description": "open trade price, that are multiplied with a factor of 10000"
             },
             "low": {
               "type": "integer",
               "format": "int64",
-              "description": "lowest trade price during the day"
+              "description": "lowest trade price during the day, that are multiplied with a factor of 10000"
             },
             "high": {
               "type": "integer",
               "format": "int64",
-              "description": "high trade price during the day"
+              "description": "high trade price during the day, that are multiplied with a factor of 10000"
             }
           }
         }
@@ -1077,7 +1083,8 @@
         "properties": {
           "price": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description" : "the price is an integer, that are multiplied with a factor of 10000"
           },
           "quantity": {
             "type": "integer",
@@ -1100,7 +1107,8 @@
         "properties": {
           "price": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description" : "the price is an integer, that are multiplied with a factor of 10000"
           },
           "quantity": {
             "type": "integer",
@@ -1168,7 +1176,8 @@
             },
             "price": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "description" : "the price is an integer, that are multiplied with a factor of 10000"
             },
             "quantity": {
               "type": "integer",
@@ -1200,7 +1209,8 @@
             },
             "price": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "description" : "the price is an integer, that are multiplied with a factor of 10000"
             },
             "quantity": {
               "type": "integer",
@@ -1233,7 +1243,8 @@
             },
             "bid": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "description" : "the price is an integer, that are multiplied with a factor of 10000"
             },
             "bidQty": {
               "type": "integer",
@@ -1241,7 +1252,8 @@
             },
             "offer": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "description" : "the price is an integer, that are multiplied with a factor of 10000"
             },
             "offerQty": {
               "type": "integer",

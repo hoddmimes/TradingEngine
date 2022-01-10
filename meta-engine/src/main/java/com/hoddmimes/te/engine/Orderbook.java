@@ -107,7 +107,7 @@ public class Orderbook
     public MessageInterface amendOrder( long pOrderId, AmendOrderRequest pAmendRqst, RequestContextInterface pRqstCntx ) {
         AmendOrderResponse tAmendRsp;
         // Check that there is something to amend
-        if (pAmendRqst.getSide().isPresent() && pAmendRqst.getPrice().isPresent() && pAmendRqst.getDeltaQuantity().isPresent()) {
+        if (pAmendRqst.getSide().isEmpty() && pAmendRqst.getPrice().isEmpty() && pAmendRqst.getDeltaQuantity().isEmpty()) {
             return StatusMessageBuilder.error("nothing to amend", pAmendRqst.getRef().get());
         }
 
@@ -120,13 +120,13 @@ public class Orderbook
         boolean tCleanAmend = true;
         // Only decreasing the volume will performe a clean amend, otherwise
         // the order is delete and a new one is created
-        if ((!pAmendRqst.getSide().isPresent()) && (!pAmendRqst.getSide().get().contentEquals(tOrderToAmend.getSide().name()))) {
+        if ((!pAmendRqst.getSide().isEmpty()) && (!pAmendRqst.getSide().get().contentEquals(tOrderToAmend.getSide().name()))) {
             tCleanAmend = false;
         }
-        if ((!pAmendRqst.getDeltaQuantity().isPresent()) && (pAmendRqst.getDeltaQuantity().get() > 0)) {
+        if ((!pAmendRqst.getDeltaQuantity().isEmpty()) && (pAmendRqst.getDeltaQuantity().get() > 0)) {
             tCleanAmend = false;
         }
-        if (!pAmendRqst.getPrice().isPresent()) {
+        if (!pAmendRqst.getPrice().isEmpty()) {
             if ((tOrderToAmend.getSide() == Order.Side.BUY) && (pAmendRqst.getPrice().get() > tOrderToAmend.getPrice())) {
                 tCleanAmend = false;
             }
@@ -137,8 +137,8 @@ public class Orderbook
 
         // If clean amend update the existing order
         if (tCleanAmend) {
-            int tNewVolume = (!pAmendRqst.getDeltaQuantity().isPresent()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
-            long tNewPrice = (!pAmendRqst.getPrice().isPresent()) ? (pAmendRqst.getPrice().get()) : tOrderToAmend.getPrice();
+            int tNewVolume = (!pAmendRqst.getDeltaQuantity().isEmpty()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
+            long tNewPrice = (!pAmendRqst.getPrice().isEmpty()) ? (pAmendRqst.getPrice().get()) : tOrderToAmend.getPrice();
 
             if (tNewVolume <= 0) {
                 this.deleteOrder(tOrderToAmend.getOrderId(), pAmendRqst.getRef().get(), pRqstCntx);
@@ -162,9 +162,9 @@ public class Orderbook
         }
 
         // Amend require the existing order to be deleted and possibly a new to be inserted
-        int tVolume = (!pAmendRqst.getDeltaQuantity().isPresent()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
-        String tSide = (!pAmendRqst.getSide().isPresent()) ? pAmendRqst.getSide().get() : tOrderToAmend.getSide().name();
-        long tPrice = (!pAmendRqst.getPrice().isPresent()) ? pAmendRqst.getPrice().get() : tOrderToAmend.getPrice();
+        int tVolume = (!pAmendRqst.getDeltaQuantity().isEmpty()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
+        String tSide = (!pAmendRqst.getSide().isEmpty()) ? pAmendRqst.getSide().get() : tOrderToAmend.getSide().name();
+        long tPrice = (!pAmendRqst.getPrice().isEmpty()) ? pAmendRqst.getPrice().get() : tOrderToAmend.getPrice();
 
         // Always delete the existing one
         this.deleteOrder(tOrderToAmend.getOrderId(), pAmendRqst.getRef().get(), pRqstCntx);

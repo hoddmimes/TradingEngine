@@ -32,8 +32,15 @@ task buildClientJar (type: Jar ) {
         attributes 'Implementation-Title': 'Trading Engine Client', 'Implementation-Version': archiveVersion
     }
 }
+task buildHTMLZip(type: Zip) {
+    from '../doc/html'
+
+    archiveName 'te-html-' + project.version + '.zip'
+    destinationDir(file('../'))
+}
 
 
+build.finalizedBy(buildHTMLZip)
 build.finalizedBy(buildClientJar)
 
 dependencies {

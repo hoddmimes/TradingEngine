@@ -19,6 +19,7 @@ package com.hoddmimes.te;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.engine.MatchingEngine;
@@ -40,6 +41,8 @@ import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.hoddmimes.te.sessionctl.SessionController.INTERNAL_SESSION_ID;
 
 @SpringBootApplication
 public class TradingEngine
@@ -74,7 +77,7 @@ public class TradingEngine
 		TeAppCntx.getInstance().setTestMode();
 	}
 
-	 void initialize() {
+	 public void initialize() {
 		mLog.info("current working dir: " + currentWorkingDirURI());
 
 		// Setup Management Service
@@ -162,7 +165,7 @@ public class TradingEngine
 		return false;
 	}
 
-	 void parsePargument( String pArgs[]) {
+	 public void parsePargument( String pArgs[]) {
 		if (pArgs.length == 0) {
 			mLog.error("configuration URI source program argument is missing");
 			System.exit(-1);
@@ -186,5 +189,8 @@ public class TradingEngine
 		}
 	}
 
+	public MessageInterface testMessage(JsonObject pRequestMessage ) {
+		return TeAppCntx.getInstance().getSessionController().connectorMessage( INTERNAL_SESSION_ID, pRequestMessage.toString() );
+	}
 
 }

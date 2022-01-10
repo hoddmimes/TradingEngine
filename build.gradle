@@ -8,15 +8,7 @@ group 'com.hoddmimes'
 repositories {
     mavenCentral()
 }
-task buildHTMLZip(type: Zip) {
-    from './doc/html'
 
-    archiveName 'te-html-' + project.version + '.zip'
-    destinationDir(file('./'))
-}
-
-
-build.finalizedBy(buildHTMLZip)
 
 allprojects {
     group = 'com.hoddmimes'

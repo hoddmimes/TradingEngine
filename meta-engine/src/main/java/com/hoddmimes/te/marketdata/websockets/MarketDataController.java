@@ -36,19 +36,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 @Configuration
 @EnableWebSocket
-public class MarketDataController extends MarketDataBase implements WebSocketConfigurer, Runnable
-{
-    public record BdxQueueItem( EngineBdxInterface mBdx, String mAccountId){}
+public class MarketDataController extends MarketDataBase implements WebSocketConfigurer, Runnable {
+    public record BdxQueueItem(EngineBdxInterface mBdx, String mAccountId) {
+    }
 
 
     WebSocketHandler mWebSocketHandler;
     private BlockingQueue<BdxQueueItem> mBdxQueue;
     Thread mTransmitter;
 
-    public  MarketDataController() {
+    public MarketDataController() {
         super(TeAppCntx.getInstance().getTeConfiguration());
         mBdxQueue = new LinkedBlockingQueue<>();
-        mTransmitter = new Thread( this );
+        mTransmitter = new Thread(this);
         mTransmitter.start();
     }
 
@@ -57,25 +57,24 @@ public class MarketDataController extends MarketDataBase implements WebSocketCon
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         mWebSocketHandler = new WebSocketHandler();
         WebSocketHandlerRegistration tWsHandler = registry.addHandler(mWebSocketHandler, "/marketdata");
-        tWsHandler.addInterceptors( new WebSocketHandshakeInterceptor());
-        TeAppCntx.getInstance().setMarketDataDistributor( this );
+        tWsHandler.addInterceptors(new WebSocketHandshakeInterceptor());
+        TeAppCntx.getInstance().setMarketDataDistributor(this);
     }
 
 
     @Override
     public void queueBdxPrivate(String pAccountId, EngineBdxInterface pBdx) {
         try {
-            mBdxQueue.put( new BdxQueueItem( pBdx, pAccountId ));
+            mBdxQueue.put(new BdxQueueItem(pBdx, pAccountId));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void queueBdxPublic(EngineBdxInterface pBdx)
-    {
+    public void queueBdxPublic(EngineBdxInterface pBdx) {
         try {
-            mBdxQueue.put( new BdxQueueItem(pBdx,null ));
+            mBdxQueue.put(new BdxQueueItem(pBdx, null));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -83,12 +82,16 @@ public class MarketDataController extends MarketDataBase implements WebSocketCon
 
     @Override
     protected void sendPrivateBdx(String pAccountId, EngineBdxInterface pBdx) {
-        mWebSocketHandler.sendPrivateBdx( pAccountId, pBdx);
+        if (mWebSocketHandler != null) {
+            mWebSocketHandler.sendPrivateBdx(pAccountId, pBdx);
+         }
     }
 
     @Override
     protected void sendPublicBdx(EngineBdxInterface pBdx) {
-        mWebSocketHandler.sendPublicBdx( pBdx);
+        if (mWebSocketHandler != null) {
+            mWebSocketHandler.sendPublicBdx(pBdx);
+        }
     }
 
     private void sendBdx( BdxQueueItem pBdxQueueItem) {
