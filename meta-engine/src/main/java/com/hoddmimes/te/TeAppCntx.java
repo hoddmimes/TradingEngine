@@ -25,6 +25,7 @@ import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
 import com.hoddmimes.te.engine.MatchingEngineInterface;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.management.service.MgmtFactory;
+import com.hoddmimes.te.positions.PositionController;
 import com.hoddmimes.te.sessionctl.SessionController;
 import com.hoddmimes.te.trades.TradeContainer;
 import org.apache.logging.log4j.LogManager;
@@ -32,6 +33,8 @@ import org.apache.logging.log4j.Logger;
 
 
 public class TeAppCntx {
+	public static final long PRICE_MULTIPLER = 10000L;
+
 	private static final Logger mLog = LogManager.getLogger( TeAppCntx.class );
 	private static TeAppCntx mInstance;
 	private ConnectorInterface  mConnector;
@@ -40,6 +43,7 @@ public class TeAppCntx {
 	private MarketDataInterface mMarketDataDistributor;
 	private MatchingEngineInterface mMatchingEngine;
 	private TradeContainer mTradeContainer;
+	private PositionController mPositionController;
 	private JsonObject mTeConfiguration;
 	private Object mMarketDataDistributorMutex;
 	private MgmtFactory mMgmtFactory;
@@ -48,6 +52,7 @@ public class TeAppCntx {
 	private TeAppCntx() {
 		mMarketDataDistributorMutex = new Object();
 		setConnector(null);
+		setPositionController( null );
 		setSessionController(null);
 		setInstrumentContainer(null);
 		setMatchingEngine(null);
@@ -113,6 +118,19 @@ public class TeAppCntx {
 
 	public void setSessionController(SessionController pSessionController) {
 		mSessionController = pSessionController;
+	}
+
+
+	public PositionController getPositionController() {
+		if (mPositionController == null) {
+			mLog.fatal("try to retrieve PositionController implementation before setting it ", new Exception("PositionController is null"));
+			System.exit(-1);
+		}
+		return mPositionController;
+	}
+
+	public void setPositionController(PositionController pPositionController) {
+		mPositionController = pPositionController;
 	}
 
 

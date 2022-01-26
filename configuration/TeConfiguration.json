@@ -32,6 +32,10 @@
       "startState" : "normal",
       "dataStore" : "configuration/InstrumentDefinitions.json"
     },
+    "positionConfiguration" : {
+      "dataStore" : "configuration/Positions.json",
+      "preTradingValidation" : true
+    },
     "connectorConfiguration": {
       "implementaion": "com.hoddmimes.te.connector.rest.RestConnector",
       "configuration": {

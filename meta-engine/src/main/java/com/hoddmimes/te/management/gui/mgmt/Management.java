@@ -63,6 +63,7 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 	AccountsPanel mAccountPanel;
 	OrderPanel mOrderPanel;
 	TradePanel mTradePanel;
+	PositionPanel mPositionPanel;
 	MsglogPanel mMsglogPanel;
 	StatisticsPanel mStatisticsPanel;
 
@@ -243,6 +244,7 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 		mAccountPanel = new AccountsPanel( this );
 		mOrderPanel = new OrderPanel( this );
 		mTradePanel = new TradePanel( this );
+		mPositionPanel = new PositionPanel( this );
 		mMsglogPanel = new MsglogPanel( this );
 		mStatisticsPanel = new StatisticsPanel(this );
 
@@ -252,6 +254,7 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 		mTabbedPane.addTab("Accounts", mAccountPanel);
 		mTabbedPane.addTab("Orders", mOrderPanel);
 		mTabbedPane.addTab("Trades", mTradePanel);
+		mTabbedPane.addTab("Positions", mPositionPanel);
 		mTabbedPane.addTab("MsgLog", mMsglogPanel);
 		mTabbedPane.addTab("Statistics", mStatisticsPanel);
 
@@ -287,6 +290,9 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 				}
 				if (c instanceof StatisticsPanel) {
 					((StatisticsPanel) c).loadStatisticsData();
+				}
+				if (c instanceof PositionPanel) {
+					((PositionPanel) c).loadAccountData();
 				}
 				tabPane.setSelectedComponent(c);
 			}

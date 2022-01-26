@@ -99,7 +99,7 @@
 
     <Message name="MgmtGetAccountOrdersRequest" implements="MgmtMessageRequest" rootMessage="true">
         <Attribute name="ref" type="String" mandatory="true"/>
-        <Attribute name="accounts" type="String" mandatory="true"/>
+        <Attribute name="account" type="String" mandatory="true"/>
     </Message>
 
     <Message name="MgmtGetAccountOrdersResponse" implements="MgmtMessageResponse" rootMessage="true">
@@ -310,5 +310,25 @@
         <Attribute name="counters" type="MgmtStatEntry" list="array"/>
         <Attribute name="subscriptions" type="MgmtTropicEntry" list="array"/>
     </Message>
+
+
+    <Message name="MgmtPositionEntry" rootMessage="false">
+        <Attribute name="sid" type="String" mandatory="true"/>
+        <Attribute name="position" type="int" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetAccountPositionsRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="account" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetAccountPositionsResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="isDefined" type="boolean"/>
+        <Attribute name="accountId" type="String"/>
+        <Attribute name="cash" type="long"/>
+        <Attribute name="positions" type="MgmtPositionEntry" list="array"/>
+    </Message>
+
 
 </Messages>

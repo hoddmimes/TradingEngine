@@ -60,27 +60,27 @@
   "instruments": [
     {
       "sid": "1:AMZN",
-      "refPrice": 34190000
+      "refPrice": 3419.00
     },
     {
       "sid": "1:FB",
-      "refPrice": 3270000
+      "refPrice": 327.00
     },
     {
       "sid": "1:TSLA",
-      "refPrice": 9880000
+      "refPrice": 988.00
     },
     {
       "sid": "1:XOM",
-      "refPrice": 620000
+      "refPrice": 62.00
     },
     {
       "sid": "2:BTC",
-      "refPrice": 4330000
+      "refPrice": 433.00
     },
     {
       "sid": "2:ETH",
-      "refPrice": 40110000
+      "refPrice": 4011.00
     }
   ],
   "execution": {

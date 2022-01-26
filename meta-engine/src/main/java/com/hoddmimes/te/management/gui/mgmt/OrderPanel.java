@@ -230,7 +230,7 @@ public class OrderPanel extends JPanel implements TableCallbackInterface {
 
 
 	void loadOrders( String pAccount, boolean pNoOrderInfo ) {
-		MgmtGetAccountOrdersResponse tOrdersResponse = (MgmtGetAccountOrdersResponse) mServiceInterface.transceive(TeMgmtServices.MatchingService, new MgmtGetAccountOrdersRequest().setRef("X").setAccounts(pAccount));
+		MgmtGetAccountOrdersResponse tOrdersResponse = (MgmtGetAccountOrdersResponse) mServiceInterface.transceive(TeMgmtServices.MatchingService, new MgmtGetAccountOrdersRequest().setRef("X").setAccount(pAccount));
 
 		if (tOrdersResponse == null) {
 			return;

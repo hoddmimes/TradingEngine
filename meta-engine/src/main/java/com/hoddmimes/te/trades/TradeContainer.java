@@ -106,6 +106,9 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 
 	private void toTrades( TradeX pTrade ) {
 
+		// Update the position holdings
+		TeAppCntx.getInstance().getPositionController().tradeExcution( pTrade );
+
 		// Add trade by Market
 		List<TradeX> tTrdLst = mTradesByMkt.get( pTrade.getMarketId().get());
 		if (tTrdLst == null) {

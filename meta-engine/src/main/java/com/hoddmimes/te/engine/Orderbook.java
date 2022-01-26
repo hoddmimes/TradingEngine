@@ -79,6 +79,35 @@ public class Orderbook
 
     }
 
+
+    public int getAccountPosition( String pAccount, Order.Side pSide ) {
+        int mPosition = 0;
+        Order tOrder = null;
+
+        Iterator<Order> tItr = (pSide == Order.Side.BUY) ? mBuySide.iterator() : mSellSide.iterator();
+        while(tItr.hasNext()) {
+            tOrder = tItr.next();
+            if (tOrder.getAccountId().contentEquals(pAccount)) {
+                mPosition += tOrder.getQuantity();
+            }
+        }
+        return mPosition;
+    }
+
+    public int getAccountExposure( String pAccount, Order.Side pSide ) {
+        int mExposure = 0;
+        Order tOrder = null;
+
+        Iterator<Order> tItr = (pSide == Order.Side.BUY) ? mBuySide.iterator() : mSellSide.iterator();
+        while(tItr.hasNext()) {
+            tOrder = tItr.next();
+            if (tOrder.getAccountId().contentEquals(pAccount)) {
+                mExposure += (tOrder.getQuantity() * tOrder.getPrice());
+            }
+        }
+        return mExposure;
+    }
+
     public void updateBBO() {
         Iterator<Order> tItr = null;
         BdxBBO bbo = new BdxBBO().setSid( mSymbol.getSid().get());

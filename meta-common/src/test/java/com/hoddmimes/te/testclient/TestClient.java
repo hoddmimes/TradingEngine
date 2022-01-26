@@ -1,9 +1,6 @@
 package com.hoddmimes.te.testclient;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.transport.http.TeRequestException;
 import com.hoddmimes.te.common.transport.http.TeWebsocketClient;
@@ -16,8 +13,10 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,12 +27,13 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
     private static SimpleDateFormat SDF = new SimpleDateFormat("HH:mm:ss.SSS");
     private enum MsgType { RESP,RQST };
 
+
     private OrderIdContainer mOrderIdContainer = new OrderIdContainer();
     private JsonObject mCmdRoot;
     private JsonArray mRequests;
     private long tRef = (System.currentTimeMillis() / 10000L);
     private Gson mGson = new Gson();
-
+    private NumberFormat numfmt;
 
 
     private TeWebsocketClient tWssClient;
@@ -55,6 +55,14 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
         tc.test();
     }
 
+    public TestClient()
+    {
+        numfmt = NumberFormat.getInstance();
+        numfmt.setGroupingUsed(false);
+        numfmt.setMinimumIntegerDigits(2);
+        numfmt.setMaximumFractionDigits(2);
+    }
+
     private void msglog( JsonObject pMsg  )
     {
         if (pMsg == null) {
@@ -62,22 +70,25 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
             return;
         }
 
-        if (pMsg.has("endpoint")) {
-            String tEndpoint = pMsg.get("endpoint").getAsString();
-            String tMethod = pMsg.get("endpoint").getAsString();
-            JsonObject jRqstMsg = (pMsg.has("body")) ? pMsg.get("body").getAsJsonObject() : null;
+        JsonObject tMsg = pMsg.deepCopy();
+        adjustFromPriceValues( tMsg );
+
+        if (tMsg.has("endpoint")) {
+            String tEndpoint = tMsg.get("endpoint").getAsString();
+            String tMethod = tMsg.get("endpoint").getAsString();
+            JsonObject jRqstMsg = (tMsg.has("body")) ? tMsg.get("body").getAsJsonObject() : null;
             if (jRqstMsg != null) {
                 System.out.println(SDF.format(System.currentTimeMillis()) + " [RQST] (" + tMethod + ") endpoint: <" + tEndpoint + "> msg: " + mGson.toJson(jRqstMsg).toString());
             } else {
                 System.out.println(SDF.format(System.currentTimeMillis()) + " [RQST] (" + tMethod + ") endpoint: <" + tEndpoint + ">");
             }
         } else {
-            System.out.println(SDF.format(System.currentTimeMillis()) + " [RESP]  msg: " + mGson.toJson(pMsg).toString());
+            System.out.println(SDF.format(System.currentTimeMillis()) + " [RESP]  msg: " + mGson.toJson(tMsg).toString());
         }
     }
 
-    private void msglog( String  pMsg  ) {
-        System.out.println(SDF.format(System.currentTimeMillis()) + pMsg);
+    private void msglog( String  tMsg  ) {
+        System.out.println(SDF.format(System.currentTimeMillis()) + tMsg);
     }
 
 
@@ -86,6 +97,7 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
             FileReader tCmdFileReader = new FileReader( pCommandfile );
             mCmdRoot = JsonParser.parseReader(tCmdFileReader).getAsJsonObject();
             mRequests = mCmdRoot.get("requests").getAsJsonArray();
+            adjustToPriceValues( mRequests );
         }
         catch( IOException e) {
             e.printStackTrace();
@@ -93,7 +105,60 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
         }
     }
 
+    double scaleDownPrice( long pLongValue ) {
+        double tDoubleValue = (double) ((double) pLongValue / 10000.0);
+        return tDoubleValue;
+    }
 
+    long scaleUpPrice( double pDoubleValue ) {
+        return (long) (pDoubleValue * 10000L);
+    }
+
+    private void adjustFromPriceValues(JsonObject jObject) {
+        Iterator<String> tKeyItr = jObject.keySet().iterator();
+        while (tKeyItr.hasNext()) {
+            String tKey = tKeyItr.next();
+            JsonElement jElement = jObject.get(tKey);
+            if (jElement.isJsonObject()) {
+                adjustFromPriceValues(jElement.getAsJsonObject());
+            } else if (jElement.isJsonArray()) {
+                JsonArray jArr = jElement.getAsJsonArray();
+                for (int i = 0; i < jArr.size(); i++) {
+                    JsonElement tArrElement = jArr.get(i);
+                    if (tArrElement.isJsonObject()) {
+                        adjustFromPriceValues(tArrElement.getAsJsonObject());
+                    }
+                }
+            } else {
+                if (tKey.contentEquals("price")) {
+                    jObject.addProperty("price", scaleDownPrice(jObject.get("price").getAsLong()));
+                }
+                if (tKey.contentEquals("tickSize")) {
+                    jObject.addProperty("tickSize", scaleDownPrice(jObject.get("tickSize").getAsLong()));
+                }
+                if (tKey.contentEquals("offer")) {
+                    jObject.addProperty("offer", scaleDownPrice(jObject.get("offer").getAsLong()));
+                }
+                if (tKey.contentEquals("bid")) {
+                    jObject.addProperty("bid", scaleDownPrice(jObject.get("bid").getAsLong()));
+                }
+            }
+        }
+    }
+
+
+
+    private void adjustToPriceValues( JsonArray jRequests ) {
+        for (int i = 0; i < jRequests.size(); i++) {
+            JsonObject jRqstMsg = jRequests.get(i).getAsJsonObject();
+            if (jRqstMsg.has("body")) {
+                JsonObject jRqst = jRqstMsg.get("body").getAsJsonObject();
+                if (jRqst.has("price")) {
+                    jRqst.addProperty("price", scaleUpPrice(jRqst.get("price").getAsDouble()));
+                }
+            }
+        }
+    }
 
     private void init() {
         String tAuthId = null;
@@ -134,9 +199,8 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
             try {
                 JsonObject tRspMsg = null;
 
-                msglog( tRqst );
-
                 mOrderIdContainer.orderIdReplace( tRqst );
+                msglog( tRqst );
 
                 if (tRqst.get("method").getAsString().contentEquals("POST")) {
                     if (tRqst.get("endpoint").getAsString().contentEquals("marketdata")) {
@@ -188,8 +252,10 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
     }
 
     @Override
-    public void onMessage(String pBdxMsg) {
-        msglog(" [BDX] " +pBdxMsg);
+    public void onMessage(String jBdxMsgStr) {
+        JsonObject jBdxMsg = JsonParser.parseString( jBdxMsgStr ).getAsJsonObject();
+        adjustFromPriceValues( jBdxMsg );
+        msglog(" [BDX] " + jBdxMsg.toString());
     }
 
     @Override

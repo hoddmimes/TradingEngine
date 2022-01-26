@@ -16,6 +16,9 @@
  * limitations under the License.
  */
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -43,7 +46,12 @@ public class Test {
 
 
 	private void test() {
-		long l = (long) ((double) 100000L * 0.65d);
+		String jText = "{\"tickSize\" : 0.01}";
+		JsonObject jObj = JsonParser.parseString( jText ).getAsJsonObject();
+		long tTickSize = (long) (jObj.get("tickSize").getAsDouble() * 10000.0);
+		System.out.println("new: " + tTickSize);
+		jObj.addProperty("tickSize", tTickSize);
+		System.out.println("object: " + jObj.toString());
 	}
 
 

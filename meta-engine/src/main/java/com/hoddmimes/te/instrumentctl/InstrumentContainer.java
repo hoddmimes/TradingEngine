@@ -59,7 +59,9 @@ public class InstrumentContainer implements MgmtCmdCallbackInterface
 
 	 try {
 		 JsonElement jElement = AuxJson.loadAndParseFile( tDataStore ).get(0);
+
 	     JsonObject tInstruments = jElement.getAsJsonObject();
+		 adjustPriceValues( tInstruments );
 		 JsonArray tMarketArray = tInstruments.get("MarketConfiguration").getAsJsonArray();
 		 for (int i = 0; i < tMarketArray.size(); i++) {
 			 JsonObject jMarket = tMarketArray.get(i).getAsJsonObject();
@@ -74,6 +76,18 @@ public class InstrumentContainer implements MgmtCmdCallbackInterface
 	 }
 	 TeAppCntx.getInstance().setInstrumentContainer( this );
 	 MgmtComponentInterface tMgmt = TeAppCntx.getInstance().getMgmtService().registerComponent( TeMgmtServices.InstrumentData, 0, this );
+   }
+
+
+   private void adjustPriceValues( JsonObject pInstruments ) {
+      JsonArray jMarkets = pInstruments.get("MarketConfiguration").getAsJsonArray();
+	   for (int i = 0; i < jMarkets.size(); i++) {
+		   JsonObject jMarket = jMarkets.get(i).getAsJsonObject();
+		   JsonArray jSymbolArray = jMarket.get("symbols").getAsJsonArray();
+		   for (int j = 0; j < jSymbolArray.size(); j++) {
+			   AuxJson.adjustPriceValue( jSymbolArray.get(j).getAsJsonObject(),"tickSize", TeAppCntx.PRICE_MULTIPLER);
+		   }
+	   }
    }
 
 	/**

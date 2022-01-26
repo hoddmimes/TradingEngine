@@ -105,7 +105,11 @@ public class RestMessageController
 	@PostMapping( path = "/deleteOrder" )
 	ResponseEntity<?> deleteOrder(HttpSession pSession, @RequestBody String pJsonRqstString ) {
 		String jRqstMsgString  = AuxJson.tagMessageBody(DeleteOrderRequest.NAME, pJsonRqstString);
-		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), jRqstMsgString );
+		DeleteOrderRequest tDelOrderRqst = new DeleteOrderRequest( jRqstMsgString );
+		if (tDelOrderRqst.getRef().isEmpty()) {
+			tDelOrderRqst.setRef( String.valueOf(mInternalRef.getAndIncrement()));
+		}
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), tDelOrderRqst.toJson().toString() );
 		return buildResponse( tResponseMessage );
 	}
 

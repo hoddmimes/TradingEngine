@@ -26,6 +26,7 @@ import com.hoddmimes.te.engine.MatchingEngine;
 import com.hoddmimes.te.engine.MatchingEngineFrontend;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.management.service.MgmtFactory;
+import com.hoddmimes.te.positions.PositionController;
 import com.hoddmimes.te.sessionctl.SessionController;
 import com.hoddmimes.te.trades.TradeContainer;
 import org.apache.logging.log4j.LogManager;
@@ -55,6 +56,7 @@ public class TradingEngine
 	private InstrumentContainer         mInstrumentContainer;
 	private TradeContainer              mTradeContainer;
 	private JsonObject                  mConfiguration;
+	private PositionController          mPositionController;
 
 
 
@@ -88,7 +90,12 @@ public class TradingEngine
 		mInstrumentContainer = new InstrumentContainer( mConfiguration );
 		mLog.info("successfully loaded InstrumentContainer");
 
-		//Instansiate Matching Engine Frontend
+		// Instansiate Position Controller
+		 mPositionController = new PositionController( mConfiguration );
+		 mLog.info("successfully loaded PositionController");
+
+
+		 //Instansiate Matching Engine Frontend
 		mMatchingEngineFrontend = new MatchingEngineFrontend( mConfiguration, mMatchingEngine);
 		mLog.info("successfully loaded MatchingEngineFrontend");
 

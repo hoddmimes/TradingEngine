@@ -169,4 +169,13 @@ public class AuxJson
 	public static String tagMessageBody( String pMessageTagName, String pJsonMessageBody ) {
 		return "{ \"" + pMessageTagName + "\" : " + pJsonMessageBody + " }";
 	}
+
+	public static void adjustPriceValue( JsonObject pObject, String pAttribute, long pMultiplier ) {
+		if (!pObject.has(pAttribute)) {
+			throw new RuntimeException("attribute: " + pAttribute + "missing in object: " + pObject.toString());
+		}
+		long tNewValue = (long) (pObject.get( pAttribute ).getAsDouble() * (double) pMultiplier);
+		pObject.addProperty( pAttribute, tNewValue );
+	}
+
 }

@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
+import com.hoddmimes.te.common.TeException;
 import com.hoddmimes.te.common.interfaces.MarketDataInterface;
 import com.hoddmimes.te.common.interfaces.RequestContextInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
@@ -37,6 +38,7 @@ import com.hoddmimes.te.messages.MgmtMessageRequest;
 import com.hoddmimes.te.messages.MgmtMessageResponse;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
+import com.hoddmimes.te.positions.AccountPosition;
 import com.hoddmimes.te.sessionctl.RequestContext;
 import com.hoddmimes.te.trades.TradeX;
 import org.apache.logging.log4j.LogManager;
@@ -57,6 +59,7 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 	private MarketDataInterface         mMarketDataDistributor;
 	private HashMap<String,Orderbook>   mOrderbooks;
 	private RateItem                    mOrderRate;
+	private boolean                     mPreTradeValidation;
 
 	private AtomicInteger  mOrderCount;
 	private AtomicInteger  mDeleteCount;
@@ -80,6 +83,7 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 		configureDataDistribution(AuxJson.navigateObject(pTeConfiguration, "TeConfiguration/marketDataConfiguration"));
 		MgmtComponentInterface tMgmt = TeAppCntx.getInstance().getMgmtService().registerComponent( TeMgmtServices.MatchingService, 0, this );
 		mOrderRate = RateStatistics.getInstance().addRateItem("Order rate");
+		mPreTradeValidation = TeAppCntx.getInstance().getPositionController().isPreTradingValidationEnabled();
 	}
 
 
@@ -115,7 +119,16 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 		pRequestContext.timestamp("is orderbook open");
 
 		synchronized (tOrderbook) {
+
 			Order tOrder = new Order(pRequestContext.getAccountId(), pAddOrderRequest);
+
+			if (mPreTradeValidation) {
+				try {preTradeValidation( tOrderbook, tOrder  ); }
+				catch( TeException te) {
+					return StatusMessageBuilder.error("pre-trade validation failure", pAddOrderRequest.getRef().get(), te );
+				}
+			}
+
 			mOrderRate.increment();
 			mOrderCount.incrementAndGet();
 
@@ -126,6 +139,23 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 		}
 	}
 
+	private void preTradeValidation( Orderbook pOrderbook, Order pOrder ) throws TeException
+	{
+		AccountPosition tAccount = TeAppCntx.getInstance().getPositionController().getAccount( pOrder.getAccountId() );
+		if (tAccount == null) {
+			throw new TeException(0, StatusMessageBuilder.error("No deposit position defined for account: " + pOrder.getAccountId(), pOrder.getUserRef()));
+		}
+
+		if (pOrder.getSide() == Order.Side.BUY) {
+			if (!tAccount.validateBuyOrder(  pOrder, pOrderbook.getAccountExposure( pOrder.getAccountId(), Order.Side.BUY))) {
+				throw new TeException(0, StatusMessageBuilder.error("Order will exceed cash exposure limit ", pOrder.getUserRef()));
+			}
+		} else {
+			if (!tAccount.validateSellOrder(pOrder, pOrderbook.getAccountPosition(pOrder.getAccountId(), Order.Side.SELL))) {
+				throw new TeException(0, StatusMessageBuilder.error("Order will exceed selling position limit ", pOrder.getUserRef()));
+			}
+		}
+	}
 
 	MessageInterface processAmendOrder( AmendOrderRequest pAmendOrderRequest, RequestContextInterface pRequestContext) {
 		long tOrderId;
@@ -320,7 +350,7 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 		while(tItr.hasNext()) {
 			Orderbook ob = tItr.next();
 			synchronized (ob) {
-				tResponse.addOrders(ob.getOrdersForAccount(pRequest.getAccounts().get()));
+				tResponse.addOrders(ob.getOrdersForAccount(pRequest.getAccount().get()));
 			}
 		}
 		return tResponse;
@@ -407,6 +437,7 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 
 		BdxTrade tBdxTrade = TeAppCntx.getInstance().getTradeContainer().addTrade( pTrade );
 
+		TeAppCntx.getInstance().getPositionController().tradeExcution ( pTrade );
 
 		if (mIsEnabledTradeflow) {
 			mMarketDataDistributor.queueBdxPublic(tBdxTrade);

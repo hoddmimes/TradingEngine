@@ -638,6 +638,20 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
+            case "MgmtGetAccountPositionsRequest":
+            {
+            	MgmtGetAccountPositionsRequest tMessage = new MgmtGetAccountPositionsRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtGetAccountPositionsResponse":
+            {
+            	MgmtGetAccountPositionsResponse tMessage = new MgmtGetAccountPositionsResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
             default:
               return null;
 		}	
