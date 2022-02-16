@@ -18,10 +18,9 @@
 package com.hoddmimes.te.management.gui.mgmt;
 
 import com.hoddmimes.te.TeAppCntx;
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
-import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
 import com.hoddmimes.te.management.gui.table.TableModel;
 import com.hoddmimes.te.messages.generated.*;
 
@@ -160,7 +159,7 @@ public class PositionPanel extends JPanel  {
 	public void loadAccountData() {
 		// Load market data if not already loaded
 		if (mAccountComboBox.getItemCount() == 0) {
-			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeMgmtServices.Autheticator, new MgmtGetAccountsRequest().setRef("ga"));
+			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, new MgmtGetAccountsRequest().setRef("ga"));
 			if (tAccountsResponse == null) {
 				return;
 			}
@@ -177,9 +176,12 @@ public class PositionPanel extends JPanel  {
 
 
 	void loadPositions( String pAccount, boolean pNoOrderInfo ) {
-		MgmtGetAccountPositionsResponse tPositionResponse = (MgmtGetAccountPositionsResponse) mServiceInterface.transceive(TeMgmtServices.PositionData, new MgmtGetAccountPositionsRequest().setRef("X").setAccount(pAccount));
+		MgmtGetAccountPositionsResponse tPositionResponse = (MgmtGetAccountPositionsResponse) mServiceInterface.transceive(TeIpcServices.PositionData, new MgmtGetAccountPositionsRequest().setRef("X").setAccount(pAccount));
 
 		mCashTxt.setText("");
+		mPositionTableModel.clear();
+
+
 		if (tPositionResponse == null) {
 			return;
 		}
@@ -214,10 +216,11 @@ public class PositionPanel extends JPanel  {
 
 	public static class PositionEntry {
 		public String mSid;
-		public int    mPosition;
+		public long    mPosition;
 
 
-		public PositionEntry(String pSid, int pPosition ) {
+
+		public PositionEntry(String pSid, long pPosition ) {
 			mSid = pSid;
 			mPosition = pPosition;
 
@@ -248,11 +251,11 @@ public class PositionPanel extends JPanel  {
 		}
 
 		String getAccountId() {
-			return mAccount.getAccount().get();
+			return mAccount.getAccountId().get();
 		}
 
 		public String toString() {
-			return mAccount.getAccount().get() ;
+			return mAccount.getAccountId().get() ;
 		}
 	}
 }

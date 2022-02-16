@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableModel;
@@ -25,7 +25,6 @@ import com.hoddmimes.te.messages.SID;
 import com.hoddmimes.te.messages.generated.*;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.text.NumberFormat;
 import java.util.Collections;
@@ -104,7 +103,7 @@ public class StatTradePanel extends BasePanel {
 
 	public void refreshStatistics() {
 		MgmtQueryTradeRequest tReq = new MgmtQueryTradeRequest().setRef("qts");
-		MgmtQueryTradeResponse tResp = (MgmtQueryTradeResponse) mServiceInterface.transceive(TeMgmtServices.TradeData, tReq );
+		MgmtQueryTradeResponse tResp = (MgmtQueryTradeResponse) mServiceInterface.transceive(TeIpcServices.TradeData, tReq );
 
 		mMktTableModel.clear();
 		List<MgmtMarketTradeEntry> tMktList = tResp.getMarkets().get();
@@ -115,11 +114,13 @@ public class StatTradePanel extends BasePanel {
 		}
 
 		mSidTableModel.clear();
-		List<MgmtSymbolTradeEntry> tSidList = tResp.getSids().get();
-		Collections.sort( tSidList, new SidSorter());
+		if (tResp.getSids().isPresent()) {
+			List<MgmtSymbolTradeEntry> tSidList = tResp.getSids().get();
+			Collections.sort(tSidList, new SidSorter());
 
-		for( MgmtSymbolTradeEntry tSidEntry : tResp.getSids().get()) {
-			mSidTableModel.addEntry( new SymbolEntry( tSidEntry ));
+			for (MgmtSymbolTradeEntry tSidEntry : tResp.getSids().get()) {
+				mSidTableModel.addEntry(new SymbolEntry(tSidEntry));
+			}
 		}
 
 

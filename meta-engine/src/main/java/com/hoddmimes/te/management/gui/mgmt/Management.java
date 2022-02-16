@@ -20,6 +20,8 @@ package com.hoddmimes.te.management.gui.mgmt;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.ipc.IpcService;
 import com.hoddmimes.te.common.transport.IpmgPublisher;
 import com.hoddmimes.te.common.transport.IpmgSubscriber;
 import com.hoddmimes.te.common.transport.IpmgSubscriberListenerInterface;
@@ -41,7 +43,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Management extends JFrame implements IpmgSubscriberListenerInterface, ServiceInterface
+public class Management extends JFrame implements  ServiceInterface
 {
 	static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 14 );
 	static final Font DEFAULT_FONT_BOLD = new Font("Arial", Font.BOLD, 14 );
@@ -66,10 +68,9 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 	PositionPanel mPositionPanel;
 	MsglogPanel mMsglogPanel;
 	StatisticsPanel mStatisticsPanel;
+	CryptoPanel mCryptoPanel;
 
-
-	IpmgSubscriber mIpmgSubscriber;
-	IpmgPublisher mIpmgPublisher;
+	IpcService mIpcService;
 
 	private String mGroupAddress;
 	private int mGroupPort;
@@ -110,14 +111,11 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 		mMessageFactory = new MessageFactory();
 
 
-
-
 		JPanel tRootPanel = new JPanel( new BorderLayout());
 		tRootPanel.add( createTopPanel(), BorderLayout.NORTH );
 		//tRootPanel.add( createCenterPanel(), BorderLayout.CENTER );
 
 		this.setContentPane( tRootPanel );
-		setupIpmg();
 
 		this.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent componentEvent) {
@@ -127,14 +125,14 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 			}
 		});
 
-		mWaitForServerFrame = new WaitForServerFrame( mGroupAddress, mGroupPort );
-		mWaitForServerFrame.setVisible( true );
 
-		synchronized ( mWaitForServerFrame ) {
-			try {
-				mWaitForServerFrame.wait();
-			} catch (InterruptedException ie) {}
-		}
+		mIpcService = new IpcService( mGroupAddress, mGroupPort, null );
+
+		mIpcService.addServiceListener( mConfigPanel );
+
+		mWaitForServerFrame = new WaitForServerFrame( mIpcService );
+		mWaitForServerFrame.setVisible( true );
+		mWaitForServerFrame.waitForNamedService(TeIpcServices.MatchingService);
 		mWaitForServerFrame = null;
 	}
 
@@ -204,23 +202,7 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 		return (MgmtMessageResponse) tResponse;
 	}
 
-	private void
-	setupIpmg() {
-		try {
-			mIpmgPublisher = new IpmgPublisher();
-			mIpmgPublisher.initialize(mGroupAddress, mGroupPort);
-			mIpmgSubscriber = new IpmgSubscriber();
-			mIpmgSubscriber.initialize(mGroupAddress, mGroupPort);
-			mIpmgSubscriber.addSubscriber( this );
 
-			MgmtConfigurationPingBdx tBdx = new MgmtConfigurationPingBdx();
-			mIpmgPublisher.publish( tBdx );
-
-		}
-		catch( Exception e) {
-			e.printStackTrace();
-		}
-	}
 
 	private JPanel createTopPanel() {
 		JPanel tRootPanel = new JPanel( new BorderLayout());
@@ -247,6 +229,7 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 		mPositionPanel = new PositionPanel( this );
 		mMsglogPanel = new MsglogPanel( this );
 		mStatisticsPanel = new StatisticsPanel(this );
+		mCryptoPanel = new CryptoPanel( this );
 
 		mTabbedPane.addTab("Configuration", mConfigPanel );
 		mTabbedPane.addTab("Markets", mMarketPanel);
@@ -257,6 +240,7 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 		mTabbedPane.addTab("Positions", mPositionPanel);
 		mTabbedPane.addTab("MsgLog", mMsglogPanel);
 		mTabbedPane.addTab("Statistics", mStatisticsPanel);
+		mTabbedPane.addTab( "CryptoGwy", mCryptoPanel);
 
 		mTabbedPane.setFont( Management.DEFAULT_FONT );
 		mTabbedPane.setPreferredSize( new Dimension(800,650));
@@ -294,6 +278,9 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 				if (c instanceof PositionPanel) {
 					((PositionPanel) c).loadAccountData();
 				}
+				if (c instanceof CryptoPanel) {
+					((CryptoPanel) c).loadData();
+				}
 				tabPane.setSelectedComponent(c);
 			}
 		});
@@ -309,27 +296,6 @@ public class Management extends JFrame implements IpmgSubscriberListenerInterfac
 		return tTxtArea;
 	}
 
-
-	void mgmtConfigurationUpdate( MgmtConfigurationBdx pConfigUpdate ) {
-		mConfigPanel.configurationUpdate(pConfigUpdate);
-
-		if (mWaitForServerFrame != null) {
-			synchronized (mWaitForServerFrame) {
-				mWaitForServerFrame.serverIsAvailable();
-			}
-		}
-	}
-
-	@Override
-	public void multicastReceived(MessageInterface pMsg) {
-		if (pMsg instanceof MgmtConfigurationBdx) {
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-				   mgmtConfigurationUpdate((MgmtConfigurationBdx) pMsg);
-				}
-			});
-		}
-	}
 }
 
 

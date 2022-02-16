@@ -112,4 +112,10 @@ public class MatchingEngineFrontend implements MatchingEngineInterface
 		MessageInterface tRspMsg = mMatchingEngine.processQueryBBO( pQueryBBORequest, pRequestContext );
 		return tRspMsg;
 	}
+
+	@Override
+	public MessageInterface redrawCryptoRequest(CryptoReDrawRequest pCryptoReDrawRequest, RequestContextInterface pRequestContext) {
+		MessageInterface tRspMsg = mMatchingEngine.redrawCryptoRequest( pCryptoReDrawRequest, pRequestContext );
+		return tRspMsg;
+	}
 }

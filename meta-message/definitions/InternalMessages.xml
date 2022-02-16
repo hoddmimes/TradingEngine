@@ -1,16 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Messages mongoSupport="false">
+<Messages mongoSupport="true">
    <Imports>
        <Import path="com.hoddmimes.te.messages.*"/>
    </Imports>
 
-    <Message name="Account" rootMessage="false">
-        <Attribute name="account" type="String" mandatory="true" />
+    <Message name="Account" rootMessage="false" db="true" dbCollection="Account">
+        <Attribute name="accountId" type="String" mandatory="true" dbKey="not-unique"/>
+        <Attribute name="mailAddr" type="String" mandatory="true" />
         <Attribute name="password" type="String" mandatory="true"/>
         <Attribute name="suspended" type="boolean" mandatory="true"/>
+        <Attribute name="confirmed" type="boolean" mandatory="true"/>
     </Message>
 
+    <Message name="IpcComponentConfiguration" rootMessage="false">
+        <Attribute name="host" type="String" mandatory="true"/>
+        <Attribute name="name" type="String" mandatory="true"/>
+        <Attribute name="port" type="int" mandatory="true"/>
+        <Attribute name="cretime" type="long" mandatory="true"/>
+        <Attribute name="lastTimeSeen" type="long" mandatory="true"/>
+    </Message>
+
+    <Message name="IpcConfigurationBdx"  rootMessage="true">
+        <Attribute name="components" type="IpcComponentConfiguration" list="array"/>
+    </Message>
+
+    <Message name="IpcConfigurationPingBdx"  rootMessage="true">
+    </Message>
 
     <!--
         Request messages sent from Modum Client to Matching Engine
@@ -91,5 +107,8 @@
         <Attribute name="maxPricePctChg" type="long"/>
         <Attribute name="suspended" type="boolean"/>
     </Message>
+
+
+
 
 </Messages>

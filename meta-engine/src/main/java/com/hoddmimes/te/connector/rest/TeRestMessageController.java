@@ -22,8 +22,12 @@ import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.TeException;
+import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.ipc.IpcProxy;
+import com.hoddmimes.te.common.ipc.IpcService;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
 import org.apache.logging.log4j.LogManager;
@@ -32,29 +36,29 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.socket.TextMessage;
 
 import javax.servlet.http.HttpSession;
-import javax.websocket.server.PathParam;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 @Configuration
-@RequestMapping("/te")
+@RequestMapping("/te-trading")
 
-public class RestMessageController
+public class TeRestMessageController
 {
-	private Logger mLog = LogManager.getLogger( RestMessageController.class );
+	private Logger mLog = LogManager.getLogger( TeRestMessageController.class );
 	private ConnectorInterface.ConnectorCallbackInterface mCallback;
 	private JsonObject mConfiguration;
 	private MessageFactory mMessageFactory;
 	private AtomicInteger mInternalRef = new AtomicInteger(1);
+	private IpcService mIpcService;
 
-
-	public RestMessageController() {
+	public TeRestMessageController() {
 		mCallback = TeAppCntx.getInstance().getSessionController();
 		mConfiguration = AuxJson.navigateObject( TeAppCntx.getInstance().getTeConfiguration(), "TeConfiguration/connectorConfiguration/configuration");
 		mMessageFactory = new MessageFactory();
+		mIpcService = TeAppCntx.getInstance().getIpcService();
 	}
 
 	/**
@@ -230,6 +234,65 @@ public class RestMessageController
 		return buildResponse(tResponseMessage);
 	}
 
+
+
+
+	@GetMapping( path = "/getDepositEntry/{coin}" )
+	ResponseEntity<String> getPaymentEntry(HttpSession pSession, @PathVariable String coin) {
+		GetDepositEntryRequest tPayEntryRqst = new GetDepositEntryRequest();
+		tPayEntryRqst.setRef(String.valueOf(mInternalRef.getAndIncrement()));
+
+		if (AuxJson.navigateBoolean( TeAppCntx.getInstance().getTeConfiguration(),"TeConfiguration/cryptoGateway/enable")) {
+			return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
+		}
+
+		if ((coin == null) && ((!coin.contentEquals(TEDB.CoinType.BTC.name())) && (!coin.contentEquals(TEDB.CoinType.ETH.name())))) {
+			return buildResponse(StatusMessageBuilder.error("Invalid coin type", null));
+		}
+
+		tPayEntryRqst.setAccountId( mCallback.getSessionContext( pSession.getId()).getAccount());
+		tPayEntryRqst.setCoin( coin );
+
+		MessageInterface tResponse =  TeAppCntx.getInstance().getCryptoGateway().setDepositAddressEntry( tPayEntryRqst );
+		return buildResponse( tResponse );
+	}
+
+	@GetMapping( path = "/setRedrawEntry/{coin}/{address}" )
+	ResponseEntity<String> setRedrawEntry(HttpSession pSession, @PathVariable String coin, @PathVariable String address) {
+		SetReDrawEntryRequest tRedrawEntryRqst = new SetReDrawEntryRequest();
+		tRedrawEntryRqst.setRef(String.valueOf(mInternalRef.getAndIncrement()));
+
+		if (AuxJson.navigateBoolean( TeAppCntx.getInstance().getTeConfiguration(),"TeConfiguration/cryptoGateway/enable")) {
+			return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
+		}
+
+		if ((coin == null) && ((!coin.contentEquals(TEDB.CoinType.BTC.name())) && (!coin.contentEquals(TEDB.CoinType.ETH.name())))) {
+			return buildResponse(StatusMessageBuilder.error("Invalid coin asset", null));
+		}
+
+		tRedrawEntryRqst.setAddress( address );
+		tRedrawEntryRqst.setAccountId( mCallback.getSessionContext( pSession.getId()).getAccount());
+		tRedrawEntryRqst.setCoin( coin );
+
+		MessageInterface tResponse =  TeAppCntx.getInstance().getCryptoGateway().setRedrawAddressEntry( tRedrawEntryRqst );
+		return buildResponse( tResponse );
+	}
+
+	@PostMapping( path = "/redrawCrypto" )
+	ResponseEntity<?> redrawCrypto(HttpSession pSession, @RequestBody String pJsonRqstString ) {
+		String jRqstMsgString  = AuxJson.tagMessageBody(CryptoReDrawRequest.NAME, pJsonRqstString);
+		CryptoReDrawRequest tRedrawCryptoRequest = new CryptoReDrawRequest( jRqstMsgString );
+		if (tRedrawCryptoRequest.getRef().isEmpty()) {
+			tRedrawCryptoRequest.setRef( String.valueOf(mInternalRef.getAndIncrement()));
+		}
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), tRedrawCryptoRequest.toJson().toString() );
+		return buildResponse( tResponseMessage );
+	}
+
+
+
+
+
 	private ResponseEntity<String> buildStatusMessageResponse( StatusMessage pStsMsg ) {
 		if (pStsMsg.getIsOk().get()) {
 			return new ResponseEntity<>( AuxJson.getMessageBody(pStsMsg.toJson()).toString(), HttpStatus.OK );
@@ -244,6 +307,11 @@ public class RestMessageController
 		}
 		return new ResponseEntity<>( AuxJson.getMessageBody(pResponseMessage.toJson()).toString(), HttpStatus.OK );
 	}
+
+	private ResponseEntity<String> buildResponse(JsonObject pResponseMessage ) {
+		return new ResponseEntity<>( pResponseMessage.toString(), HttpStatus.OK );
+	}
+
 
 
 }

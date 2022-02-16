@@ -18,9 +18,8 @@
 package com.hoddmimes.te.management.gui.mgmt;
 
 import com.hoddmimes.te.common.interfaces.MarketStates;
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 
-import com.hoddmimes.te.messages.MgmtMessageResponse;
 import com.hoddmimes.te.messages.generated.*;
 
 import java.util.List;
@@ -53,7 +52,7 @@ public class MarketPanel extends JPanel
 
 	void updateMarketState( MgmtSetMarketsRequest pRqst )
 	{
-		MgmtSetMarketsResponse tResponse  = (MgmtSetMarketsResponse) mServiceInterface.transceive(TeMgmtServices.InstrumentData, pRqst );
+		MgmtSetMarketsResponse tResponse  = (MgmtSetMarketsResponse) mServiceInterface.transceive(TeIpcServices.InstrumentData, pRqst );
 		if (tResponse instanceof MgmtSetMarketsResponse) {
 			displayMarketData(((MgmtSetMarketsResponse)tResponse).getMarkets().get());
 		}
@@ -62,7 +61,7 @@ public class MarketPanel extends JPanel
 	public void loadData() {
 
 
-		MgmtGetMarketsResponse tResponse = (MgmtGetMarketsResponse) mServiceInterface.transceive(TeMgmtServices.InstrumentData, new MgmtGetMarketsRequest().setRef("X"));
+		MgmtGetMarketsResponse tResponse = (MgmtGetMarketsResponse) mServiceInterface.transceive(TeIpcServices.InstrumentData, new MgmtGetMarketsRequest().setRef("X"));
 		if (tResponse == null) {
 			return;
 		}

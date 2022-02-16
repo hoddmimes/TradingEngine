@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  Hoddmimes Solution AB 2021.
+ * Copyright (c)  Hoddmimes Solution AB 2022.
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.hoddmimes.te.management.service;
+package com.hoddmimes.te.common.ipc;
 
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.common.AuxJson;
@@ -24,7 +24,7 @@ import com.hoddmimes.te.common.transport.tcpip.TcpServerCallbackIf;
 import com.hoddmimes.te.common.transport.tcpip.TcpThread;
 import com.hoddmimes.te.common.transport.tcpip.TcpThreadCallbackIf;
 import com.hoddmimes.te.messages.MgmtMessageRequest;
-import com.hoddmimes.te.messages.MgmtMessageResponse;
+import com.hoddmimes.te.messages.generated.IpcComponentConfiguration;
 import com.hoddmimes.te.messages.generated.MessageFactory;
 import com.hoddmimes.te.messages.generated.MgmtStatusResponse;
 import org.apache.logging.log4j.LogManager;
@@ -35,24 +35,25 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 
-public class MgmtComponent implements MgmtComponentInterface, TcpServerCallbackIf, TcpThreadCallbackIf {
+public class IpcComponent implements IpcComponentInterface, TcpServerCallbackIf, TcpThreadCallbackIf {
 	private String      mName;
 	private long        mCreateTime;
+	private String      mHost;
 	private int         mPort;
 	private TcpServer   mServer;
 	private MessageFactory mMsgFactory;
 	private Logger      mLog;
-	private MgmtCmdCallbackInterface                        mDefaultHandler;
-	private HashMap<String, MgmtCmdCallbackInterface>       mHandlers;
+	private IpcRequestCallbackInterface mCallbacktHandler;
 
-	public MgmtComponent( String pName, int pPort, MgmtCmdCallbackInterface pDefaultHandler ) {
+
+	public IpcComponent(String pName, String pHost, int pPort, IpcRequestCallbackInterface pDefaultHandler ) {
 		mName = pName;
+		mHost = pHost;
 		mPort = pPort;
 		mCreateTime = System.currentTimeMillis();
-		mLog = LogManager.getLogger( MgmtComponent.class );
+		mLog = LogManager.getLogger( IpcComponent.class );
 		mMsgFactory = new MessageFactory();
-		mDefaultHandler = pDefaultHandler;
-		mHandlers = new HashMap<>();
+		mCallbacktHandler = pDefaultHandler;
 		declareServer();
 	}
 
@@ -84,25 +85,11 @@ public class MgmtComponent implements MgmtComponentInterface, TcpServerCallbackI
 		pThread.close();
 	}
 
-	@Override
-	public void registerHandler(String pCommad, MgmtCmdCallbackInterface pCallbackHandler) {
-		mHandlers.put( pCommad, pCallbackHandler);
-	}
 
-	private void dispatchRequest( TcpThread pThread, MgmtMessageRequest pRequest ) {
-		MgmtCmdCallbackInterface tCallback = mHandlers.get( pRequest.getMessageName() );
-		if (tCallback != null) {
-			MgmtMessageResponse tResponse = tCallback.mgmtRequest( pRequest );
+
+	private void dispatchRequest( TcpThread pThread, MessageInterface pRequest ) {
+			MessageInterface tResponse = mCallbacktHandler.ipcRequest( pRequest );
 			send( pThread, tResponse );
-			return;
-		}
-		if (mDefaultHandler != null) {
-			MgmtMessageResponse tResponse = mDefaultHandler.mgmtRequest( pRequest );
-			send( pThread, tResponse );
-			return;
-		}
-		MgmtStatusResponse tRsp = new MgmtStatusResponse().setRef(pRequest.getRef().get()).setMessage("No command destination found");
-		send( pThread, tRsp );
 	}
 
 	@Override
@@ -114,14 +101,7 @@ public class MgmtComponent implements MgmtComponentInterface, TcpServerCallbackI
 			mLog.error("invalid request message : " + jMsgRqst );
 			pThread.close();
 		}
-		if (!(tRqstMsg instanceof MgmtMessageRequest)) {
-			mLog.error("Not a MgmtMessageRequest message : " + jMsgRqst );
-			String tRef = AuxJson.getMessageRef(jMsgRqst, null);
-			MgmtStatusResponse tRsp = new MgmtStatusResponse().setRef(tRef).setMessage("Not a MgmtMessageRequest message");
-			send( pThread, tRsp );
-		}
-
-		dispatchRequest( pThread,  (MgmtMessageRequest) tRqstMsg );
+		dispatchRequest( pThread,  tRqstMsg );
 	}
 
 	private void send( TcpThread pThread, MessageInterface pMsg ) {
@@ -134,12 +114,15 @@ public class MgmtComponent implements MgmtComponentInterface, TcpServerCallbackI
 		}
 	}
 
-	public com.hoddmimes.te.messages.generated.MgmtComponent toMgmtComponentMsg() {
+
+	public IpcComponentConfiguration toIpcComponentConfigMsg() {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-		com.hoddmimes.te.messages.generated.MgmtComponent tComp = new com.hoddmimes.te.messages.generated.MgmtComponent();
-		tComp.setCretime( sdf.format(mCreateTime));
+		IpcComponentConfiguration tComp = new IpcComponentConfiguration();
+		tComp.setCretime( mCreateTime );
+		tComp.setLastTimeSeen( System.currentTimeMillis());
 		tComp.setName( mName );
+		tComp.setHost( mHost );
 		tComp.setPort( mPort );
 		return tComp;
 	}

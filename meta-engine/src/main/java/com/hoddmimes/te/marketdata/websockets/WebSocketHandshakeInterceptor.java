@@ -80,7 +80,7 @@ public class WebSocketHandshakeInterceptor extends HttpSessionHandshakeIntercept
         }
         String tAuthId = m.group(1);
         if (!TeAppCntx.getInstance().getSessionController().validateAuthId( tAuthId )) {
-            mLog.warn("No http session cntx found for auth id");
+            mLog.warn("No http session context found for auth id");
           return null;
         }
         return tAuthId;

@@ -41,7 +41,7 @@ public class TcpClient
 			tClientChannel.connect(socketAddr);
 			tClientChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
 			tClientChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
-            TcpThread tTcpThread = new TcpThread( tClientChannel, pCallback);
+            TcpThread tTcpThread = new TcpThread( tClientChannel, TcpThread.ThreadType.ThreadClient, pCallback);
 			tTcpThread.start();
             return tTcpThread;
         }

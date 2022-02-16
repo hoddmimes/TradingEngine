@@ -25,6 +25,7 @@ import com.hoddmimes.te.sessionctl.SessionController;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.util.IOUtils;
+import org.springframework.http.server.ServletServerHttpRequest;
 
 
 import java.io.IOException;
@@ -45,7 +46,10 @@ public class TeFilter implements Filter
 {
 	private static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
 	static final String TE_SESS_CNTX = "TE_SESS_CNTX";
-	private static final String LOGIN_URL = "/te/logon";
+	private static final String LOGIN_URL = "/te-trading/logon";
+	private static final String CONFIRM_URL = "/te-confimation/";
+	private static final String MARKETDATA_URL = "/te-marketdata";
+
 	private Logger mLog;
 
 	public TeFilter() {
@@ -90,14 +94,35 @@ public class TeFilter implements Filter
 		if (mLog.isTraceEnabled()) {
 			trace( tHttpRqst );
 		}
-/*
-		if (!tHttpRqst.getRequestURI().equals(LOGIN_URL)) {
-			if (!validateSession( tSession )) {
-				generateAndSendValidationError( tHttpRqst, tHttpResp);
-				return;
-			}
+
+		/**
+		 * A bit clumsi and rough but I never bonded with the SessionManagementFilter framework
+		 * A likely this should be done in another way  but we have a dead simple service
+		 * that do not need a lot of filtering. There will be three URI prefix
+		 * "/te-trading/..." must be validated with the exception of "/te-trading/logon"
+		 * "/te-marketdata" destination is the WSS just let it through, validation will take place WebSocketHandshakeInterceptor
+		 * "/te-confirmation/..." should not be validate
+		 */
+		 String tRqstURI = tHttpRqst.getRequestURI();
+		 boolean tValidateRequest = true;
+
+		 if (tRqstURI.contentEquals( LOGIN_URL )) {
+			 tValidateRequest = false;
+		 }
+		if (tRqstURI.startsWith( CONFIRM_URL )) {
+			tValidateRequest = false;
 		}
-*/
+
+		if (tRqstURI.startsWith( MARKETDATA_URL )) {
+			tValidateRequest = false;
+		}
+
+
+		if ((tValidateRequest) && (!validateSession( tSession ))) {
+			generateAndSendValidationError( tHttpRqst, tHttpResp);
+			return;
+		}
+
 		chain.doFilter(request, response);
 	}
 

@@ -28,9 +28,9 @@ import com.hoddmimes.te.common.TeException;
 import com.hoddmimes.te.common.interfaces.AuthenticateInterface;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
-import com.hoddmimes.te.management.service.MgmtCmdCallbackInterface;
-import com.hoddmimes.te.management.service.MgmtComponentInterface;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
+import com.hoddmimes.te.common.ipc.IpcComponentInterface;
 import com.hoddmimes.te.messages.*;
 import com.hoddmimes.te.messages.generated.*;
 import org.apache.logging.log4j.LogManager;
@@ -52,7 +52,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SessionController implements ConnectorInterface.ConnectorCallbackInterface, MgmtCmdCallbackInterface
+public class SessionController implements ConnectorInterface.ConnectorCallbackInterface, IpcRequestCallbackInterface
 {
 	public static final String INTERNAL_SESSION_ID = UUID.randomUUID().toString();
 
@@ -122,18 +122,16 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 			mMsgLogger = new MessageLogger( tFilename, mMessageLoggerFlushMode, mMessagerLoggerFlushInterval);
 			mLog.info("Create message log file \"" + mMsgLogger.getFilename() + "\"");
 		}
-		MgmtComponentInterface tMgmt = TeAppCntx.getInstance().getMgmtService().registerComponent( TeMgmtServices.SessionService, 0, this );
+		IpcComponentInterface tMgmt = TeAppCntx.getInstance().getIpcService().registerComponent( TeIpcServices.SessionService, 0, this );
 	}
 
 	private void initializeAuthenticator() {
 		String tAuthClsStr = null;
 		try {
 			tAuthClsStr = AuxJson.navigateString( mConfiguration,"autheticator/implementation");
-			String tAuthDataStore = AuxJson.navigateString( mConfiguration,"autheticator/dataStore");
-			Class[] cArg = new Class[1];
-			cArg[0] = String.class;
+			Class[] cArg = new Class[0];
 			Class c = Class.forName(tAuthClsStr);
-			mAuthenticator = (AuthenticateInterface) c.getDeclaredConstructor( cArg ).newInstance(tAuthDataStore);
+			mAuthenticator = (AuthenticateInterface) c.getDeclaredConstructor( cArg ).newInstance();
 		} catch (Exception e) {
 			mLog.error("Failed to instansiate Authenticator class \"" + tAuthClsStr +"\" reason: " + e.getMessage());
 		}
@@ -158,7 +156,7 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 		}
 		Account tAccount = mAuthenticator.logon(pLogonRequest.getAccount().get(), pLogonRequest.getPassword().get());
 		if (tAccount != null) {
-			tSessCntx = new SessionCntx(tAccount.getAccount().get(), pSessionId);
+			tSessCntx = new SessionCntx(tAccount.getAccountId().get(), pSessionId);
 			mSessionMapper.add( tSessCntx );
 			return tSessCntx;
 		}
@@ -288,6 +286,8 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().executePriceLevel((InternalPriceLevelRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryOrderbookRequest) {
 				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().executeQueryOrderbook((QueryOrderbookRequest) pRqstMsg, tRequestContext);
+			} else if (pRqstMsg instanceof CryptoReDrawRequest) {
+				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().redrawCryptoRequest((CryptoReDrawRequest) pRqstMsg, tRequestContext);
 			} else {
 				mLog.fatal("No execute implementation for ME request \"" + pRqstMsg.getMessageName() + "\"");
 				tResponseMessage = StatusMessageBuilder.error(("No execute implementation for ME request \"" + pRqstMsg.getMessageName() + "\""), pRqstMsg.getRef().get());
@@ -376,7 +376,7 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 	}
 
 	@Override
-	public MgmtMessageResponse mgmtRequest(MgmtMessageRequest pMgmtRequest) {
+	public MessageInterface ipcRequest(MessageInterface pMgmtRequest) {
 		if (pMgmtRequest instanceof MgmtGetLogMessagesRequest) {
 			return mgmtGetlogMsgData((MgmtGetLogMessagesRequest) pMgmtRequest );
 		}

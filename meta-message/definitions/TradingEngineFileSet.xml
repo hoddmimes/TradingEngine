@@ -2,8 +2,10 @@
 
 <MessageFiles>
     <MessageFactory outPath="src/main/java/com/hoddmimes/te/messages/generated/" package="com.hoddmimes.te.messages.generated"/>
+    <MessageFile file="./definitions/CryptoMessages.xml" outPath="src/main/java/com/hoddmimes/te/messages/generated/" package="com.hoddmimes.te.messages.generated"/>
     <MessageFile file="./definitions/PublicMessages.xml" outPath="src/main/java/com/hoddmimes/te/messages/generated/" package="com.hoddmimes.te.messages.generated"/>
     <MessageFile file="./definitions/InternalMessages.xml" outPath="src/main/java/com/hoddmimes/te/messages/generated/" package="com.hoddmimes.te.messages.generated"/>
     <MessageFile file="./definitions/MgmtMessages.xml" outPath="src/main/java/com/hoddmimes/te/messages/generated/" package="com.hoddmimes.te.messages.generated"/>
     <SchemaFactory outPath="../configuration/jsonSchemas/" schemaDir="./configuration/jsonSchemas/"/>
+    <MongoAux outPath="src/main/java/com/hoddmimes/te/messages/generated/" package="com.hoddmimes.te.messages.generated"/>
 </MessageFiles>

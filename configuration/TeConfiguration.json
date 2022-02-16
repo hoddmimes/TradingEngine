@@ -1,12 +1,15 @@
 {
   "TeConfiguration": {
+    "dbConfiguration" : {
+      "dbHost" : "localhost",
+      "dbPort" : "27017",
+      "dbName" : "TradingEngine"
+    },
     "sessionControllerConfiguration": {
       "autheticator": {
-        "implementation": "com.hoddmimes.te.sessionctl.Authenticator",
-        "dataStore": "configuration/AccountDefinitions.json"
+        "implementation": "com.hoddmimes.te.sessionctl.Authenticator"
       },
       "schemaDefinitions" : "configuration/jsonSchemas",
-
       "traceExecutionTimeLimitUsec":1000,
       "traceExecutionTimeVerbose":true,
       "traceExecutionTimeOff":true,
@@ -39,7 +42,7 @@
     "connectorConfiguration": {
       "implementaion": "com.hoddmimes.te.connector.rest.RestConnector",
       "configuration": {
-        "appConfiguration" : "configuration/RestConnector.properties",
+        "appConfiguration" : "configuration/TERestConnector.properties",
         "inactivityTimer" : 600
       }
     },
@@ -59,10 +62,20 @@
     "matchinEngine": {
 
     },
-    "management" : {
+    "ipc" : {
       "localAddress" : "192.168.42.100",
       "groupPort" : 3939,
       "groupAddress" : "224.20.20.20"
+    },
+    "cryptoGateway" : {
+      "enable" : true,
+      "bitcoin" : {
+        "verbose" : false,
+        "network" : "REGTEST",
+        "dataDir" : "./cryptogwy/bitcoin",
+        "wallet" : "bitcoinWallet.bin",
+        "walletPassword" : "test"
+      }
     }
   }
 }

@@ -44,6 +44,10 @@ build.finalizedBy(buildHTMLZip)
 build.finalizedBy(buildClientJar)
 
 dependencies {
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.17.0'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.17.0'
+
+    implementation group: 'org.mongodb', name: 'mongo-java-driver', version: '3.12.10'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.5.6'
     implementation group: 'org.springframework', name: 'spring-websocket', version: '5.3.12'
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'

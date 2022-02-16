@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  Hoddmimes Solution AB 2021.
+ * Copyright (c)  Hoddmimes Solution AB 2022.
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,17 +15,11 @@
  * limitations under the License.
  */
 
-package com.hoddmimes.te.common.interfaces;
+package com.hoddmimes.te.common.ipc;
 
-public interface TeMgmtServices
+import com.hoddmimes.te.messages.generated.IpcComponentConfiguration;
+
+public interface IpcComponentInterface
 {
-	public static String InstrumentData = "InstrumentData";
-	public static String Autheticator = "Autheticator";
-	public static String TradeData = "TradetData";
-	public static String MatchingService = "Matcher";
-	public static String SessionService = "SessionController";
-	public static String MarketData = "MarketData";
-	public static String PositionData = "PositionData";
-	public static String MarketDataConsilidator = "MarketDataConsilidator";
-
+	public IpcComponentConfiguration toIpcComponentConfigMsg();
 }

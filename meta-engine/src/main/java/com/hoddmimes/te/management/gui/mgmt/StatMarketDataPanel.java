@@ -17,11 +17,10 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableModel;
-import com.hoddmimes.te.messages.SID;
 import com.hoddmimes.te.messages.generated.*;
 
 import javax.swing.*;
@@ -79,7 +78,7 @@ public class StatMarketDataPanel extends BasePanel {
 
 	public void refreshStatistics() {
 		MgmtQueryMarketDataRequest tReq = new MgmtQueryMarketDataRequest().setRef("qmms");
-		MgmtQueryMarketDataResponse tResp = (MgmtQueryMarketDataResponse) mServiceInterface.transceive(TeMgmtServices.MarketData, tReq );
+		MgmtQueryMarketDataResponse tResp = (MgmtQueryMarketDataResponse) mServiceInterface.transceive(TeIpcServices.MarketData, tReq );
 
 		mCounterPanel.loadStatistics( tResp.getCounters().get());
 		mTopicTableModel.clear();

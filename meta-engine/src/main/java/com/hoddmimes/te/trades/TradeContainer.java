@@ -23,12 +23,12 @@ import com.hoddmimes.jaux.txlogger.*;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.engine.InternalTrade;
 import com.hoddmimes.te.engine.Order;
 import com.hoddmimes.te.instrumentctl.MarketX;
-import com.hoddmimes.te.management.service.MgmtCmdCallbackInterface;
-import com.hoddmimes.te.management.service.MgmtComponentInterface;
+import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
+import com.hoddmimes.te.common.ipc.IpcComponentInterface;
 import com.hoddmimes.te.messages.MgmtMessageRequest;
 import com.hoddmimes.te.messages.MgmtMessageResponse;
 import com.hoddmimes.te.messages.SID;
@@ -44,7 +44,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TradeContainer implements MgmtCmdCallbackInterface
+public class TradeContainer implements IpcRequestCallbackInterface
 {
 	private SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private Logger mLog = LogManager.getLogger( TradeContainer.class);
@@ -79,7 +79,7 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 		openTradelog();
 
 		TeAppCntx.getInstance().setTradeContainer( this );
-		MgmtComponentInterface tMgmt = TeAppCntx.getInstance().getMgmtService().registerComponent( TeMgmtServices.TradeData, 0, this );
+		IpcComponentInterface tMgmt = TeAppCntx.getInstance().getIpcService().registerComponent( TeIpcServices.TradeData, 0, this );
 	}
 
 
@@ -291,7 +291,7 @@ public class TradeContainer implements MgmtCmdCallbackInterface
 
 
 	@Override
-	public MgmtMessageResponse mgmtRequest(MgmtMessageRequest pMgmtRequest) {
+	public MessageInterface ipcRequest(MessageInterface pMgmtRequest) {
 		if (pMgmtRequest instanceof MgmtGetTradesRequest) {
 			return getTradesForMgmt((MgmtMessageRequest) pMgmtRequest);
 		}

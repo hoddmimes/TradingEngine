@@ -23,17 +23,17 @@ import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.TeException;
+import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.MarketDataInterface;
 import com.hoddmimes.te.common.interfaces.RequestContextInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.instrumentctl.SymbolX;
 import com.hoddmimes.te.management.RateItem;
 import com.hoddmimes.te.management.RateStatistics;
-import com.hoddmimes.te.management.service.MgmtCmdCallbackInterface;
-import com.hoddmimes.te.management.service.MgmtComponent;
-import com.hoddmimes.te.management.service.MgmtComponentInterface;
+import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
+import com.hoddmimes.te.common.ipc.IpcComponentInterface;
 import com.hoddmimes.te.messages.MgmtMessageRequest;
 import com.hoddmimes.te.messages.MgmtMessageResponse;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
@@ -46,10 +46,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackInterface
+public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbackInterface
 {
 	private static SimpleDateFormat SDT_TIME = new SimpleDateFormat("HH:mm:ss.SSS");
 
@@ -81,7 +80,7 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 		mConfiguration = AuxJson.navigateObject(pTeConfiguration, "TeConfiguration/matchingEngineConfiguration");
 		initializeOrderbooks();
 		configureDataDistribution(AuxJson.navigateObject(pTeConfiguration, "TeConfiguration/marketDataConfiguration"));
-		MgmtComponentInterface tMgmt = TeAppCntx.getInstance().getMgmtService().registerComponent( TeMgmtServices.MatchingService, 0, this );
+		IpcComponentInterface tIpc = TeAppCntx.getInstance().getIpcService().registerComponent( TeIpcServices.MatchingService, 0, this );
 		mOrderRate = RateStatistics.getInstance().addRateItem("Order rate");
 		mPreTradeValidation = TeAppCntx.getInstance().getPositionController().isPreTradingValidationEnabled();
 	}
@@ -387,6 +386,21 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 		}
 	}
 
+	MessageInterface redrawCryptoRequest(CryptoReDrawRequest pCryptoReDrawRequest, RequestContextInterface pRequestContext) {
+		String tSid = (pCryptoReDrawRequest.getCoin().get().contentEquals(TEDB.CoinType.BTC.name())) ? InstrumentContainer.getBitcoinSID().toString() : InstrumentContainer.getEthereumSID().toString();
+
+		Orderbook tOrderbook = mOrderbooks.get( tSid );
+
+		if (tOrderbook == null) {
+			mLog.warn("orderbook " + tSid + " does not exists " + pRequestContext );
+			return StatusMessageBuilder.error("orderbook " + tSid + " does not exists", pCryptoReDrawRequest.getRef().get());
+		}
+
+		synchronized (tOrderbook) {
+			long tSellOrderExposure = tOrderbook.getAccountExposure( pRequestContext.getAccountId(), Order.Side.SELL);
+			return TeAppCntx.getInstance().getPositionController().redrawCrypto( pCryptoReDrawRequest, tSellOrderExposure);
+		}
+	}
 
 
 	public List<String> getOrderbookSymbolIds() {
@@ -431,6 +445,8 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 		}
 	}
 
+
+
 	@Override
 	public void trade(InternalTrade pTrade, SessionCntxInterface pSessionCntx) {
 		String tSymbol =  pTrade.getSid();
@@ -461,6 +477,9 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 		}
 	}
 
+
+
+
 	@Override
 	public void orderbookChanged(String pSymbol) {
 		// Trigger price level update
@@ -470,21 +489,21 @@ public class MatchingEngine implements MatchingEngineCallback, MgmtCmdCallbackIn
 	}
 
 	@Override
-	public MgmtMessageResponse mgmtRequest(MgmtMessageRequest pMgmtRequest) {
+	public MessageInterface ipcRequest(MessageInterface pMgmtRequest) {
 		if (pMgmtRequest instanceof MgmtGetAccountOrdersRequest) {
 			return getOrdersForAccount((MgmtGetAccountOrdersRequest) pMgmtRequest);
 		}
 		if (pMgmtRequest instanceof MgmtDeleteOrderRequest) {
 			boolean tDeleted = mgmtDeleteOrder((MgmtDeleteOrderRequest) pMgmtRequest);
-			return new MgmtDeleteOrderResponse().setRef( pMgmtRequest.getRef().get()).setDeleted( tDeleted );
+			return new MgmtDeleteOrderResponse().setRef( ((MgmtMessageRequest) pMgmtRequest).getRef().get()).setDeleted( tDeleted );
 		}
 		if (pMgmtRequest instanceof MgmtDeleteAllOrdersRequest) {
 			int tOrdersDeleted = mgmtDeleteAllOrders((MgmtDeleteAllOrdersRequest) pMgmtRequest);
-			return new MgmtDeleteAllOrdersResponse().setRef( pMgmtRequest.getRef().get()).setDeleted( tOrdersDeleted);
+			return new MgmtDeleteAllOrdersResponse().setRef( ((MgmtMessageRequest) pMgmtRequest).getRef().get()).setDeleted( tOrdersDeleted);
 		}
 		if (pMgmtRequest instanceof MgmtRevertTradeRequest) {
 			InternalTrade tTrade = mgmtRevertTrade((MgmtRevertTradeRequest) pMgmtRequest);
-			MgmtRevertTradeResponse tResponse = new MgmtRevertTradeResponse().setRef( pMgmtRequest.getRef().get());
+			MgmtRevertTradeResponse tResponse = new MgmtRevertTradeResponse().setRef( ((MgmtMessageRequest) pMgmtRequest).getRef().get());
 			tResponse.setRevertedTrades( new TradeX( tTrade));
 			return tResponse;
 		}

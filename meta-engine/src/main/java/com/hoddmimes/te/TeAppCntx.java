@@ -18,13 +18,14 @@
 package com.hoddmimes.te;
 
 import com.google.gson.JsonObject;
-import com.hoddmimes.jsontransform.JsonSchemaValidator;
+import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.common.interfaces.MarketDataInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
+import com.hoddmimes.te.common.ipc.IpcService;
+import com.hoddmimes.te.cryptogwy.CryptoGateway;
 import com.hoddmimes.te.engine.MatchingEngineInterface;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
-import com.hoddmimes.te.management.service.MgmtFactory;
 import com.hoddmimes.te.positions.PositionController;
 import com.hoddmimes.te.sessionctl.SessionController;
 import com.hoddmimes.te.trades.TradeContainer;
@@ -46,7 +47,9 @@ public class TeAppCntx {
 	private PositionController mPositionController;
 	private JsonObject mTeConfiguration;
 	private Object mMarketDataDistributorMutex;
-	private MgmtFactory mMgmtFactory;
+	private IpcService mIpcService;
+	private CryptoGateway mCryptoGateway;
+	private TEDB mDb;
 	private boolean mTestMode;
 
 	private TeAppCntx() {
@@ -59,6 +62,8 @@ public class TeAppCntx {
 		setTeConfiguration(null);
 		setMarketDataDistributor(null);
 		setTradeContainer(null);
+		setCryptoGateway(null);
+		setDb(null);
 		mTestMode = false;
 	}
 
@@ -91,18 +96,42 @@ public class TeAppCntx {
 		return mConnector;
 	}
 
-	public void setMgmtService(MgmtFactory pMgmtService)  {
-		mMgmtFactory = pMgmtService;
+	public void setIpcService(IpcService pIpcService)  {
+		mIpcService = pIpcService;
 	}
 
-	public MgmtFactory getMgmtService() {
-		if (mMgmtFactory == null) {
-			mLog.fatal("try to retrieve MgmtService implementation before setting it ", new Exception("mMgmtFactory is null"));
+	public IpcService getIpcService() {
+		if (mIpcService == null) {
+			mLog.fatal("try to retrieve IPC Service implementation before setting it ", new Exception("mIpcService is null"));
 			System.exit(-1);
 		}
-		return mMgmtFactory;
+		return mIpcService;
 	}
 
+	public void setCryptoGateway(CryptoGateway pGateway)  {
+		mCryptoGateway = pGateway;
+	}
+
+	public CryptoGateway getCryptoGateway() {
+		if (mCryptoGateway == null) {
+			mLog.fatal("try to retrieve Crypto Gateway  implementation before setting it ", new Exception("mCryptoGateway is null"));
+			System.exit(-1);
+		}
+		return mCryptoGateway;
+	}
+
+
+	public void setDb( TEDB pDB ) {
+		mDb = pDB;
+	}
+
+	public TEDB getDb() {
+		if (mDb == null) {
+			mLog.fatal("try to retrieve TE Database  implementation before setting it ", new Exception("mDb is null"));
+			System.exit(-1);
+		}
+		return mDb;
+	}
 
 	public void setConnector(ConnectorInterface pConnector) {
 		mConnector = pConnector;

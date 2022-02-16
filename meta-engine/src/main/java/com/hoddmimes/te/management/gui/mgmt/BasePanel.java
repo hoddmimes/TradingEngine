@@ -17,13 +17,9 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
 import com.hoddmimes.te.messages.generated.Account;
-import com.hoddmimes.te.messages.generated.MgmtGetAccountsRequest;
-import com.hoddmimes.te.messages.generated.MgmtGetAccountsResponse;
 
 import java.util.Comparator;
-import java.util.List;
 import java.awt.*;
 import javax.swing.*;
 
@@ -70,7 +66,7 @@ public class BasePanel extends JPanel
 	{
 		@Override
 		public int compare(Account A1, Account A2) {
-			return A1.getAccount().get().compareTo( A2.getAccount().get());
+			return A1.getAccountId().get().compareTo( A2.getAccountId().get());
 		}
 	}
 }

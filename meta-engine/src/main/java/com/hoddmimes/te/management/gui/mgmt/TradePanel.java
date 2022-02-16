@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
@@ -139,7 +139,7 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 			return;
 		}
 
-		MgmtRevertTradeResponse tResponse = (MgmtRevertTradeResponse) mServiceInterface.transceive( TeMgmtServices.MatchingService, new MgmtRevertTradeRequest().setRef("rt").setTrade( pTrade.getTrade()));
+		MgmtRevertTradeResponse tResponse = (MgmtRevertTradeResponse) mServiceInterface.transceive( TeIpcServices.MatchingService, new MgmtRevertTradeRequest().setRef("rt").setTrade( pTrade.getTrade()));
 		if (tResponse != null) {
 			mTrades.add(tResponse.getRevertedTrades().get());
 			filterTrades();
@@ -188,7 +188,7 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 		if (mAccountComboBox.getItemCount() == 0) {
 			mAccountComboBox.addItem(new AccountEntry(null));
 
-			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeMgmtServices.Autheticator, new MgmtGetAccountsRequest().setRef("ga"));
+			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, new MgmtGetAccountsRequest().setRef("ga"));
 			if (tAccountsResponse == null) {
 				return;
 			}
@@ -201,13 +201,13 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 		}
 
 		if (mMarkets == null) {
-			MgmtGetMarketsResponse tMktRsp = (MgmtGetMarketsResponse) mServiceInterface.transceive(TeMgmtServices.InstrumentData, new MgmtGetMarketsRequest().setRef("gm"));
+			MgmtGetMarketsResponse tMktRsp = (MgmtGetMarketsResponse) mServiceInterface.transceive(TeIpcServices.InstrumentData, new MgmtGetMarketsRequest().setRef("gm"));
 			mMarkets = tMktRsp.getMarkets().get();
 
 			mSidComboBox.addItem(new SidEntry(null));
 			for( Market mkt : mMarkets) {
 				// Load SID Data
-				MgmtGetSymbolsResponse tSymRsp = (MgmtGetSymbolsResponse) mServiceInterface.transceive(TeMgmtServices.InstrumentData, new MgmtGetSymbolsRequest().setRef("gs").setMarketId( mkt.getId().get()));
+				MgmtGetSymbolsResponse tSymRsp = (MgmtGetSymbolsResponse) mServiceInterface.transceive(TeIpcServices.InstrumentData, new MgmtGetSymbolsRequest().setRef("gs").setMarketId( mkt.getId().get()));
 
 				if (tSymRsp == null) {
 					return;
@@ -224,7 +224,7 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 
 	public void loadTradeData() {
 
-			MgmtGetTradesResponse tTradeResponse = (MgmtGetTradesResponse) mServiceInterface.transceive(TeMgmtServices.TradeData, new MgmtGetTradesRequest().setRef("gt"));
+			MgmtGetTradesResponse tTradeResponse = (MgmtGetTradesResponse) mServiceInterface.transceive(TeIpcServices.TradeData, new MgmtGetTradesRequest().setRef("gt"));
 			if (tTradeResponse == null) {
 				return;
 			}
@@ -361,11 +361,11 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 		}
 
 		String getAccountId() {
-			return (mAccount == null) ? null : mAccount.getAccount().get();
+			return (mAccount == null) ? null : mAccount.getAccountId().get();
 		}
 
 		public String toString() {
-			return (mAccount == null) ? "" : mAccount.getAccount().get() ;
+			return (mAccount == null) ? "" : mAccount.getAccountId().get() ;
 		}
 	}
 }

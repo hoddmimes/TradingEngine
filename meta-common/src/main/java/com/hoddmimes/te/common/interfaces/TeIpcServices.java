@@ -15,12 +15,18 @@
  * limitations under the License.
  */
 
-package com.hoddmimes.te.management.service;
+package com.hoddmimes.te.common.interfaces;
 
-import com.hoddmimes.te.messages.generated.MgmtComponent;
-
-public interface MgmtComponentInterface
+public interface TeIpcServices
 {
-	public void registerHandler( String pCommand, MgmtCmdCallbackInterface pCallbackHandler );
-	public MgmtComponent toMgmtComponentMsg();
+	public static String InstrumentData = "InstrumentData";
+	public static String Autheticator = "Autheticator";
+	public static String TradeData = "TradetData";
+	public static String MatchingService = "Matcher";
+	public static String SessionService = "SessionController";
+	public static String MarketData = "MarketData";
+	public static String PositionData = "PositionData";
+	public static String CryptoGwy = "CryptoGateway";
+
+
 }

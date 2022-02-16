@@ -17,12 +17,11 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.management.gui.table.*;
 import com.hoddmimes.te.messages.generated.Account;
 import com.hoddmimes.te.messages.generated.MgmtDeleteAccountRequest;
 import com.hoddmimes.te.messages.generated.MgmtDeleteAccountResponse;
-import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -113,7 +112,7 @@ public class RemoveUpdateAccountPanel extends BasePanel implements TableCallback
 			return;
 		}
 		MgmtDeleteAccountRequest pRequest = new MgmtDeleteAccountRequest().setRef("ra").setAccount( pAccountEntry.mAccount );
-		MgmtDeleteAccountResponse tResponse = (MgmtDeleteAccountResponse) mServiceInterface.transceive(TeMgmtServices.Autheticator, pRequest );
+		MgmtDeleteAccountResponse tResponse = (MgmtDeleteAccountResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, pRequest );
 		if (tResponse.getIsDeleted().get()) {
 			JOptionPane.showMessageDialog( this, "Account successfully deleted " , "Account Deleted", JOptionPane.PLAIN_MESSAGE );
 			mAccountsPanel.loadAccountData();
@@ -186,17 +185,27 @@ public class RemoveUpdateAccountPanel extends BasePanel implements TableCallback
 
 		@TableAttribute(header = "Account", column = 1, width = 120, alignment = JLabel.LEFT)
 		public String getAccount() {
-			return mAccount.getAccount().get();
+			return mAccount.getAccountId().get();
 		}
 
-		@TableAttribute(header = "Password", column = 2, width = 220, alignment = JLabel.LEFT)
+		@TableAttribute(header = "Mail", column = 2, width = 120, alignment = JLabel.LEFT)
+		public String getMail() {
+			return mAccount.getMailAddr().get();
+		}
+
+		@TableAttribute(header = "Password", column = 3, width = 220, alignment = JLabel.LEFT)
 		public String getPassword() {
 			return mAccount.getPassword().get();
 		}
 
-		@TableAttribute(header = "Suspended", column = 3, width = 80, alignment = JLabel.LEFT)
-		public String getRef() {
+		@TableAttribute(header = "Suspended", column = 4, width = 80, alignment = JLabel.LEFT)
+		public String getSuspended() {
 			return String.valueOf(mAccount.getSuspended().get());
+		}
+
+		@TableAttribute(header = "Confirmed", column = 5, width = 80, alignment = JLabel.LEFT)
+		public String getConfirmed() {
+			return String.valueOf(mAccount.getConfirmed().get());
 		}
 	}
 

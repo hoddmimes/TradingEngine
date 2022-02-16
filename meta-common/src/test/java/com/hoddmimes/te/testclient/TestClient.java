@@ -5,19 +5,15 @@ import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.transport.http.TeRequestException;
 import com.hoddmimes.te.common.transport.http.TeWebsocketClient;
 import com.hoddmimes.te.common.transport.http.TeHttpClient;
-import com.hoddmimes.te.messages.generated.AddOrderResponse;
 
 
 import javax.websocket.*;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +33,7 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
 
 
     private TeWebsocketClient tWssClient;
-    private TeHttpClient tHttpClient;
+    private TeHttpClient tTEHttpClient;
 
     public static void main(String[] args) {
         System.setProperty("org.springframework.boot.logging.LoggingSystem", "none");
@@ -163,11 +159,11 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
     private void init() {
         String tAuthId = null;
 
-        tHttpClient = new TeHttpClient(AuxJson.navigateString( mCmdRoot,"baseHttp/uri"), false);
+        tTEHttpClient = new TeHttpClient(AuxJson.navigateString( mCmdRoot,"baseHttp/uri"), false);
         try {
             JsonObject tLogonRqst = mRequests.get(0).getAsJsonObject();
             msglog( tLogonRqst );
-            JsonObject jLogonRsp = tHttpClient.post( tLogonRqst.get("body").getAsJsonObject().toString(), tLogonRqst.get("endpoint").getAsString());
+            JsonObject jLogonRsp = tTEHttpClient.post( tLogonRqst.get("body").getAsJsonObject().toString(), tLogonRqst.get("endpoint").getAsString());
             msglog( jLogonRsp );
             tAuthId = jLogonRsp.get("sessionAuthId").getAsString();
         }
@@ -203,15 +199,15 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
                 msglog( tRqst );
 
                 if (tRqst.get("method").getAsString().contentEquals("POST")) {
-                    if (tRqst.get("endpoint").getAsString().contentEquals("marketdata")) {
+                    if (tRqst.get("endpoint").getAsString().contentEquals("te-marketdata")) {
                         tRspMsg = sendSubscriptionRequest( tRqst.get("body").getAsJsonObject() );
                     } else {
-                        tRspMsg = tHttpClient.post(tRqst.get("body").getAsJsonObject().toString(), tRqst.get("endpoint").getAsString());
+                        tRspMsg = tTEHttpClient.post(tRqst.get("body").getAsJsonObject().toString(), tRqst.get("endpoint").getAsString());
                     }
                 } else if (tRqst.get("method").getAsString().contentEquals("GET")) {
-                    tRspMsg = tHttpClient.get(tRqst.get("endpoint").getAsString());
+                    tRspMsg = tTEHttpClient.get(tRqst.get("endpoint").getAsString());
                 } else if (tRqst.get("method").getAsString().contentEquals("DELETE")) {
-                    tRspMsg = tHttpClient.delete(tRqst.get("endpoint").getAsString());
+                    tRspMsg = tTEHttpClient.delete(tRqst.get("endpoint").getAsString());
                 } else {
                     throw new RuntimeException("Unknown request method");
                 }

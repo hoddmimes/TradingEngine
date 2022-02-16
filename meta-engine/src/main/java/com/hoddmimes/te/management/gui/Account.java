@@ -17,14 +17,14 @@
 
 package com.hoddmimes.te.management.gui;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.hoddmimes.te.TeAppCntx;
+import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
 import com.hoddmimes.te.management.gui.table.TableModel;
 import com.hoddmimes.te.sessionctl.AccountX;
+import com.mongodb.client.result.UpdateResult;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -34,22 +34,30 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class Account extends JFrame implements TableCallbackInterface<Account.AccountEntry> {
+	private final String REGEX_EMAIL_VALIDATION = "^[\\w-\\+]+(\\.[\\w]+)*@[\\w-]+(\\.[\\w]+)*(\\.[a-zA-Z]{2,})$";
+
 	private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 14 );
-	String mConfigurationFile;
-	JsonObject jAccounts;
+	TEDB mDb;
+	List<com.hoddmimes.te.messages.generated.Account> mAccounts;
 	JTextField mAccountTxt;
+	JTextField mMailAddrTxt;
 	JPasswordField mPasswordField;
 	JPasswordField mPasswordConfirmField;
 	JCheckBox mSuspendedChkBox;
+	JCheckBox mConfirmedChkBox;
 	int mSelectedRow = -1;
 
 	JButton mCreatBtn;
 	JButton mUpdateBtn;
 	JButton mDeleteBtn;
+
 
 
 	TableModel<AccountEntry> mAccountTableModel;
@@ -62,23 +70,19 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 			System.out.println(ex.getMessage());
 		}
 
+
+
 		Account au = new Account();
 		au.parseArguments( args );
 		au.init();
 	}
 
 	private void parseArguments( String[] args ) {
-		int i = 0;
-		while( i < args.length) {
-			if (args[i].contentEquals("-accountdb")) {
-				mConfigurationFile = args[++i];
-			}
-			i++;
-		}
 	}
 
 	private void init() {
-		loadConfigurationFile();
+		mDb = TeAppCntx.getInstance().getDb();
+		loadAccounts();
 
 		JPanel tRootPanel = new JPanel( new BorderLayout());
 
@@ -115,94 +119,57 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 
 	private void removeAccount() {
 		if (mSelectedRow >= 0) {
-			mAccountTableModel.remove(mSelectedRow);
+			AccountEntry tAccountEntry = (AccountEntry) mAccountTableModel.remove(mSelectedRow);
 			mAccountTableModel.fireTableDataChanged();
-			saveUsers();
+			if (mDb.deleteAccountByAccountId(tAccountEntry.getAccountId()) < 0) {
+				JOptionPane.showMessageDialog(this,
+						"Failed to remove account", "Delete Account Failed", JOptionPane.WARNING_MESSAGE);
+			}
 		}
 	}
 	private void updateAccount() {
 		boolean tUpdatePassword = false;
 
+		if (!validateInput()) {
+			return;
+		}
+
 		String tUsername = mAccountTxt.getText();
-		if (tUsername.isEmpty() || tUsername.isBlank()) {
-			JOptionPane.showMessageDialog(this,
-					"Account must not be empty or blank",
-					"Invalid account",
-					JOptionPane.WARNING_MESSAGE);
-			return;
-		}
+		String tMailAddr = mMailAddrTxt.getText();
 		String tPassword = mPasswordField.getText();
-		if (tPassword.isEmpty() || tPassword.isBlank()) {
-			JOptionPane.showMessageDialog(this,
-					"Password must not be empty or blank",
-					"Invalid account",
-					JOptionPane.WARNING_MESSAGE);
-			return;
-		}
 		String tPasswordConfirm = mPasswordConfirmField.getText();
-		if ((!tPasswordConfirm.isEmpty()) && (!tPasswordConfirm.isBlank())) {
+
+		if ((!tPasswordConfirm.isEmpty())  && (!tPasswordConfirm.isBlank())) {
 			tUpdatePassword = true;
-			if (!tPasswordConfirm.contentEquals( tPassword)) {
-				JOptionPane.showMessageDialog(this,
-						"Confirm password must not be same as password",
-						"Invalid Password",
-						JOptionPane.WARNING_MESSAGE);
-				return;
-			}
 		}
 
-
-
-		JsonObject jUser = getJsonUser( tUsername );
-		if (tUpdatePassword) {
-			jUser.addProperty("password", AccountX.hashPassword(tUsername.toUpperCase() + tPassword));
-		}
-		jUser.addProperty( "suspended", mSuspendedChkBox.isSelected());
-
-	    // Update table model
-		java.util.List<AccountEntry> tTableUsers =  mAccountTableModel.getObjects();
-		for( AccountEntry ue : tTableUsers) {
-			if (ue.mAccount.contentEquals( tUsername )) {
-				if (tUpdatePassword) {
-					ue.mPassword = AccountX.hashPassword(tUsername.toUpperCase() + tPassword);
-				}
-				ue.mSuspended = String.valueOf( mSuspendedChkBox.isSelected());
-				mAccountTableModel.fireTableDataChanged();
+		com.hoddmimes.te.messages.generated.Account tAccount = null;
+		for(AccountEntry ae : mAccountTableModel.getObjects()) {
+			if (ae.getAccountId().contentEquals( tUsername )) {
+				tAccount = ae.getAccount();
 				break;
 			}
 		}
+		if (tUpdatePassword) {
+			tAccount.setPassword(AccountX.hashPassword(tUsername.toUpperCase() + tPassword));
+		}
+		tAccount.setMailAddr( tMailAddr );
+		tAccount.setConfirmed( mConfirmedChkBox.isSelected() );
+		tAccount.setSuspended( mSuspendedChkBox.isSelected() );
+		mAccountTableModel.fireTableDataChanged();
 
-		saveUsers();
+		saveUsers( tAccount ); // Save user in data base
 	}
 
 	private void createUser() {
+		if (!validateInput()) {
+			return;
+		}
+
 		String tUsername = mAccountTxt.getText();
-		if (tUsername.isEmpty() || tUsername.isBlank()) {
-			JOptionPane.showMessageDialog(this,
-					"Username must not be empty or blank",
-					"Invalid username",
-					JOptionPane.WARNING_MESSAGE);
-			return;
-		}
 		String tPassword = mPasswordField.getText();
-
-		if (tUsername.isEmpty() || tUsername.isBlank()) {
-			JOptionPane.showMessageDialog(this,
-					"Username must not be empty or blank",
-					"Invalid username",
-					JOptionPane.WARNING_MESSAGE);
-			return;
-		}
-
 		String tPasswordConfirm = mPasswordConfirmField.getText();
 
-		if (!tPasswordConfirm.contentEquals( tPassword )) {
-			JOptionPane.showMessageDialog(this,
-					"Password and confirm password are not equal",
-					"Invalid password",
-					JOptionPane.WARNING_MESSAGE);
-			return;
-		}
 
 		if (isUserDefined( tUsername )) {
 			JOptionPane.showMessageDialog(this,
@@ -213,49 +180,93 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 		}
 
 		com.hoddmimes.te.messages.generated.Account tAccount = new com.hoddmimes.te.messages.generated.Account();
-		tAccount.setAccount( tUsername );
+		tAccount.setAccountId( tUsername );
 		tAccount.setPassword( AccountX.hashPassword( tUsername.toUpperCase() + tPassword ));
 		tAccount.setSuspended( mSuspendedChkBox.isSelected());
+		tAccount.setConfirmed( mConfirmedChkBox.isSelected());
+		mAccounts.add( tAccount );
 
-		JsonArray jUsrArr = jAccounts.get("accounts").getAsJsonArray();
-		jUsrArr.add( tAccount.toJson() );
-
-		mAccountTableModel.addEntry(new AccountEntry( tUsername, tAccount.getPassword().get(), tAccount.getSuspended().get()));
-
-		saveUsers();
+		mAccountTableModel.addEntry(new AccountEntry( tAccount ));
+		saveUsers( tAccount );
 	}
 
-	private JsonObject getJsonUser( String pUsername ) {
-		JsonArray jUsrArr = jAccounts.get("accounts").getAsJsonArray();
-		for (int i = 0; i < jUsrArr.size(); i++) {
-			JsonObject u = jUsrArr.get(i).getAsJsonObject();
-			if (pUsername.contentEquals(u.get("account").getAsString())) {
-				return u;
+	private boolean validateInput() {
+
+		String tUsername = mAccountTxt.getText();
+		if (tUsername.isEmpty() || tUsername.isBlank()) {
+			JOptionPane.showMessageDialog(this,
+					"Account must not be empty or blank",
+					"Invalid account",
+					JOptionPane.WARNING_MESSAGE);
+			return false;
+		}
+		String tMailAddr = mMailAddrTxt.getText();
+		Pattern tMailPattern = Pattern.compile(REGEX_EMAIL_VALIDATION);
+		if (tMailAddr.isEmpty() || tMailAddr.isBlank()) {
+			JOptionPane.showMessageDialog(this,
+					"Mail address must not be empty or blank",
+					"Invalid mail address",
+					JOptionPane.WARNING_MESSAGE);
+			return false;
+		}
+		Matcher m = tMailPattern.matcher(tMailAddr);
+		if (!m.matches()) {
+			JOptionPane.showMessageDialog(this,
+					"Invalid mail address",
+					"Invalid mail address",
+					JOptionPane.WARNING_MESSAGE);
+			return false;
+		}
+
+		String tPassword = mPasswordField.getText();
+		if (tPassword.isEmpty() || tPassword.isBlank()) {
+			JOptionPane.showMessageDialog(this,
+					"Password must not be empty or blank",
+					"Invalid account",
+					JOptionPane.WARNING_MESSAGE);
+			return false;
+		}
+		String tPasswordConfirm = mPasswordConfirmField.getText();
+		if ((!tPasswordConfirm.isEmpty()) && (!tPasswordConfirm.isBlank())) {
+			if (!tPasswordConfirm.contentEquals(tPassword)) {
+				JOptionPane.showMessageDialog(this,
+						"Confirm password must not be same as password",
+						"Invalid Password",
+						JOptionPane.WARNING_MESSAGE);
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+
+
+
+	private com.hoddmimes.te.messages.generated.Account getUser(String pUsername ) {
+		for(com.hoddmimes.te.messages.generated.Account tAccount : mAccounts ) {
+			if (tAccount.getAccountId().get().contentEquals( pUsername )) {
+				return tAccount;
 			}
 		}
 		return null;
 	}
 
 	private boolean isUserDefined( String pUsername ) {
-		JsonArray jUsrArr = jAccounts.get("accounts").getAsJsonArray();
-		for (int i = 0; i < jUsrArr.size(); i++) {
-			JsonObject u = jUsrArr.get(i).getAsJsonObject();
-			if (pUsername.contentEquals(u.get("account").getAsString())) {
+		for(com.hoddmimes.te.messages.generated.Account tAccount : mAccounts ) {
+			if (tAccount.getAccountId().get().contentEquals( pUsername)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private void saveUsers() {
-		try {
-			FileOutputStream tOut = new FileOutputStream(  mConfigurationFile );
-			tOut.write( jAccounts.toString().getBytes(StandardCharsets.UTF_8));
-			tOut.flush();
-			tOut.close();
-		}
-		catch( IOException e) {
-			e.printStackTrace();
+	private void saveUsers(com.hoddmimes.te.messages.generated.Account pAccount) {
+		UpdateResult tUpdResult = mDb.updateAccount(pAccount, true);
+		if (tUpdResult.getModifiedCount() <= 0) {
+			JOptionPane.showMessageDialog(this,
+					"Failed to save user to DB", "Invalid username", JOptionPane.WARNING_MESSAGE);
+			return;
 		}
 	}
 
@@ -299,15 +310,9 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 
 		// Create Table
 		mAccountTableModel = new TableModel(AccountEntry.class);
-
-		JsonArray tUsrArr = jAccounts.get("accounts").getAsJsonArray();
-		for (int i = 0; i < tUsrArr.size(); i++) {
-			JsonObject u = tUsrArr.get(i).getAsJsonObject();
-			AccountEntry ue = new AccountEntry(u.get("account").getAsString(), u.get("password").getAsString(), u.get("suspended").getAsBoolean());
-			mAccountTableModel.addEntry( ue );
+		for(com.hoddmimes.te.messages.generated.Account tAccount : mAccounts) {
+			mAccountTableModel.addEntry( new AccountEntry( tAccount ) );
 		}
-
-
 
 		mTable = new Table(mAccountTableModel, new Dimension(mAccountTableModel.getPreferedWith() + 20, 220), this);
 		mTable.setBackground(Color.white);
@@ -325,15 +330,6 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 		JPanel tRootPanel = new JPanel( new BorderLayout());
 		tRootPanel.setBorder( new EmptyBorder(10,10,10,10));
 
-		JPanel tConfigFilePanel = new JPanel( new FlowLayout( FlowLayout.CENTER));
-		tConfigFilePanel.setBorder( new EmptyBorder(10,10,10,10));
-		JPanel tConfigFilePanelBorder = new JPanel( new FlowLayout( FlowLayout.CENTER));
-		tConfigFilePanelBorder.setBorder(new EtchedBorder(1));
-		JLabel tCfgFileLbl = new JLabel("User definition file \"" + mConfigurationFile + "\"");
-		tCfgFileLbl.setFont( new Font("Arial", Font.BOLD, 14 ));
-		tConfigFilePanelBorder.add( tCfgFileLbl );
-		tConfigFilePanel.add( tConfigFilePanelBorder );
-		tRootPanel.add( tConfigFilePanel, BorderLayout.NORTH );
 
 		JPanel tInPanel = new JPanel( new GridBagLayout());
 		tInPanel.setBorder( new EtchedBorder(1));
@@ -354,6 +350,23 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 		mAccountTxt.setPreferredSize(new Dimension(150,22));
 		mAccountTxt.setMargin( new Insets(0,5,0,0));
 		tInPanel.add(mAccountTxt, cb );
+
+		// Mail Address
+		cb.gridx = 0; cb.gridy++;
+		JLabel tMailLbl = new JLabel("Mail Address");
+		tMailLbl.setFont( DEFAULT_FONT );
+		tMailLbl.setPreferredSize( new Dimension(150,22));
+		tInPanel.add( tMailLbl, cb );
+		cb.gridx++;
+
+		mMailAddrTxt = new JTextField();
+		mMailAddrTxt.setFont( DEFAULT_FONT );
+		mMailAddrTxt.setPreferredSize(new Dimension(150,22));
+		mMailAddrTxt.setMargin( new Insets(0,5,0,0));
+		tInPanel.add(mMailAddrTxt, cb );
+
+
+		// Add Password
 
 		cb.gridx = 0; cb.gridy++;
 		JLabel tPwdLbl = new JLabel("Password");
@@ -381,54 +394,32 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 		mPasswordConfirmField.setMargin( new Insets(0,5,0,0));
 		tInPanel.add( mPasswordConfirmField, cb );
 
-		cb.gridx = 0; cb.gridy++;
-		cb.insets = new Insets(10,10,10,10);
+		// Add Suspend checkbox
+
+		cb.gridx = 1; cb.gridy++;
+		cb.insets = new Insets(20,10,10,10);
 		mSuspendedChkBox = new JCheckBox("Suspended");
 		mSuspendedChkBox.setSelected( false );
 		mSuspendedChkBox.setFont( DEFAULT_FONT );
 		mSuspendedChkBox.setPreferredSize(new Dimension(150,22));
 		tInPanel.add(mSuspendedChkBox, cb );
 
+		// Add Confirmation check box
+		cb.gridx = 1; cb.gridy++;
+		cb.insets = new Insets(10,10,10,10);
+		mConfirmedChkBox = new JCheckBox("Confirmed");
+		mConfirmedChkBox.setSelected( false );
+		mConfirmedChkBox.setFont( DEFAULT_FONT );
+		mConfirmedChkBox.setPreferredSize(new Dimension(150,22));
+		tInPanel.add(mConfirmedChkBox, cb );
+
+
 		tRootPanel.add( tInPanel, BorderLayout.SOUTH);
 		return tRootPanel;
 	}
 
-	private void loadConfigurationFile() {
-		File tFile = null;
-
-		if (mConfigurationFile != null) {
-			tFile = new File(mConfigurationFile);
-			if (((!tFile.exists()) || (!tFile.canRead()))) {
-				tFile = null;
-			}
-		}
-
-		while( tFile == null ) {
-			tFile = selectConfigurationFile();
-			if (((tFile == null) || (!tFile.exists()) || (!tFile.canRead()))) {
-				tFile = null;
-
-
-				JOptionPane.showMessageDialog(this,
-						"Can not find or open users definition file",
-						"Invalid user definition file",
-						JOptionPane.WARNING_MESSAGE);
-			}
-		}
-
-		try {
-			InputStreamReader tReader = new InputStreamReader(new FileInputStream(tFile));
-			jAccounts = JsonParser.parseReader(tReader).getAsJsonObject();
-			tReader.close();
-			mConfigurationFile = tFile.getAbsolutePath();
-		}
-		catch( IOException e) {
-			JOptionPane.showMessageDialog(this,
-					"Can not open users definition file, reason: " + e.getMessage(),
-					"Invalid user definition file",
-					JOptionPane.ERROR_MESSAGE);
-			System.exit(-1);
-		}
+	private void loadAccounts()  {
+		mAccounts = mDb.findAllAccount();
 	}
 
 
@@ -464,9 +455,11 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 	public void tableMouseClick(AccountEntry pAccountEntry, int pRow, int pCol) {
 		if (mSelectedRow < 0) {
 			mTable.setSelectedRow( pRow );
-			mAccountTxt.setText( pAccountEntry.mAccount);
-			mPasswordField.setText( pAccountEntry.mPassword);
-			mSuspendedChkBox.setSelected( Boolean.parseBoolean( pAccountEntry.mSuspended));
+			mAccountTxt.setText( pAccountEntry.getAccountId());
+			mPasswordField.setText( pAccountEntry.getPassword());
+			mMailAddrTxt.setText( pAccountEntry.getMail());
+			mSuspendedChkBox.setSelected( Boolean.parseBoolean( pAccountEntry.getSuspended()));
+			mConfirmedChkBox.setSelected( Boolean.parseBoolean( pAccountEntry.getConfirmed()));
 			mUpdateBtn.setEnabled( true );
 			mDeleteBtn.setEnabled( true );
 			mCreatBtn.setEnabled( false );
@@ -516,33 +509,40 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 		}
 
 	public static class AccountEntry {
-
-		public String mAccount;
-		public String mPassword;
-		public String mSuspended;
+		com.hoddmimes.te.messages.generated.Account mAccount;
 
 
-		public AccountEntry(String pAccount, String pPassword, boolean pSuspended ) {
+		public AccountEntry(com.hoddmimes.te.messages.generated.Account pAccount) {
 			mAccount = pAccount;
-			mPassword = pPassword;
-			mSuspended = String.valueOf( pSuspended );
 		}
 
-
-		@TableAttribute(header = "Account", column = 1, width = 100, alignment = JLabel.LEFT)
-		public String getAccount() {
+		public com.hoddmimes.te.messages.generated.Account getAccount() {
 			return mAccount;
 		}
 
-		@TableAttribute(header = "Password", column = 2, width = 240, alignment = JLabel.LEFT)
+		@TableAttribute(header = "Account", column = 1, width = 100, alignment = JLabel.LEFT)
+		public String getAccountId() {
+			return mAccount.getAccountId().get();
+		}
+
+		@TableAttribute(header = "Mail", column = 2, width = 180, alignment = JLabel.LEFT)
+		public String getMail() {
+			return mAccount.getMailAddr().get();
+		}
+
+		@TableAttribute(header = "Password", column = 3, width = 240, alignment = JLabel.LEFT)
 		public String getPassword() {
-			return mPassword;
+			return mAccount.getPassword().get();
 		}
 
-		@TableAttribute(header = "Suspended", column = 3, width = 65)
+		@TableAttribute(header = "Confirmed", column = 4, width = 65)
+		public String getConfirmed() {
+			return mAccount.getConfirmed().get().toString();
+		}
+
+		@TableAttribute(header = "Suspended", column = 5, width = 65)
 		public String getSuspended() {
-			return mSuspended;
+			return mAccount.getSuspended().get().toString();
 		}
-
 	}
 }

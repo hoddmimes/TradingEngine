@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableModel;
@@ -78,7 +78,7 @@ public class StatMatcherPanel extends BasePanel {
 
 	public void refreshStatistics() {
 		MgmtQueryMatcherRequest tReq = new MgmtQueryMatcherRequest().setRef("qms");
-		MgmtQueryMatcherResponse tResp = (MgmtQueryMatcherResponse) mServiceInterface.transceive(TeMgmtServices.MatchingService, tReq );
+		MgmtQueryMatcherResponse tResp = (MgmtQueryMatcherResponse) mServiceInterface.transceive(TeIpcServices.MatchingService, tReq );
 
 		mCounterPanel.loadStatistics( tResp.getMatcherCounters().get());
 		mMatchTableModel.clear();

@@ -17,8 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.MarketStates;
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.messages.generated.*;
 
 import java.awt.event.ActionEvent;
@@ -91,7 +90,7 @@ public class SymbolPanel extends JPanel
 	public void loadMarketData() {
 		// Load market data if not already loaded
 		if (mMarketComboBox.getItemCount() == 0) {
-			MgmtGetMarketsResponse tMktResponse = (MgmtGetMarketsResponse) mServiceInterface.transceive(TeMgmtServices.InstrumentData, new MgmtGetMarketsRequest().setRef("X"));
+			MgmtGetMarketsResponse tMktResponse = (MgmtGetMarketsResponse) mServiceInterface.transceive(TeIpcServices.InstrumentData, new MgmtGetMarketsRequest().setRef("X"));
 			if (tMktResponse == null) {
 				return;
 			}
@@ -102,7 +101,7 @@ public class SymbolPanel extends JPanel
 				}
 			}
 			MarketEntry tMarketEntry = (MarketEntry) mMarketComboBox.getSelectedItem();
-			MgmtGetSymbolsResponse tSymResponse = (MgmtGetSymbolsResponse) mServiceInterface.transceive(TeMgmtServices.InstrumentData, new MgmtGetSymbolsRequest().setRef("X").setMarketId( tMarketEntry.getMarketId()));
+			MgmtGetSymbolsResponse tSymResponse = (MgmtGetSymbolsResponse) mServiceInterface.transceive(TeIpcServices.InstrumentData, new MgmtGetSymbolsRequest().setRef("X").setMarketId( tMarketEntry.getMarketId()));
 			displaySymbolData( tSymResponse.getSymbols().get());
 
 		}
@@ -114,14 +113,14 @@ public class SymbolPanel extends JPanel
 				setSuspended( pSymbolEntryPanel.isSuspended()).
 				setSid(pSymbolEntryPanel.getSID());
 
-		MgmtSetSymbolResponse tResponse = (MgmtSetSymbolResponse) mServiceInterface.transceive( TeMgmtServices.InstrumentData, tRqst );
+		MgmtSetSymbolResponse tResponse = (MgmtSetSymbolResponse) mServiceInterface.transceive( TeIpcServices.InstrumentData, tRqst );
 		if (tResponse != null) {
 			pSymbolEntryPanel.updateSuspendStatus( tResponse.getSymbol().get().getSuspended().orElse(false));
 		}
 	}
 
 	void loadSymbols( int pMarketId ) {
-		MgmtGetSymbolsResponse tResponse = (MgmtGetSymbolsResponse) mServiceInterface.transceive(TeMgmtServices.InstrumentData,
+		MgmtGetSymbolsResponse tResponse = (MgmtGetSymbolsResponse) mServiceInterface.transceive(TeIpcServices.InstrumentData,
 				new MgmtGetSymbolsRequest().setRef("X").setMarketId(pMarketId));
 
 		if (tResponse == null) {

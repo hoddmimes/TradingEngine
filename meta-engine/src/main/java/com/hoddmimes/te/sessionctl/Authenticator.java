@@ -17,40 +17,28 @@
 
 package com.hoddmimes.te.sessionctl;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
+import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.AuthenticateInterface;
-import com.hoddmimes.te.common.AuxJson;
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
-import com.hoddmimes.te.management.service.MgmtCmdCallbackInterface;
-import com.hoddmimes.te.management.service.MgmtComponentInterface;
-import com.hoddmimes.te.messages.MgmtMessageRequest;
-import com.hoddmimes.te.messages.MgmtMessageResponse;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.ipc.IpcComponentInterface;
+import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
 import com.hoddmimes.te.messages.generated.*;
+import com.mongodb.client.result.UpdateResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
-public class Authenticator implements AuthenticateInterface, MgmtCmdCallbackInterface
+public class Authenticator implements AuthenticateInterface, IpcRequestCallbackInterface
 {
 	private Logger mLog = LogManager.getLogger( Authenticator.class );
-	private String mDataStore;
-	private HashMap<String, AccountX> mAccounts;
+	private TEDB mDb;
 
-	public Authenticator( String pDataStore ) {
-		mAccounts = new HashMap<>();
-		mDataStore = pDataStore;
-		loadAccounts( pDataStore );
-		MgmtComponentInterface tMgmt = TeAppCntx.getInstance().getMgmtService().registerComponent( TeMgmtServices.Autheticator, 0, this );
+	public Authenticator() {
+		mDb = TeAppCntx.getInstance().getDb();
+		IpcComponentInterface tMgmt = TeAppCntx.getInstance().getIpcService().registerComponent( TeIpcServices.Autheticator, 0, this );
 	}
 
 	@Override
@@ -60,7 +48,7 @@ public class Authenticator implements AuthenticateInterface, MgmtCmdCallbackInte
 			return null;
 		}
 
-		AccountX a = mAccounts.get(pAccount.toUpperCase());
+		AccountX a = getAccount(pAccount);
 		if (a == null) {
 			mLog.info("Account \"" + pAccount + "\" not found");
 			return null;
@@ -73,104 +61,100 @@ public class Authenticator implements AuthenticateInterface, MgmtCmdCallbackInte
 		return a;
 	}
 
-	private void loadAccounts(String pDataStore ) {
-		JsonArray tAccounts = null;
-
-		try {
-			List<JsonElement> tElementList = AuxJson.loadAndParseFile( pDataStore );
-			if ((tElementList == null) || (tElementList.size() == 0)) {
-				mLog.error("no user defined in user data store \"" + pDataStore + "\"");
-				return;
-			}
-			tAccounts = tElementList.get(0).getAsJsonObject().get("accounts").getAsJsonArray();
-			for (int i = 0; i < tAccounts.size(); i++)
-			{
-				JsonObject a = tAccounts.get(i).getAsJsonObject();
-				AccountX tAccount = new AccountX( a.get("account").getAsString().toUpperCase(), a.get("password").getAsString(), a.get("suspended").getAsBoolean());
-				mAccounts.put( tAccount.getAccountId(), tAccount );
-			}
+	private AccountX getAccount( String pAccountId ) {
+		List<Account> tAccounts = mDb.findAccount(pAccountId);
+		if ((tAccounts == null) || (tAccounts.size() != 1)) {
+			return null;
 		}
-		catch( IOException e) {
-			mLog.fatal("Fail to load accounts from \"" + pDataStore + "\"", e);
-			System.exit(-1);
-		}
+		return new AccountX( tAccounts.get(0));
 	}
 
-	private void saveAccounts( String pReason) {
-		JsonObject jAccounts = new JsonObject();
-		JsonArray jAccountArray = new JsonArray();
-		for( Account tAcc : mAccounts.values()) {
-			jAccountArray.add( tAcc.toJson());
-		}
-		jAccounts.add("accounts", jAccountArray );
 
-		try {
-			FileOutputStream tOut = new FileOutputStream(  mDataStore );
-			tOut.write( jAccounts.toString().getBytes(StandardCharsets.UTF_8));
-			tOut.flush();
-			tOut.close();
-		}
-		catch( IOException e) {
-			e.printStackTrace();
-		}
-		mLog.info("AccountDefinitions \"" + mDataStore + "\" is updated, reason: " + pReason );
+	private void saveAccount( Account tAccount) {
+		mDb.updateAccount( tAccount, true);
 	}
 
-	private MgmtGetAccountsResponse mgmtCmdGetAccounts(MgmtGetAccountsRequest pRqst ) {
-		MgmtGetAccountsResponse tRsp = new MgmtGetAccountsResponse().setRef( pRqst.getRef().get());
-		List<Account> tAccLst = new ArrayList<>( mAccounts.values());
-		tRsp.addAccounts( tAccLst );
+	private MgmtGetAccountsResponse mgmtCmdGetAccounts(MgmtGetAccountsRequest pRqst) {
+		MgmtGetAccountsResponse tRsp = new MgmtGetAccountsResponse().setRef(pRqst.getRef().get());
+		List<Account> tAccLst = mDb.findAllAccount();
+		tRsp.addAccounts(tAccLst);
 		return tRsp;
 	}
 
-	private MgmtSetAccountsResponse mgmtCmdSetAccounts(MgmtSetAccountsRequest pRqst ) {
-		MgmtSetAccountsResponse tRsp = new MgmtSetAccountsResponse().setRef( pRqst.getRef().get());
-		AccountX tAccount = mAccounts.get( pRqst.getAccountId().get());
-		tAccount.setSuspended( pRqst.getSuspended().get());
-		tRsp.setAccount( tAccount );
+	private MgmtUpdateAccountResponse mgmtCmdUpdateAccount(MgmtUpdateAccountRequest pRqst ) {
+		MgmtUpdateAccountResponse tRsp = new MgmtUpdateAccountResponse().setRef(pRqst.getRef().get());
+
+		try {
+			Account tAccount = mDb.findAccount(pRqst.getAccountId().get()).get(0);
+			if (pRqst.getSuspended().isPresent() || (!pRqst.getSuspended().isEmpty())) {
+				tAccount.setSuspended(pRqst.getSuspended().get());
+			}
+			if (pRqst.getConfirmed().isPresent() || (!pRqst.getConfirmed().isEmpty())) {
+				tAccount.setConfirmed(pRqst.getConfirmed().get());
+			}
+			if (pRqst.getMailAddress().isPresent() || (!pRqst.getMailAddress().isEmpty())) {
+				tAccount.setMailAddr(pRqst.getMailAddress().get());
+			}
+			if (pRqst.getHashedPassword().isPresent() || (!pRqst.getHashedPassword().isEmpty())) {
+				tAccount.setPassword(pRqst.getHashedPassword().get());
+			}
+			mDb.updateAccount( tAccount, false );
+			tRsp.setIsUpdated(true);
+			tRsp.setStatusText("success");
+			tRsp.setAccount( tAccount );
+		} catch (Throwable e) {
+			tRsp.setIsUpdated(false);
+			tRsp.setStatusText("failed to update DB, reason: " + e.getMessage());
+			mLog.error("failed to update account in DB", e);
+		}
 		return tRsp;
 	}
 
-	MgmtUpdateAccountResponse mgmtCmdUpdateAccounts( MgmtUpdateAccountRequest pRqst )
-	{
-			AccountX tAccount = mAccounts.get( pRqst.getAccountId().get());
-			if (tAccount == null) {
-				return new MgmtUpdateAccountResponse().setRef( pRqst.getRef().get()).setIsUpdated(false).setAccount(null);
-			}
-			tAccount.setSuspended( pRqst.getSuspended().get());
-			if (!pRqst.getHashedPassword().isEmpty()) {
-				tAccount.setHashedPassword( pRqst.getHashedPassword().get());
-			}
-			saveAccounts(" account: " + pRqst.getAccountId().get() + " updated");
-			return new MgmtUpdateAccountResponse().setRef( pRqst.getRef().get()).setIsUpdated(true).setAccount(tAccount);
+
+	MgmtDeleteAccountResponse mgmtCmdDeleteAccounts(MgmtDeleteAccountRequest pRqst) {
+		MgmtDeleteAccountResponse tDelRsp = new MgmtDeleteAccountResponse().setRef(pRqst.getRef().get());
+		if (mDb.deleteAccountByAccountId(pRqst.getAccount().get().getAccountId().get()) > 0) {
+			tDelRsp.setIsDeleted(true);
+		} else {
+			tDelRsp.setIsDeleted(false);
+		}
+		return tDelRsp;
 	}
 
-	MgmtAddAccountResponse mgmtCmdAddAccounts( MgmtAddAccountRequest pRqst ) {
-		AccountX tAccount = mAccounts.get(pRqst.getAccountId().get());
+	MgmtAddAccountResponse mgmtCmdAddAccounts(MgmtAddAccountRequest pRqst) {
+
+		AccountX tAccount = getAccount(pRqst.getAccount().get().getAccountId().get());
+
 		if (tAccount != null) {
 			return new MgmtAddAccountResponse().setRef(pRqst.getRef().get()).setIsAddded(false).setStatusMessage("account already exists");
 		}
-		tAccount = new AccountX(pRqst.getAccountId().get(), pRqst.getHashedPassword().get(), pRqst.getSuspended().get());
-		mAccounts.put(pRqst.getAccountId().get(), tAccount);
-		saveAccounts(" account: " + pRqst.getAccountId().get() + " added");
-		return new MgmtAddAccountResponse().setRef(pRqst.getRef().get()).setIsAddded(true).setAccount(tAccount).setStatusMessage("successfully added");
+		UpdateResult tUpdResult = mDb.updateAccount(pRqst.getAccount().get(), true);
+		if (tUpdResult.getUpsertedId() != null) {
+			return new MgmtAddAccountResponse().setRef(pRqst.getRef().get()).setIsAddded(true).setAccount(tAccount).setStatusMessage("successfully added");
+		}
+
+		mLog.error("failed to add new account to DB");
+		return new MgmtAddAccountResponse().setRef(pRqst.getRef().get()).setIsAddded(false).setStatusMessage("Hmmmmmmmm");
+
 	}
 
 
 	@Override
-	public MgmtMessageResponse mgmtRequest(MgmtMessageRequest pMgmtRequest) {
+	public MessageInterface ipcRequest(MessageInterface pMgmtRequest) {
 		if (pMgmtRequest instanceof MgmtGetAccountsRequest) {
 			return mgmtCmdGetAccounts( (MgmtGetAccountsRequest) pMgmtRequest );
 		}
-		if (pMgmtRequest instanceof MgmtSetAccountsRequest) {
-			return mgmtCmdSetAccounts( (MgmtSetAccountsRequest) pMgmtRequest );
-		}
 		if (pMgmtRequest instanceof MgmtUpdateAccountRequest) {
-			return mgmtCmdUpdateAccounts( (MgmtUpdateAccountRequest) pMgmtRequest );
+			return mgmtCmdUpdateAccount( (MgmtUpdateAccountRequest) pMgmtRequest );
 		}
 		if (pMgmtRequest instanceof  MgmtAddAccountRequest) {
 			return mgmtCmdAddAccounts( (MgmtAddAccountRequest) pMgmtRequest );
 		}
+		if (pMgmtRequest instanceof  MgmtDeleteAccountRequest) {
+			return mgmtCmdDeleteAccounts( (MgmtDeleteAccountRequest) pMgmtRequest );
+		}
+
+
 		throw new RuntimeException("No commnad entry found for : " + pMgmtRequest.getMessageName());
 	}
 }

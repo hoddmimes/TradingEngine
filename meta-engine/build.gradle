@@ -42,6 +42,13 @@ dependencies {
     implementation group: 'org.springframework.security', name: 'spring-security-config', version: '5.5.3'
     implementation group: 'org.springframework', name: 'spring-websocket', version: '5.3.12'
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
+    implementation group: 'org.mongodb', name: 'mongo-java-driver', version: '3.12.10'
+
+    implementation group: 'org.bitcoinj', name: 'bitcoinj-core', version: '0.16.1'
+    implementation group: 'commons-codec', name: 'commons-codec', version: '1.15'
+    implementation group: 'org.web3j', name: 'crypto', version: '5.0.0'
+    implementation group: 'org.web3j', name: 'core', version: '5.0.0'
+
     implementation project(':meta-message')
     implementation project(':meta-common')
 

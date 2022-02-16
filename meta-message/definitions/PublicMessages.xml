@@ -380,5 +380,58 @@
         </code>
     </Message>
 
+    <!--
+     ====         Crypto Gateway Requests       =====
+     -->
+    <Message name="GetDepositEntryRequest" implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="coin" type="String" mandatory="true" />
+        <Attribute name="accountId" type="String" />
+    </Message>
+
+    <Message name="GetDepositEntryResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="coin" type="String" mandatory="true" />
+        <Attribute name="address" type="String" mandatory="true" />
+        <Attribute name="confirmationId" type="String"/>
+    </Message>
+
+    <Message name="SetReDrawEntryRequest" implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="coin" type="String" mandatory="true" />
+        <Attribute name="accountId" type="String" />
+        <Attribute name="address" type="String" mandatory="true" />
+    </Message>
+
+    <Message name="SetReDrawEntryResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="coin" type="String" mandatory="true" />
+        <Attribute name="address" type="String" mandatory="true" />
+        <Attribute name="confirmationId" type="String" mandatory="true" />
+    </Message>
+
+    <Message name="CryptoReDrawRequest" implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="accountId" type="String"/>
+        <Attribute name="coin" type="String" mandatory="true" />
+        <Attribute name="address" type="String" mandatory="true" />
+        <Attribute name="amount" type="long" mandatory="true" />
+    </Message>
+
+    <Message name="CryptoReDrawResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="coin" type="String" mandatory="true" />
+        <Attribute name="remaingCoins" type="long" mandatory="true" />
+        <Attribute name="txid" type="String" mandatory="true" />
+    </Message>
+
+
+    <Message name="CryptoConfirmationRequest"  implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String"/>
+        <Attribute name="accountId" type="String" />
+        <Attribute name="address" type="String" mandatory="true" />
+    </Message>
+
+
 
 </Messages>

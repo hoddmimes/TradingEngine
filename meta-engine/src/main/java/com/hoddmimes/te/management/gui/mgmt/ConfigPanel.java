@@ -17,12 +17,14 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
+import com.hoddmimes.te.common.ipc.IpcComponent;
+import com.hoddmimes.te.common.ipc.IpcService;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
 import com.hoddmimes.te.management.gui.table.TableModel;
-import com.hoddmimes.te.messages.generated.MgmtComponent;
-import com.hoddmimes.te.messages.generated.MgmtConfigurationBdx;
+import com.hoddmimes.te.messages.generated.IpcComponentConfiguration;
+import com.hoddmimes.te.messages.generated.IpcConfigurationBdx;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -33,19 +35,17 @@ import java.util.List;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class ConfigPanel extends JPanel implements TableCallbackInterface {
+public class ConfigPanel extends JPanel implements TableCallbackInterface, IpcService.IpcServiceListner {
 	private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 14 );
 
 	TableModel<ComponentEntity> mComponentTableModel;
 	Table mTable;
-	Timer mTimer;
+	IpcService mIpcService;
 
 
 	public ConfigPanel() {
 		this.setLayout(new FlowLayout( FlowLayout.CENTER));
 		init();
-		mTimer = new Timer( 10000,  new InactivityListner());
-		mTimer.start();
 	}
 
 	List<ComponentEntity> getServiceComponents() {
@@ -55,10 +55,9 @@ public class ConfigPanel extends JPanel implements TableCallbackInterface {
 
 
 
-	public void configurationUpdate(MgmtConfigurationBdx pUpdBdx ) {
-		String tHost = pUpdBdx.getHost().get();
-		for (MgmtComponent mc : pUpdBdx.getComponents().get()) {
-			ComponentEntity tUpdCe = new ComponentEntity(tHost, mc);
+	public void configurationUpdate(IpcConfigurationBdx pUpdBdx ) {
+		for (IpcComponentConfiguration ipc : pUpdBdx.getComponents().get()) {
+			ComponentEntity tUpdCe = new ComponentEntity(ipc);
 
 			ComponentEntity ce = componentExists( tUpdCe );
 
@@ -137,6 +136,38 @@ public class ConfigPanel extends JPanel implements TableCallbackInterface {
 
 	}
 
+	@Override
+	public void ipcServiceAdded(IpcComponentConfiguration pIpcComponentConfiguration) {
+		SwingUtilities.invokeLater( new ComponentChange( pIpcComponentConfiguration, IpcService.ServiceEvent.Add ) );
+	}
+
+	@Override
+	public void ipcServiceRemoved(IpcComponentConfiguration pIpcComponentConfiguration) {
+		SwingUtilities.invokeLater( new ComponentChange( pIpcComponentConfiguration, IpcService.ServiceEvent.Remove ) );
+	}
+
+
+	class ComponentChange implements Runnable
+	{
+		IpcService.ServiceEvent mServiceEvent;
+		IpcComponentConfiguration mCompConfig;
+
+		ComponentChange( IpcComponentConfiguration pCompConfig, IpcService.ServiceEvent pServiceEvent ) {
+			mServiceEvent = pServiceEvent;
+			mCompConfig = pCompConfig;
+		}
+
+		@Override
+		public void run() {
+			if (mServiceEvent == IpcService.ServiceEvent.Add) {
+				mComponentTableModel.addEntry( new ComponentEntity( mCompConfig ));
+			} else {
+				mComponentTableModel.remove( new ComponentEntity( mCompConfig ) );
+			}
+			mComponentTableModel.fireTableDataChanged();
+		}
+	}
+
 	class InactivityListner implements ActionListener
 	{
 		@Override
@@ -145,7 +176,7 @@ public class ConfigPanel extends JPanel implements TableCallbackInterface {
 		}
 	}
 
-	public class ComponentEntity
+	public static  class ComponentEntity
 	{
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
 
@@ -156,13 +187,23 @@ public class ConfigPanel extends JPanel implements TableCallbackInterface {
 		public long mLastSeen;
 
 
-		public ComponentEntity(String pHost, MgmtComponent pMgmtComponent  ) {
-			mName  = pMgmtComponent.getName().get();
-			mPort = pMgmtComponent.getPort().get();
-			mCreateTime = pMgmtComponent.getCretime().get();
-			mHost = pHost;
+		public ComponentEntity( IpcComponentConfiguration pIpcComponent  ) {
+			mName  = pIpcComponent.getName().get();
+			mPort = pIpcComponent.getPort().get();
+			mCreateTime = sdf.format(pIpcComponent.getCretime().get());
+			mHost = pIpcComponent.getHost().get();
 			mLastSeen = System.currentTimeMillis();
 
+		}
+		@Override
+		public boolean equals( Object pObj ) {
+			if (pObj == null) {
+				return false;
+			}
+			if (!(pObj instanceof ComponentEntity)) {
+				return false;
+			}
+			return isSame( (ComponentEntity) pObj);
 		}
 
 		public void updateLastSeen() {

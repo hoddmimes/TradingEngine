@@ -35,7 +35,7 @@ clean.dependsOn(deleteGeneratedFiles)
 
 
 dependencies {
-    implementation group: 'com.h2database', name: 'h2', version: '2.1.210'
+    implementation group: 'org.mongodb', name: 'mongo-java-driver', version: '3.12.10'
     implementation group: 'com.github.erosb', name: 'everit-json-schema-jdk6', version: '1.9.2'
 }
 

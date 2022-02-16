@@ -20,14 +20,15 @@ package com.hoddmimes.te.marketdata.websockets;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.management.RateItem;
 import com.hoddmimes.te.management.RateStatistics;
-import com.hoddmimes.te.management.service.MgmtCmdCallbackInterface;
-import com.hoddmimes.te.management.service.MgmtComponentInterface;
+import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
+import com.hoddmimes.te.common.ipc.IpcComponentInterface;
 import com.hoddmimes.te.marketdata.SubscriptionFilter;
 import com.hoddmimes.te.marketdata.SubscriptionUpdateCallbackIf;
 import com.hoddmimes.te.messages.EngineBdxInterface;
@@ -49,7 +50,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class WebSocketHandler extends TextWebSocketHandler implements SubscriptionUpdateCallbackIf, MgmtCmdCallbackInterface {
+public class WebSocketHandler extends TextWebSocketHandler implements SubscriptionUpdateCallbackIf, IpcRequestCallbackInterface {
     private Logger mLog = LogManager.getLogger(WebSocketHandler.class);
     private ConcurrentHashMap<String, WebSocketSessionCntx> mSessions;
 
@@ -63,7 +64,7 @@ public class WebSocketHandler extends TextWebSocketHandler implements Subscripti
         mBdxTotalPriceLevel =new AtomicLong(0);
         mRateBdx = RateStatistics.getInstance().addRateItem("BBO broadcast");
         mSessions = new ConcurrentHashMap<>();
-        MgmtComponentInterface tMgmt = TeAppCntx.getInstance().getMgmtService().registerComponent( TeMgmtServices.MarketData, 0, this );
+        IpcComponentInterface tMgmt = TeAppCntx.getInstance().getIpcService().registerComponent( TeIpcServices.MarketData, 0, this );
     }
 
 
@@ -288,7 +289,7 @@ public class WebSocketHandler extends TextWebSocketHandler implements Subscripti
 
 
     @Override
-    public MgmtMessageResponse mgmtRequest(MgmtMessageRequest pMgmtRequest) {
+    public MessageInterface ipcRequest(MessageInterface pMgmtRequest) {
         if (pMgmtRequest instanceof MgmtQueryMarketDataRequest) {
             return mgmtGetMarketDataSetup((MgmtQueryMarketDataRequest) pMgmtRequest);
         }

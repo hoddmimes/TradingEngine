@@ -17,10 +17,9 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.messages.generated.*;
 import com.hoddmimes.te.sessionctl.AccountX;
-import com.hoddmimes.te.sessionctl.Authenticator;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -28,13 +27,20 @@ import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class AddUpdateAccountPanel extends BasePanel
 {
+	private final static String REGEX_EMAIL_VALIDATION = "^[\\w-\\+]+(\\.[\\w]+)*@[\\w-]+(\\.[\\w]+)*(\\.[a-zA-Z]{2,})$";
+	private static final Pattern cMailPattern = Pattern.compile(REGEX_EMAIL_VALIDATION);
+
 	enum Action { Add, Update };
 	JTextField      mAccountTxt;
 	JPasswordField  mPasswordField,mPasswordConfirmField;
+	JTextField      mMailAddressTxt;
 	JCheckBox       mSuspendedChkBox;
+	JCheckBox       mConfirmChkBox;
 	JButton         mActionBtn;
 	JButton         mCancelBtn;
 	Action          mAction;
@@ -55,16 +61,18 @@ public class AddUpdateAccountPanel extends BasePanel
 		this.add( createInputPanel(), BorderLayout.NORTH);
 
 		if (pAccount != null) {
-			mAccountTxt.setText( pAccount.getAccount().get());
+			mAccountTxt.setText( pAccount.getAccountId().get());
 			mAccountTxt.setEditable(false);
+			mConfirmChkBox.setSelected( pAccount.getConfirmed().get());
 			mSuspendedChkBox.setSelected( pAccount.getSuspended().get());
 			mPasswordConfirmField.setText("");
 			mPasswordField.setText("");
+			mMailAddressTxt.setText(pAccount.getMailAddr().get());
 		}
 	}
 
 	private boolean doesAccountExist( String pAccountId ) {
-		Account tAccount = new Account().setAccount( pAccountId );
+		Account tAccount = new Account().setAccountId( pAccountId );
 		return mAccountsPanel.doesAccountExist( tAccount );
 	}
 
@@ -82,20 +90,37 @@ public class AddUpdateAccountPanel extends BasePanel
 			JOptionPane.showMessageDialog( this, "Confirmation password not same " , "Add Account", JOptionPane.WARNING_MESSAGE );
 			return;
 		}
+		if (mMailAddressTxt.getText().isBlank() || mMailAddressTxt.getText().isEmpty()) {
+			JOptionPane.showMessageDialog( this, "Mail address must not be emtpty or blank " , "Add Mail", JOptionPane.WARNING_MESSAGE );
+			return;
+		}
 
-		Account tSearchAccount = new Account().setAccount( mAccountTxt.getText());
+		Matcher m = cMailPattern.matcher( mMailAddressTxt.getText());
+		if (!m.matches()) {
+			JOptionPane.showMessageDialog( this, "Invalid mail address " , "Add Mail", JOptionPane.WARNING_MESSAGE );
+			return;
+		}
+
+
+		Account tSearchAccount = new Account().setAccountId( mAccountTxt.getText());
 		if (mAccountsPanel.doesAccountExist(tSearchAccount)) {
 			JOptionPane.showMessageDialog( this, "Account already exists" , "Add Account", JOptionPane.WARNING_MESSAGE );
 			return;
 		}
 
+		Account tAccount = new Account()
+				.setSuspended( mSuspendedChkBox.isSelected())
+				.setConfirmed( mConfirmChkBox.isSelected())
+				.setAccountId( mAccountTxt.getText())
+				.setMailAddr( mMailAddressTxt.getText())
+				.setPassword(  AccountX.hashPassword(mAccountTxt.getText().toUpperCase() + mPasswordField.getText()));
+
+
 
 		MgmtAddAccountRequest tRequest = new MgmtAddAccountRequest().setRef("aa");
-		tRequest.setAccountId(mAccountTxt.getText() );
-		tRequest.setSuspended(mSuspendedChkBox.isSelected());
-		tRequest.setHashedPassword( AccountX.hashPassword(mAccountTxt.getText().toUpperCase() + mPasswordField.getToolTipText()));
+		tRequest.setAccount( tAccount );
 
-		MgmtAddAccountResponse tResponse = (MgmtAddAccountResponse) mServiceInterface.transceive(TeMgmtServices.Autheticator, tRequest);
+		MgmtAddAccountResponse tResponse = (MgmtAddAccountResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, tRequest);
 		if (tResponse.getIsAddded().get()) {
 			JOptionPane.showMessageDialog( this, "Account successfully added " , "Account Added", JOptionPane.PLAIN_MESSAGE );
 			mAccountsPanel.loadAccountData();
@@ -105,6 +130,16 @@ public class AddUpdateAccountPanel extends BasePanel
 	}
 
 	private void updateAccout() {
+
+		if ((!mMailAddressTxt.getText().isEmpty()) && (!mMailAddressTxt.getText().isBlank())) {
+			Matcher m = cMailPattern.matcher(mMailAddressTxt.getText());
+			if (!m.matches()) {
+				JOptionPane.showMessageDialog(this, "Invalid mail address ", "Add Mail", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+		}
+
+
 		if ((!mPasswordField.getText().isBlank()) && (!mPasswordField.getText().isEmpty())) {
 			if (!mPasswordField.getText().contentEquals(mPasswordConfirmField.getText())) {
 				JOptionPane.showMessageDialog(this, "Confirmation password not same ", "Update Account", JOptionPane.WARNING_MESSAGE);
@@ -116,18 +151,30 @@ public class AddUpdateAccountPanel extends BasePanel
 		if (!accountChanged()) {
 			JOptionPane.showMessageDialog(this, "Nothing changed for the account ", "Update Account", JOptionPane.WARNING_MESSAGE);
 			return;
-
 		}
 
 		MgmtUpdateAccountRequest tRequest = new MgmtUpdateAccountRequest().setRef("ua");
-		tRequest.setAccountId( mAccountTxt.getText());
-		tRequest.setSuspended(mSuspendedChkBox.isSelected());
-		if ((!mPasswordField.getText().isBlank()) && (!mPasswordField.getText().isEmpty())) {
-			tRequest.setHashedPassword(AccountX.hashPassword(mAccountTxt.getText().toUpperCase() + mPasswordField.getText()));
+
+		if (mSuspendedChkBox.isSelected() != mAccountToUpdate.getSuspended().get()) {
+			tRequest.setSuspended(mSuspendedChkBox.isSelected());
+		}
+		if (mConfirmChkBox.isSelected() != mAccountToUpdate.getConfirmed().get()) {
+			tRequest.setConfirmed( mConfirmChkBox.isSelected());
+		}
+		if (!mMailAddressTxt.getText().contentEquals(mAccountToUpdate.getMailAddr().get())) {
+			tRequest.setMailAddress( mMailAddressTxt.getText());
 		}
 
+		if ((!mPasswordField.getText().isBlank()) && (!mPasswordField.getText().isEmpty())) {
+			String tHashPwd = AccountX.hashPassword(mAccountTxt.getText().toUpperCase() + mPasswordField.getText());
+			if (!tHashPwd.contentEquals( mAccountToUpdate.getPassword().get())) {
+				tRequest.setHashedPassword( tHashPwd );
+			}
+		}
+		tRequest.setAccountId( mAccountTxt.getText());
 
-		MgmtUpdateAccountResponse tResponse = (MgmtUpdateAccountResponse) mServiceInterface.transceive(TeMgmtServices.Autheticator, tRequest);
+
+		MgmtUpdateAccountResponse tResponse = (MgmtUpdateAccountResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, tRequest);
 		if (tResponse.getIsUpdated().get()) {
 			JOptionPane.showMessageDialog( this, "Account successfully updated " , "Account Updates", JOptionPane.PLAIN_MESSAGE );
 			mAccountsPanel.loadAccountData();
@@ -141,6 +188,13 @@ public class AddUpdateAccountPanel extends BasePanel
 		if (mSuspendedChkBox.isSelected() != mAccountToUpdate.getSuspended().get()) {
 			return true;
 		}
+		if (mConfirmChkBox.isSelected() != mAccountToUpdate.getConfirmed().get()) {
+			return true;
+		}
+		if (!mMailAddressTxt.getText().contentEquals(mAccountToUpdate.getMailAddr().get())) {
+			return true;
+		}
+
 		if ((!mPasswordField.getText().isBlank()) && (!mPasswordField.getText().isEmpty())) {
 			String tHashPwd = AccountX.hashPassword(mAccountTxt.getText().toUpperCase() + mPasswordField.getText());
 			if (!tHashPwd.contentEquals( mAccountToUpdate.getPassword().get())) {
@@ -182,6 +236,22 @@ public class AddUpdateAccountPanel extends BasePanel
 		mAccountTxt.setMargin( new Insets(0,5,0,0));
 		tInPanel.add(mAccountTxt, cb );
 
+		// Add Mail Address
+		cb.gridx = 0; cb.gridy++;
+		JLabel tMailLbl = new JLabel("Mail Address");
+		tMailLbl.setFont( DEFAULT_FONT );
+		tMailLbl.setPreferredSize( new Dimension(120,22));
+		tInPanel.add( tMailLbl, cb );
+		cb.gridx++;
+
+		mMailAddressTxt = new JTextField();
+		mMailAddressTxt.setFont( DEFAULT_FONT );
+		mMailAddressTxt.setPreferredSize(new Dimension(150,22));
+		mMailAddressTxt.setMargin( new Insets(0,5,0,0));
+		tInPanel.add(mMailAddressTxt, cb );
+
+		// Add Password
+
 		cb.gridx = 0; cb.gridy++;
 		JLabel tPwdLbl = new JLabel("Password");
 		tPwdLbl.setFont( DEFAULT_FONT );
@@ -208,7 +278,18 @@ public class AddUpdateAccountPanel extends BasePanel
 		mPasswordConfirmField.setMargin( new Insets(0,5,0,0));
 		tInPanel.add( mPasswordConfirmField, cb );
 
-		cb.gridx = 0; cb.gridy++;
+		// Add Confirmation chkbox
+		cb.gridx = 1; cb.gridy++;
+		cb.insets = new Insets(20,5,10,10);
+		mConfirmChkBox = new JCheckBox("Confirmed");
+		mConfirmChkBox.setSelected( false );
+		mConfirmChkBox.setFont( DEFAULT_FONT );
+		mConfirmChkBox.setBackground( PANEL_BACKGROUND );
+		mConfirmChkBox.setPreferredSize(new Dimension(150,22));
+		tInPanel.add(mConfirmChkBox, cb );
+
+		// Add Suspend chkbox
+		cb.gridx = 1; cb.gridy++;
 		cb.insets = new Insets(10,5,10,10);
 		mSuspendedChkBox = new JCheckBox("Suspended");
 		mSuspendedChkBox.setSelected( false );

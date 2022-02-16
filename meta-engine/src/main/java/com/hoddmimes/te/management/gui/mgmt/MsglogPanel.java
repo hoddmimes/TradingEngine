@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
@@ -30,13 +30,10 @@ import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.nio.charset.StandardCharsets;
-import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -235,7 +232,7 @@ public class MsglogPanel extends JPanel implements TableCallbackInterface {
 		tRqst.setMaxLines( getMaxLines());
 
 		mLogTableModel.clear();
-		MgmtGetLogMessagesResponse tResponse = (MgmtGetLogMessagesResponse) mServiceInterface.transceive( TeMgmtServices.SessionService, tRqst );
+		MgmtGetLogMessagesResponse tResponse = (MgmtGetLogMessagesResponse) mServiceInterface.transceive( TeIpcServices.SessionService, tRqst );
 		if (tResponse != null) {
 			for( MsgLogEntry le : tResponse.getLogMessages().get()) {
 				mLogTableModel.addEntry( new LogEntry( le ));
@@ -307,7 +304,7 @@ public class MsglogPanel extends JPanel implements TableCallbackInterface {
 	public void loadAccountData() {
 		// Load market data if not already loaded
 		if (mAccountComboBox.getItemCount() == 0) {
-			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeMgmtServices.Autheticator, new MgmtGetAccountsRequest().setRef("ga"));
+			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, new MgmtGetAccountsRequest().setRef("ga"));
 			if (tAccountsResponse == null) {
 				return;
 			}
@@ -395,11 +392,11 @@ public class MsglogPanel extends JPanel implements TableCallbackInterface {
 		}
 
 		String getAccountId() {
-			return (mAccount == null) ? null : mAccount.getAccount().get();
+			return (mAccount == null) ? null : mAccount.getAccountId().get();
 		}
 
 		public String toString() {
-			return (mAccount == null) ? "    " : mAccount.getAccount().get() ;
+			return (mAccount == null) ? "    " : mAccount.getAccountId().get() ;
 		}
 	}
 }

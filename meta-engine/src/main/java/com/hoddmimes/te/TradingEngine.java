@@ -21,11 +21,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.common.AuxJson;
+import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
+import com.hoddmimes.te.common.ipc.IpcService;
 import com.hoddmimes.te.engine.MatchingEngine;
 import com.hoddmimes.te.engine.MatchingEngineFrontend;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
-import com.hoddmimes.te.management.service.MgmtFactory;
 import com.hoddmimes.te.positions.PositionController;
 import com.hoddmimes.te.sessionctl.SessionController;
 import com.hoddmimes.te.trades.TradeContainer;
@@ -57,6 +58,7 @@ public class TradingEngine
 	private TradeContainer              mTradeContainer;
 	private JsonObject                  mConfiguration;
 	private PositionController          mPositionController;
+	private TEDB                        mDb;
 
 
 
@@ -83,8 +85,15 @@ public class TradingEngine
 		mLog.info("current working dir: " + currentWorkingDirURI());
 
 		// Setup Management Service
-		setupMgmtService();
+		setupIpcService();
 
+		// Connect the database
+		 String tDbHost = AuxJson.navigateString( mConfiguration, "TeConfiguration/dbConfiguration/dbHost");
+		 int tDbPort = AuxJson.navigateInt( mConfiguration, "TeConfiguration/dbConfiguration/dbPort");
+		 String tDbName = AuxJson.navigateString( mConfiguration, "TeConfiguration/dbConfiguration/dbName");
+		 mDb = new TEDB( tDbName, tDbHost, tDbPort );
+		 mDb.connectToDatabase();
+		 TeAppCntx.getInstance().setDb( mDb );
 
 		// Instansiate Instrument Container
 		mInstrumentContainer = new InstrumentContainer( mConfiguration );
@@ -153,10 +162,11 @@ public class TradingEngine
 		}
 	}
 
-	private void setupMgmtService() {
-		MgmtFactory tMgmtFactory = new MgmtFactory();
-		TeAppCntx.getInstance().setMgmtService( tMgmtFactory );
-		mLog.info("Management Service successfully started");
+	private void setupIpcService() {
+
+		IpcService tIpcService = new IpcService( AuxJson.navigateObject( mConfiguration, "TeConfiguration/ipc"));
+		TeAppCntx.getInstance().setIpcService( tIpcService );
+		mLog.info("IPC Service successfully started");
 	}
 
 	private boolean isComment( String pString )

@@ -31,6 +31,8 @@ import com.hoddmimes.te.messages.generated.*;
 	
 import com.hoddmimes.te.messages.generated.*;
 	
+import com.hoddmimes.te.messages.generated.*;
+	
 
 @SuppressWarnings({"WeakerAccess","unused","unchecked"})
 public class MessageFactory implements MessageFactoryInterface
@@ -57,6 +59,27 @@ public class MessageFactory implements MessageFactoryInterface
 		switch( tMessageId ) 
 		{
 
+            case "EventBitcoinOnCoinsReceived":
+            {
+            	EventBitcoinOnCoinsReceived tMessage = new EventBitcoinOnCoinsReceived();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "EventBitcoinOnCoinsSent":
+            {
+            	EventBitcoinOnCoinsSent tMessage = new EventBitcoinOnCoinsSent();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "EventBitcoinOnCoinsReceivedConfirm":
+            {
+            	EventBitcoinOnCoinsReceivedConfirm tMessage = new EventBitcoinOnCoinsReceivedConfirm();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
             case "AddOrderRequest":
             {
             	AddOrderRequest tMessage = new AddOrderRequest();
@@ -288,6 +311,69 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
+            case "GetDepositEntryRequest":
+            {
+            	GetDepositEntryRequest tMessage = new GetDepositEntryRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "GetDepositEntryResponse":
+            {
+            	GetDepositEntryResponse tMessage = new GetDepositEntryResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "SetReDrawEntryRequest":
+            {
+            	SetReDrawEntryRequest tMessage = new SetReDrawEntryRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "SetReDrawEntryResponse":
+            {
+            	SetReDrawEntryResponse tMessage = new SetReDrawEntryResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "CryptoReDrawRequest":
+            {
+            	CryptoReDrawRequest tMessage = new CryptoReDrawRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "CryptoReDrawResponse":
+            {
+            	CryptoReDrawResponse tMessage = new CryptoReDrawResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "CryptoConfirmationRequest":
+            {
+            	CryptoConfirmationRequest tMessage = new CryptoConfirmationRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "IpcConfigurationBdx":
+            {
+            	IpcConfigurationBdx tMessage = new IpcConfigurationBdx();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "IpcConfigurationPingBdx":
+            {
+            	IpcConfigurationPingBdx tMessage = new IpcConfigurationPingBdx();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
             case "LogonRequest":
             {
             	LogonRequest tMessage = new LogonRequest();
@@ -340,20 +426,6 @@ public class MessageFactory implements MessageFactoryInterface
             case "MgmtStatusResponse":
             {
             	MgmtStatusResponse tMessage = new MgmtStatusResponse();
-            	tMessage.decode( new JsonDecoder(pJsonMessageString));
-            	return tMessage;
-            }
-			
-            case "MgmtConfigurationBdx":
-            {
-            	MgmtConfigurationBdx tMessage = new MgmtConfigurationBdx();
-            	tMessage.decode( new JsonDecoder(pJsonMessageString));
-            	return tMessage;
-            }
-			
-            case "MgmtConfigurationPingBdx":
-            {
-            	MgmtConfigurationPingBdx tMessage = new MgmtConfigurationPingBdx();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }
@@ -428,16 +500,16 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
-            case "MgmtSetAccountsRequest":
+            case "MgmtUpdateAccountRequest":
             {
-            	MgmtSetAccountsRequest tMessage = new MgmtSetAccountsRequest();
+            	MgmtUpdateAccountRequest tMessage = new MgmtUpdateAccountRequest();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }
 			
-            case "MgmtSetAccountsResponse":
+            case "MgmtUpdateAccountResponse":
             {
-            	MgmtSetAccountsResponse tMessage = new MgmtSetAccountsResponse();
+            	MgmtUpdateAccountResponse tMessage = new MgmtUpdateAccountResponse();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }
@@ -540,20 +612,6 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
-            case "MgmtUpdateAccountRequest":
-            {
-            	MgmtUpdateAccountRequest tMessage = new MgmtUpdateAccountRequest();
-            	tMessage.decode( new JsonDecoder(pJsonMessageString));
-            	return tMessage;
-            }
-			
-            case "MgmtUpdateAccountResponse":
-            {
-            	MgmtUpdateAccountResponse tMessage = new MgmtUpdateAccountResponse();
-            	tMessage.decode( new JsonDecoder(pJsonMessageString));
-            	return tMessage;
-            }
-			
             case "MgmtDeleteAccountRequest":
             {
             	MgmtDeleteAccountRequest tMessage = new MgmtDeleteAccountRequest();
@@ -648,6 +706,62 @@ public class MessageFactory implements MessageFactoryInterface
             case "MgmtGetAccountPositionsResponse":
             {
             	MgmtGetAccountPositionsResponse tMessage = new MgmtGetAccountPositionsResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtGetWalletRequest":
+            {
+            	MgmtGetWalletRequest tMessage = new MgmtGetWalletRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtGetWalletResponse":
+            {
+            	MgmtGetWalletResponse tMessage = new MgmtGetWalletResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtGetCryptoDepositAccountsRequest":
+            {
+            	MgmtGetCryptoDepositAccountsRequest tMessage = new MgmtGetCryptoDepositAccountsRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtGetCryptoDepositAccountsResponse":
+            {
+            	MgmtGetCryptoDepositAccountsResponse tMessage = new MgmtGetCryptoDepositAccountsResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtGetCryptoAccountsAddressesRequest":
+            {
+            	MgmtGetCryptoAccountsAddressesRequest tMessage = new MgmtGetCryptoAccountsAddressesRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtGetCryptoAccountsAddressesResponse":
+            {
+            	MgmtGetCryptoAccountsAddressesResponse tMessage = new MgmtGetCryptoAccountsAddressesResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtGetCryptoPaymentsRequest":
+            {
+            	MgmtGetCryptoPaymentsRequest tMessage = new MgmtGetCryptoPaymentsRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "MgmtGetCryptoPaymentsResponse":
+            {
+            	MgmtGetCryptoPaymentsResponse tMessage = new MgmtGetCryptoPaymentsResponse();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }

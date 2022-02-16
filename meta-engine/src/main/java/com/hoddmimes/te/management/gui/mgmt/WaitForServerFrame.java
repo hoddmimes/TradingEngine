@@ -17,6 +17,10 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
+import com.google.gson.JsonObject;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.ipc.IpcService;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
@@ -24,10 +28,12 @@ import java.awt.*;
 
 public class WaitForServerFrame extends JFrame
 {
+	 IpcService mIpcService;
 
-	 WaitForServerFrame(String pGrpAddress, int pGrpPort )
+	 WaitForServerFrame(IpcService pService)
 	 {
-		this.setContentPane( createPane(pGrpAddress, pGrpPort) );
+		this.mIpcService = pService;
+		this.setContentPane( createPane(pService.getGroupAddress(), pService.getGroupPort()) );
 		this.pack();
 		this.setLocationRelativeTo(null);
 		this.setTitle("Waiting for TE");
@@ -58,14 +64,17 @@ public class WaitForServerFrame extends JFrame
 		return tPanel;
 	 }
 
-	 void serverIsAvailable() {
-		 this.notifyAll();
-		 this.dispose();;
+	 public void waitForNamedService( String pServiceName ) {
+		 mIpcService.waitForService( pServiceName );
+		 this.dispose();
 	 }
 
 
+
 	public static void main(String[] args) {
-		WaitForServerFrame f = new WaitForServerFrame("224.20.20.20", 3939);
+		IpcService tIpcService = new IpcService( "224.20.20.20", 3939, null);
+		WaitForServerFrame f = new WaitForServerFrame(tIpcService);
 		f.setVisible(true);
+		f.waitForNamedService(TeIpcServices.MatchingService );
 	}
 }

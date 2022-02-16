@@ -1,6 +1,7 @@
-{ "baseHttp": {"uri": "https://localhost:8883/te/"},
-  "baseWss": {"uri": "wss://localhost:8883/marketdata"},
+{ "baseHttp": {"uri": "https://localhost:8883/te-trading/"},
+  "baseWss": {"uri": "wss://localhost:8883/te-marketdata"},
   "requests" : [
+
     { "method" : "POST", "endpoint" :  "logon", "body" : {"account":"test", "password":"test","ref" : "sr-71"}},
     { "method" : "POST", "endpoint" :  "marketdata", "body":  {"command":"ADD", "topic" :  "/BdxBBO/..."}},
     { "method" : "POST", "endpoint" :  "marketdata", "body":  {"command":"ADD", "topic" :  "/BdxOwnOrderbookChange/..."}},

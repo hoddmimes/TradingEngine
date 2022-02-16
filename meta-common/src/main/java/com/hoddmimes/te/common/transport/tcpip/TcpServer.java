@@ -69,7 +69,7 @@ public class TcpServer extends Thread
 				tSocketChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
 
 			  try {
-			      TcpThread tThread = new TcpThread(tSocketChannel, null);
+			      TcpThread tThread = new TcpThread(tSocketChannel, TcpThread.ThreadType.ThreadServer);
 			      mCallback.tcpInboundConnection(tThread);
 			  } catch( Exception e ) {
 				  e.printStackTrace();

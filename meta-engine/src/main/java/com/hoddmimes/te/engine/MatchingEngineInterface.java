@@ -34,4 +34,5 @@ public interface MatchingEngineInterface
 	MessageInterface executePriceLevel( InternalPriceLevelRequest pInternalPriceLevelRequest,  RequestContextInterface pRequestContext );
 	MessageInterface executeQueryOwnOrders( QueryOwnOrdersRequest pQueryOwnOrdersRequest,  RequestContextInterface pRequestContext );
 	MessageInterface executeQueryBBO( QueryBBORequest pQueryBBORequest,  RequestContextInterface pRequestContext );
+	MessageInterface redrawCryptoRequest( CryptoReDrawRequest pCryptoReDrawRequest, RequestContextInterface pRequestContext );
 }

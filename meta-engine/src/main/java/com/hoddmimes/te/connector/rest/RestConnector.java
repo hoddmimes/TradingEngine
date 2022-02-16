@@ -19,6 +19,7 @@ package com.hoddmimes.te.connector.rest;
 
 import com.google.gson.JsonObject;
 import com.hoddmimes.te.TeAppCntx;
+import com.hoddmimes.te.common.AppProperties;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.connector.ConnectorBase;
 import org.apache.logging.log4j.LogManager;
@@ -51,10 +52,6 @@ import java.util.regex.Pattern;
 
 public class RestConnector extends ConnectorBase implements Runnable
 {
-	static Pattern  cPatterNameValue = Pattern.compile("\\s*([^=\\s]+)\\s*=\\s*(.*)");
-
-	record NameValue( String name, String value ) {}
-
 	Logger mLog = LogManager.getLogger( RestConnector.class);
 	Thread mConnectorThread;
 
@@ -79,42 +76,6 @@ public class RestConnector extends ConnectorBase implements Runnable
 		return FileSystems.getDefault().getPath("").toAbsolutePath().toUri().toString();
 	}
 
-	private Properties mapPropertyFileToProperties( String pFilename  ) {
-		BufferedReader fp;
-		Properties tProperties = new Properties();
-		String tLine = null;
-		try {
-			File tFile = new File( pFilename );
-			if ((!tFile.exists()) || (!tFile.canRead())) {
-				mLog.fatal("can not read REST connector cofiguration property file: " + pFilename);
-				System.exit(0);
-			}
-			fp = new BufferedReader( new FileReader(pFilename));
-			while ((tLine = fp.readLine()) != null) {
-				if ((!tLine.trim().startsWith("#")) && (!tLine.isBlank()) && (!tLine.isEmpty())) {
-					NameValue nv = parseNameValue( tLine );
-					if (nv != null) {
-						tProperties.setProperty( nv.name, nv.value);
-						mLog.info("app property: " + nv );
-					}
-				}
-			}
-		}
-		catch( IOException e) {
-			e.printStackTrace();
-		}
-		return tProperties;
-	}
-
-	NameValue parseNameValue( String pLine ) {
-
-		Matcher m = cPatterNameValue.matcher( pLine );
-		if (m.find()) {
-			return new NameValue( m.group(1), m.group(2));
-		} else {
-			return null;
-		}
-	}
 
 
 	@Override
@@ -128,7 +89,7 @@ public class RestConnector extends ConnectorBase implements Runnable
 
 			String tConfigFile = AuxJson.navigateString( mConfiguration,"configuration/appConfiguration");
 			mLog.info("appConfiguration : " + tConfigFile);
-			Properties tAppProperties = mapPropertyFileToProperties( tConfigFile );
+			Properties tAppProperties = AppProperties.mapPropertyFileToProperties( tConfigFile );
 
 			tApplication.setBannerMode(Banner.Mode.OFF);
 			tApplication.setLogStartupInfo( true );

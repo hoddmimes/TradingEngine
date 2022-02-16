@@ -30,16 +30,14 @@ public class AccountX extends Account
 	}
 
 
-	public AccountX(String pAccountId, String pHashedPassword  )
-	{
-		this( pAccountId, pHashedPassword,true);
-	}
 
-	public AccountX(String pAccountId, String pHashedPassword, boolean pSuspended  ) {
+	public AccountX( Account pAccount) {
 		super();
-		super.setAccount( pAccountId );
-		super.setSuspended( pSuspended );
-		super.setPassword( pHashedPassword );
+		super.setAccountId( pAccount.getAccountId().get() );
+		super.setSuspended( pAccount.getSuspended().get() );
+		super.setConfirmed( pAccount.getConfirmed().get() );
+		super.setPassword( pAccount.getPassword().get() );
+		super.setMailAddr( pAccount.getMailAddr().get());
 	}
 
 
@@ -75,8 +73,8 @@ public class AccountX extends Account
 	}
 
 
-	public String getAccountId() {
-		return super.getAccount().get();
+	public String getId() {
+		return super.getAccountId().get();
 	}
 
 	public boolean isSuspended() {

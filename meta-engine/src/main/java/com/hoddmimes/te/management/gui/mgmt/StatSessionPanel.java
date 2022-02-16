@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableModel;
@@ -27,10 +27,7 @@ import com.hoddmimes.te.messages.generated.MgmtQueryActiveSessionsResponse;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.EtchedBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 
 public class StatSessionPanel extends BasePanel {
@@ -85,7 +82,7 @@ public class StatSessionPanel extends BasePanel {
 
 	public void refreshStatistics() {
 		MgmtQueryActiveSessionsRequest tReq = new MgmtQueryActiveSessionsRequest().setRef("qss");
-		MgmtQueryActiveSessionsResponse tResp = (MgmtQueryActiveSessionsResponse) mServiceInterface.transceive(TeMgmtServices.SessionService, tReq );
+		MgmtQueryActiveSessionsResponse tResp = (MgmtQueryActiveSessionsResponse) mServiceInterface.transceive(TeIpcServices.SessionService, tReq );
 
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		mStartTimeLabel.setText( "System Starting Time " + sdf.format( tResp.getSysStarTime().get()));

@@ -25,6 +25,8 @@ import java.text.SimpleDateFormat;
 
 public class TcpThread extends Thread
 {
+	static final int                HDR_SIZE = 8;
+	static enum ThreadType          { ThreadClient,ThreadServer};
 	private static int				MAGIC_SIGN = 0x504f4242;
     private static int              mClientIndex = 0;
 	private static int              BUFFER_SIZE = 4096;
@@ -36,14 +38,18 @@ public class TcpThread extends Thread
 	private int                     mIndex;
 	private String                  mConnectTime;
 	private Object 					mAppCntx;
+	private ThreadType              mThreadType;
+	private SyncReadCntx            mSyncReadCntx;
 
 
-	public TcpThread(SocketChannel pChannel) {
-		this( pChannel, null);
+
+	public TcpThread(SocketChannel pChannel, ThreadType pThreadType) {
+		this( pChannel, pThreadType, null);
 	}
 
-	public TcpThread(SocketChannel pChannel, TcpThreadCallbackIf pCallbackIf) {
+	public TcpThread(SocketChannel pChannel, ThreadType pThreadType, TcpThreadCallbackIf pCallbackIf) {
 		mChannel = pChannel;
+		mThreadType = pThreadType;
 		mClosed = false;
 		mIndex = ++mClientIndex;
 		mConnectTime = cSDF.format(System.currentTimeMillis());
@@ -51,6 +57,7 @@ public class TcpThread extends Thread
 
 
 		mCallbackIf = pCallbackIf;
+		mSyncReadCntx = ((mThreadType == ThreadType.ThreadServer) || (pCallbackIf != null)) ? null : new SyncReadCntx();
 
 		try {
 			mChannel.configureBlocking(true);
@@ -105,43 +112,20 @@ public class TcpThread extends Thread
 		if (mCallbackIf != null) {
 			throw new IOException("Thread was started in async mode, sync reads are not permitted");
 		}
-		send( pBuffer );
-		return read();
+		synchronized( mSyncReadCntx  ) {
+			mSyncReadCntx.reset();
+			send(pBuffer);
+			try {mSyncReadCntx.wait();}
+			catch( InterruptedException e) {}
+
+			if (mSyncReadCntx.ifError()) {
+				throw mSyncReadCntx.getIOException();
+			}
+			return mSyncReadCntx.getBuffer();
+		}
 	}
 
-	public synchronized byte[]  read() throws IOException {
-		if (mCallbackIf != null) {
-			throw new IOException("Thread was started in async mode, sync reads are not permitted");
-		}
 
-		ByteBuffer tHdr = ByteBuffer.allocate(8);
-		ByteBuffer tData = ByteBuffer.allocate(BUFFER_SIZE);
-		ByteBuffer tReadBuffer = null;
-		byte[] tBuffer;
-		int tSize;
-
-		// Read header
-		tHdr.clear();
-		while (tHdr.position() < 8) {
-			mChannel.read(tHdr);
-		}
-
-		tHdr.flip();
-		if (tHdr.getInt() != MAGIC_SIGN) {
-			throw new IOException("tcp/ip read, invalid magic sign");
-		}
-		tSize = tHdr.getInt();
-		tReadBuffer = ByteBuffer.allocate(tSize);
-		tReadBuffer.clear();
-		tReadBuffer.limit(tSize);
-		while (tReadBuffer.position() < tSize) {
-			mChannel.read(tReadBuffer);
-		}
-		tBuffer = new byte[tSize];
-		tReadBuffer.flip();
-		tReadBuffer.get(tBuffer);
-		return tBuffer;
-	}
 	
 	public synchronized void send( byte[] pBuffer ) throws IOException
 	{
@@ -154,13 +138,21 @@ public class TcpThread extends Thread
 			mChannel.write(bb);
 		}
 	}
-	
-	public void run() {
-		if (mCallbackIf == null) {
-			return;
-		}
 
-		ByteBuffer tHdr = ByteBuffer.allocate(8);
+	private void readComplete( byte[] pBuffer, IOException pIOException ) {
+		if (mSyncReadCntx == null) {
+			if (pIOException != null) {
+				mCallbackIf.tcpErrorEvent( this, pIOException );
+			} else {
+				mCallbackIf.tcpMessageRead( this, pBuffer);
+			}
+		} else {
+			mSyncReadCntx.readComplete( pBuffer, pIOException );
+		}
+	}
+
+	public void run() {
+		ByteBuffer tHdr = ByteBuffer.allocate(HDR_SIZE);
 		ByteBuffer tData = ByteBuffer.allocate( BUFFER_SIZE );
 		ByteBuffer tReadBuffer = null;
 		byte[] tBuffer;
@@ -174,7 +166,7 @@ public class TcpThread extends Thread
 				 * Read Header
 				 */
 				tHdr.clear();
-				while( tHdr.position() < 8 ) {
+				while( tHdr.position() < HDR_SIZE ) {
 					mChannel.read( tHdr );
 				}
 
@@ -199,7 +191,7 @@ public class TcpThread extends Thread
 				tReadBuffer.get( tBuffer );
 			} catch( IOException e) {
 				if (!mClosed) {
-					mCallbackIf.tcpErrorEvent(this, e);
+					readComplete( null, e);
 					return;
 				} else {
 					return;
@@ -209,12 +201,48 @@ public class TcpThread extends Thread
 			/**
 			 * Deliver the read data
 			 */
+
 			try {
-				mCallbackIf.tcpMessageRead(this, tBuffer); }
+				readComplete(tBuffer, null);
+			}
 			catch( Throwable e) 
 			{
 				e.printStackTrace();
 			}
+		}
+	}
+
+	class SyncReadCntx {
+		private IOException mIOException;
+		private byte[] mBuffer;
+
+		SyncReadCntx() {
+			reset();
+		}
+		void readComplete( byte[] pBuffer, IOException pIOException) {
+			synchronized ( this ) {
+				mBuffer = pBuffer;
+				mIOException =pIOException;
+				this.notifyAll();
+			}
+		}
+
+		byte[] getBuffer() {
+			return mBuffer;
+		}
+
+		boolean ifError() {
+			return (mIOException == null) ? false : true;
+		}
+
+		IOException getIOException() {
+			return mIOException;
+		}
+
+
+		void reset() {
+			mBuffer = null;
+			mIOException = null;
 		}
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  Hoddmimes Solution AB 2021.
+ * Copyright (c)  Hoddmimes Solution AB 2022.
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,26 @@
  * limitations under the License.
  */
 
-package com.hoddmimes.te.management.service;
+package com.hoddmimes.te.cryptogwy;
 
-import com.hoddmimes.te.messages.MgmtMessageRequest;
-import com.hoddmimes.te.messages.MgmtMessageResponse;
+import com.google.gson.JsonObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public interface MgmtCmdCallbackInterface
+public class Deposit
 {
-	MgmtMessageResponse mgmtRequest(MgmtMessageRequest pMgmtRequest);
+	private Logger mLog = LogManager.getLogger( Deposit.class);
+	private JsonObject mCryptoGatewayConfig;
+
+
+
+	public Deposit( JsonObject pCryptoGatewayConfig ) {
+		mCryptoGatewayConfig = pCryptoGatewayConfig;
+		connectToDb();
+	}
+
+
+	private void connectToDb() {
+		// Connect DB
+	}
 }

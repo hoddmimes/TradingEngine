@@ -56,7 +56,7 @@ public class MarketDataController extends MarketDataBase implements WebSocketCon
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         mWebSocketHandler = new WebSocketHandler();
-        WebSocketHandlerRegistration tWsHandler = registry.addHandler(mWebSocketHandler, "/marketdata");
+        WebSocketHandlerRegistration tWsHandler = registry.addHandler(mWebSocketHandler, "/te-marketdata/");
         tWsHandler.addInterceptors(new WebSocketHandshakeInterceptor());
         TeAppCntx.getInstance().setMarketDataDistributor(this);
     }

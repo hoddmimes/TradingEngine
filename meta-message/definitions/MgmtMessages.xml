@@ -12,19 +12,7 @@
         <Attribute name="message" type="String" mandatory="true"/>
     </Message>
 
-    <Message name="MgmtComponent" rootMessage="false">
-        <Attribute name="name" type="String" mandatory="true"/>
-        <Attribute name="port" type="int" mandatory="true"/>
-        <Attribute name="cretime" type="String" mandatory="true"/>
-    </Message>
 
-    <Message name="MgmtConfigurationBdx"  rootMessage="true">
-        <Attribute name="host" type="String" mandatory="true"/>
-        <Attribute name="components" type="MgmtComponent" list="array"/>
-    </Message>
-
-    <Message name="MgmtConfigurationPingBdx"  rootMessage="true">
-    </Message>
 
     <Message name="MgmtGetMarketsRequest" implements="MgmtMessageRequest" rootMessage="true">
         <Attribute name="ref" type="String" mandatory="true"/>
@@ -79,19 +67,22 @@
 
     <Message name="MgmtGetAccountsResponse" implements="MgmtMessageResponse" rootMessage="true">
         <Attribute name="ref" type="String" mandatory="true"/>
-        <Attribute name="configFile" type="String" mandatory="true"/>
         <Attribute name="accounts" type="Account" list="array" mandatory="true"/>
     </Message>
 
-    <Message name="MgmtSetAccountsRequest" implements="MgmtMessageRequest" rootMessage="true">
+    <Message name="MgmtUpdateAccountRequest" implements="MgmtMessageRequest" rootMessage="true">
         <Attribute name="ref" type="String" mandatory="true"/>
         <Attribute name="accountId" type="String" mandatory="true"/>
-        <Attribute name="suspended" type="boolean" mandatory="true"/>
-
+        <Attribute name="suspended" type="boolean"/>
+        <Attribute name="confirmed" type="boolean"/>
+        <Attribute name="mailAddress" type="String"/>
+        <Attribute name="hashedPassword" type="String"/>
     </Message>
 
-    <Message name="MgmtSetAccountsResponse" implements="MgmtMessageResponse" rootMessage="true">
+    <Message name="MgmtUpdateAccountResponse" implements="MgmtMessageResponse" rootMessage="true">
         <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="isUpdated" type="boolean" mandatory="true"/>
+        <Attribute name="statusText" type="String" mandatory="true"/>
         <Attribute name="account" type="Account" mandatory="true"/>
     </Message>
 
@@ -168,9 +159,7 @@
 
     <Message name="MgmtAddAccountRequest" implements="MgmtMessageRequest" rootMessage="true">
         <Attribute name="ref" type="String" mandatory="true"/>
-        <Attribute name="accountId" type="String"/>
-        <Attribute name="hashedPassword" type="String"/>
-        <Attribute name="suspended" type="boolean"/>
+        <Attribute name="account" type="Account"/>
     </Message>
 
     <Message name="MgmtAddAccountResponse" implements="MgmtMessageResponse" rootMessage="true">
@@ -178,19 +167,6 @@
         <Attribute name="account" type="Account"/>
         <Attribute name="isAddded" type="boolean"/>
         <Attribute name="statusMessage" type="String"/>
-    </Message>
-
-    <Message name="MgmtUpdateAccountRequest" implements="MgmtMessageRequest" rootMessage="true">
-        <Attribute name="ref" type="String" mandatory="true"/>
-        <Attribute name="accountId" type="String"/>
-        <Attribute name="hashedPassword" type="String"/>
-        <Attribute name="suspended" type="boolean"/>
-    </Message>
-
-    <Message name="MgmtUpdateAccountResponse" implements="MgmtMessageResponse" rootMessage="true">
-        <Attribute name="ref" type="String" mandatory="true"/>
-        <Attribute name="account" type="Account"/>
-        <Attribute name="isUpdated" type="boolean"/>
     </Message>
 
 
@@ -314,7 +290,7 @@
 
     <Message name="MgmtPositionEntry" rootMessage="false">
         <Attribute name="sid" type="String" mandatory="true"/>
-        <Attribute name="position" type="int" mandatory="true"/>
+        <Attribute name="position" type="long" mandatory="true"/>
     </Message>
 
     <Message name="MgmtGetAccountPositionsRequest" implements="MgmtMessageRequest" rootMessage="true">
@@ -328,6 +304,46 @@
         <Attribute name="accountId" type="String"/>
         <Attribute name="cash" type="long"/>
         <Attribute name="positions" type="MgmtPositionEntry" list="array"/>
+    </Message>
+
+    <Message name="MgmtGetWalletRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="coin" type="String" mandatory="true"/>
+    </Message>
+
+
+    <Message name="MgmtGetWalletResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="walletData" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetCryptoDepositAccountsRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetCryptoDepositAccountsResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="accounts" type="DbCryptoDeposit" list="array"/>
+    </Message>
+
+    <Message name="MgmtGetCryptoAccountsAddressesRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="accountId" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetCryptoAccountsAddressesResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="paymentEntries" type="DbCryptoPaymentEntry" list="array"/>
+    </Message>
+
+    <Message name="MgmtGetCryptoPaymentsRequest" implements="MgmtMessageRequest" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="accountId" type="String" mandatory="true"/>
+    </Message>
+
+    <Message name="MgmtGetCryptoPaymentsResponse" implements="MgmtMessageResponse" rootMessage="true">
+        <Attribute name="ref" type="String" mandatory="true"/>
+        <Attribute name="payments" type="DbCryptoPayment" list="array"/>
     </Message>
 
 

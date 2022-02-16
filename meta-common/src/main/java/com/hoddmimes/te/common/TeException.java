@@ -23,14 +23,27 @@ public class TeException extends Exception
 {
 	StatusMessage mStatusMessage;
 	int mStatusCode;
+	Exception mException;
 
-	public TeException(int pStatusCode, StatusMessage pStsMsg)
+	public TeException(int pStatusCode, StatusMessage pStsMsg, Exception pOrginException)
 	{
 		super(pStsMsg.getStatusMessage().get());
 		mStatusMessage = pStsMsg;
 		mStatusCode = pStatusCode;
+		mException = pOrginException;
 	}
 
+	public TeException(int pStatusCode, StatusMessage pStsMsg) {
+		this( pStatusCode, pStsMsg, null );
+	}
+
+	public TeException(StatusMessage pStsMsg) {
+		this( 0, pStsMsg, null );
+	}
+
+	public Exception getOrginException() {
+		return mException;
+	}
 	public int getStatusCode() {
 		return mStatusCode;
 	}

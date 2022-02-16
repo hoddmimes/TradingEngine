@@ -23,10 +23,11 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
+import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.MarketStates;
-import com.hoddmimes.te.common.interfaces.TeMgmtServices;
-import com.hoddmimes.te.management.service.MgmtCmdCallbackInterface;
-import com.hoddmimes.te.management.service.MgmtComponentInterface;
+import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
+import com.hoddmimes.te.common.ipc.IpcComponentInterface;
 import com.hoddmimes.te.messages.MgmtMessageRequest;
 import com.hoddmimes.te.messages.MgmtMessageResponse;
 import com.hoddmimes.te.messages.SID;
@@ -41,7 +42,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class InstrumentContainer implements MgmtCmdCallbackInterface
+public class InstrumentContainer implements IpcRequestCallbackInterface
 {
 	private Logger mLog = LogManager.getLogger( InstrumentContainer.class );
 	private HashMap<Integer,  MarketX> mMarkets;
@@ -75,7 +76,7 @@ public class InstrumentContainer implements MgmtCmdCallbackInterface
 		 System.exit(-1);
 	 }
 	 TeAppCntx.getInstance().setInstrumentContainer( this );
-	 MgmtComponentInterface tMgmt = TeAppCntx.getInstance().getMgmtService().registerComponent( TeMgmtServices.InstrumentData, 0, this );
+	 IpcComponentInterface tMgmt = TeAppCntx.getInstance().getIpcService().registerComponent( TeIpcServices.InstrumentData, 0, this );
    }
 
 
@@ -333,9 +334,9 @@ public class InstrumentContainer implements MgmtCmdCallbackInterface
 	}
 
 	@Override
-	public MgmtMessageResponse mgmtRequest(MgmtMessageRequest pMgmtRequest) {
+	public MessageInterface ipcRequest(MessageInterface pMgmtRequest) {
 		if (pMgmtRequest instanceof MgmtGetMarketsRequest) {
-			return serveGetMarkets( pMgmtRequest.getRef().get());
+			return serveGetMarkets( ((MgmtGetMarketsRequest) pMgmtRequest).getRef().get());
 		}
 		if (pMgmtRequest instanceof MgmtSetMarketsRequest) {
 			return setMarketState((MgmtSetMarketsRequest) pMgmtRequest);
@@ -371,6 +372,13 @@ public class InstrumentContainer implements MgmtCmdCallbackInterface
 			e.printStackTrace();
 		}
 		return -1L;
+	}
+
+	public static SID getBitcoinSID() {
+		return new SID(2, TEDB.CoinType.BTC.name()); // todo: internally "BITCOIN" is used as constant identifier a better mapping is needed
+	}
+	public static SID getEthereumSID() {
+		return new SID(2,   TEDB.CoinType.ETH.name()); // todo: internally "ETHER" is used as constant identifier a better mapping is needed
 	}
 
 	class TradingPhaseEvent extends TimerTask

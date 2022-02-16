@@ -51,10 +51,11 @@ public class TableModel<T> extends AbstractTableModel
         mObjects.remove( pObject );
     }
 
-    public void remove( int pRow ) {
+    public T remove( int pRow ) {
        if (pRow < mObjects.size()) {
-           mObjects.remove( pRow );
+           return mObjects.remove( pRow );
        }
+       return null;
     }
 
     public int getPreferedWith() {

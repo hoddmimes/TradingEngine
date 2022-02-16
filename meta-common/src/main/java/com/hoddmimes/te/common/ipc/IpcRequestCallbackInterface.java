@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  Hoddmimes Solution AB 2021.
+ * Copyright (c)  Hoddmimes Solution AB 2022.
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,17 +15,13 @@
  * limitations under the License.
  */
 
-package com.hoddmimes.te.management.service;
+package com.hoddmimes.te.common.ipc;
 
-/**
- * This module is about providing and management real-time interface to various components
- * being part of the TE solution.
- * <p>
- * Via the TE Management App operators can send commands to various components in the solution.
- * This module implements the service point that each manageable component must implement.
- * </p>
- *
- * @since 1.0
- * @author Hoddmimes Solution
- * @version 1.0
- */
+import com.hoddmimes.jsontransform.MessageInterface;
+import com.hoddmimes.te.messages.MgmtMessageRequest;
+import com.hoddmimes.te.messages.MgmtMessageResponse;
+
+public interface IpcRequestCallbackInterface
+{
+	MessageInterface ipcRequest(MessageInterface pMgmtRequest);
+}

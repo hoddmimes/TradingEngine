@@ -39,7 +39,7 @@ i.e under <i>TradingEngine</i>. You may also build the project from a console wi
 
 <p>The project contains four runnable components:
 <ul>
-    <li><b>Trading Eninge</b> the accual market market place.</li>
+    <li><b>Trading Engine</b> the accual market market place.</li>
     <li><b>Management</b> a GUI application for monitoring and controlling the TE</li>
     <li><b>Trading Client</b> simple application for testing / excersing the TE REST and WEB socket API</li>
     <li><b>Trade Reports</b> application for creating trade reports..</li>
@@ -80,6 +80,9 @@ The application provides interfaces for:
     <li><i><b>Accounts</b></i>, in this view it is possible to define new accounts, remove accounts and update accounts (i.e. password). Changes to accounts are permanent and persisted. </li>
 
     <li><i><b>Ordes</b></i>, display active orders in the market, per account. In this view it is possible (on behalf) to delete a specific or or all orders for an account.</li>
+
+    <li><i>Positions</i></li>, display current positions for accounts, cash holdings and asset holdings. When pre-trading is enabled new orders are validated agains the holdings.
+                               Buy orders are validated against the cash holdings and the current exposure in the market. Sell order against the inventory and the expoure in the market.
 
     <li><i><b>Trades</b></i>, display trades done, per account. In this view it's also possible to <i>revert</i> a trade. Reverting a trade will create a counter trade to neutralize the position.</li>
 
