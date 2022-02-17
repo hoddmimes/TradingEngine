@@ -24,6 +24,7 @@ import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.common.ipc.IpcService;
+import com.hoddmimes.te.cryptogwy.CryptoGateway;
 import com.hoddmimes.te.engine.MatchingEngine;
 import com.hoddmimes.te.engine.MatchingEngineFrontend;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
@@ -58,6 +59,7 @@ public class TradingEngine
 	private TradeContainer              mTradeContainer;
 	private JsonObject                  mConfiguration;
 	private PositionController          mPositionController;
+	private CryptoGateway               mCryptoGateway;
 	private TEDB                        mDb;
 
 
@@ -103,6 +105,9 @@ public class TradingEngine
 		 mPositionController = new PositionController( mConfiguration );
 		 mLog.info("successfully loaded PositionController");
 
+		 // Instansiate Crypto Gatway Controller
+		 mCryptoGateway = new CryptoGateway( mConfiguration );
+		 mLog.info("successfully loaded CryptoGateway");
 
 		 //Instansiate Matching Engine Frontend
 		mMatchingEngineFrontend = new MatchingEngineFrontend( mConfiguration, mMatchingEngine);

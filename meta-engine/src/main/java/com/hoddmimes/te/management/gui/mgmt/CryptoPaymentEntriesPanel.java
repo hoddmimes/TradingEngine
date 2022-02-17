@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class CryptoPaymentEntriesPanel extends BasePanel {
-	private enum CoinType {All,BITCOIN,ETHEREUM};
+	private enum CoinType {All,BTC,ETH};
 	CryptoPanel mCryptoPanel;
 
 	JPanel mTopPanel;
@@ -81,7 +81,7 @@ public class CryptoPaymentEntriesPanel extends BasePanel {
 		gc.insets.left = 10;
 		gc.gridx++;
 
-		String tCoinModel[] = { CoinType.All.name(), CoinType.BITCOIN.name(), CoinType.ETHEREUM.name() };
+		String tCoinModel[] = { CoinType.All.name(), CoinType.BTC.name(), CoinType.ETH.name() };
 		mAccountComboBox = new JComboBox<>(tCoinModel);
 		mAccountComboBox.setFont(Management.DEFAULT_FONT_BOLD);
 		tPanel.add( mAccountComboBox, gc  );
@@ -92,7 +92,7 @@ public class CryptoPaymentEntriesPanel extends BasePanel {
 
 		gc.insets.left = 10;
 		gc.gridx++;
-		String tCoinsModel[] = { CoinType.All.name(), CoinType.BITCOIN.name(), CoinType.ETHEREUM.name() };
+		String tCoinsModel[] = { CoinType.All.name(), CoinType.BTC.name(), CoinType.ETH.name() };
 		mCoinComboBox = new JComboBox<>(tCoinsModel);
 		mCoinComboBox.setFont(Management.DEFAULT_FONT_BOLD);
 		tPanel.add( mCoinComboBox, gc  );
@@ -151,6 +151,16 @@ public class CryptoPaymentEntriesPanel extends BasePanel {
 	}
 
 	private void loadPaymentEntries() {
+		mAccountComboBox.setModel( mCryptoPanel.getAccountModel());
+
+		if (mCryptoPanel.getAccountModel().getSize() == 0) {
+			JOptionPane.showMessageDialog(this,
+					"No accounts with crypto deposits found",
+					"No Crypto Accounts",
+					JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+
 		CoinType tCointType = CoinType.valueOf( (String) mCoinComboBox.getSelectedItem());
 		MgmtGetCryptoAccountsAddressesRequest tRequest = new MgmtGetCryptoAccountsAddressesRequest().setRef("caa");
 		tRequest.setAccountId( (String) mAccountComboBox.getSelectedItem());
@@ -164,13 +174,13 @@ public class CryptoPaymentEntriesPanel extends BasePanel {
 					case All:
 						mPaymentTableModel.addEntry(new CryptoPaymentAddressEntry(tPaymentEntry));
 						break;
-					case BITCOIN:
-						if (tPaymentEntry.getCoinType().get().contentEquals(CoinType.BITCOIN.name())) {
+					case BTC:
+						if (tPaymentEntry.getCoinType().get().contentEquals(CoinType.BTC.name())) {
 							mPaymentTableModel.addEntry(new CryptoPaymentAddressEntry(tPaymentEntry));
 						}
 						break;
-					case ETHEREUM:
-						if (tPaymentEntry.getCoinType().get().contentEquals(CoinType.ETHEREUM.name())) {
+					case ETH:
+						if (tPaymentEntry.getCoinType().get().contentEquals(CoinType.ETH.name())) {
 							mPaymentTableModel.addEntry( new CryptoPaymentAddressEntry(tPaymentEntry));
 						}
 						break;

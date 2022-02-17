@@ -151,15 +151,14 @@ public class PositionController implements IpcRequestCallbackInterface
 		}
 	}
 
-	public synchronized void updateHolding( String pAccountId, int pMarket, String pSymbol, long pDeltaPosition, long pTxNo )
+	public synchronized void updateHolding( String pAccountId, String pSid, long pDeltaPosition, long pTxNo )
 	{
 		AccountPosition tPosition = mAccountMap.get( pAccountId );
 		if (tPosition == null) {
 			tPosition = new AccountPosition( pAccountId, 0L);
 			mAccountMap.put( pAccountId, tPosition );
 		}
-		SID tSid = new SID( pMarket, pSymbol );
-		tPosition.updatePosition( tSid.toString(), pDeltaPosition, pTxNo );
+		tPosition.updatePosition( pSid, pDeltaPosition, pTxNo );
 	}
 
 	public synchronized void updateCash( String pAccountId, double pAmount ) {
@@ -243,7 +242,7 @@ public class PositionController implements IpcRequestCallbackInterface
 			tResponse.setCoin( pReDrawRqst.getCoin().get());
 			tResponse.setTxid( txid );
 
-
+			// Update redraw payment
 			// Update holding
 			tAccHolding.updateHolding( (-1L * pReDrawRqst.getAmount().get()), 0);
 			tCryptoHolding.updateHolding( (-1L * pReDrawRqst.getAmount().get()));

@@ -24,7 +24,9 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.db.TEDB;
+import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.messages.generated.*;
+import com.mongodb.client.result.UpdateResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bitcoinj.core.*;
@@ -482,7 +484,7 @@ public class BitcoinGwy implements  PeerDataEventListener,
 			mDb.insertDbCryptoPayment(tPayment);
 	}
 
-	private void bitcoinOnCoinsReceivedConfirmToDB(EventBitcoinOnCoinsReceivedConfirm pEvent ) {
+	private void bitcoinOnCoinsReceivedConfirm(EventBitcoinOnCoinsReceivedConfirm pEvent ) {
 
 		List<DbCryptoPaymentEntry> tCryptoPaymentEntries = mDb.findPaymentEntryByAddressAndCoinType( pEvent.getToAddress().get() , TEDB.CoinType.BTC.name());
 		String  tAccountId = (tCryptoPaymentEntries.size() == 1) ? tCryptoPaymentEntries.get(0).getAccountId().get() : null;
@@ -511,7 +513,8 @@ public class BitcoinGwy implements  PeerDataEventListener,
 		mDb.insertDbCryptoPayment(tPayment);
 		// Update Account Position
 		if (tAccountId != null) {
-			mDb.updateAccountCryptoDeposit( tAccountId,  pEvent.getCoin().get(), pEvent.getAmount().get() );
+			UpdateResult tUpdResult = mDb.updateAccountCryptoDeposit( tAccountId,  pEvent.getCoin().get(), pEvent.getAmount().get() );
+			TeAppCntx.getInstance().getPositionController().updateHolding( tAccountId, InstrumentContainer.getBitcoinSID().toString(), pEvent.getAmount().get(), 0L);
 		}
 	}
 
@@ -528,7 +531,21 @@ public class BitcoinGwy implements  PeerDataEventListener,
 		mTransaction = mWallet.sendCoins(mPeerGroup.getConnectedPeers().get(0), xtaTx);
 		saveWallet();
 
-		return mTransaction.toString();
+
+
+		DbCryptoPayment tPayment = new DbCryptoPayment();
+		tPayment.setAccountId( pCryptoReDrawRequest.getAccountId().get());
+		tPayment.setAddress( pCryptoReDrawRequest.getAddress().get() );
+		tPayment.setCoinType(TEDB.CoinType.BTC.name());
+		tPayment.setState( TEDB.StateType.PENDING.name() );
+		tPayment.setTime( SDF.format(System.currentTimeMillis()));
+		tPayment.setTxid( mTransaction.getTxId().toString());
+		tPayment.setAmount( tCoins.toFriendlyString() );
+		tPayment.setActionType( TEDB.ActionType.REDRAW.name());
+		mDb.updateDbCryptoPayment( tPayment, true );
+
+
+		return mTransaction.getTxId().toString();
 
 	}
 
@@ -684,7 +701,7 @@ public class BitcoinGwy implements  PeerDataEventListener,
 		public void run() {
 			EventBitcoinOnCoinsReceivedConfirm tEvent = eventOnCoinsReceivedConfirmed(mWallet,mTx);
 			mLog.info( prettyJson( tEvent.toJson() ));
-			bitcoinOnCoinsReceivedConfirmToDB( tEvent );
+			bitcoinOnCoinsReceivedConfirm( tEvent );
 			saveWallet();
 		}
 

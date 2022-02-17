@@ -183,6 +183,17 @@ public class Management extends JFrame implements  ServiceInterface
 				System.out.println("invalied response message from service: " + pService + " msg: " + new String(tRcvBuf));
 				return null;
 			}
+			if (tResponse instanceof StatusMessage) {
+				StatusMessage tStsMsg = (StatusMessage) tResponse;
+				JOptionPane.showMessageDialog(this,
+						"Error status \"" + pService + "\"\n rspmsg: " + tStsMsg.toJson().toString(),
+						"Error Response",
+						JOptionPane.WARNING_MESSAGE);
+				System.out.println("invalied response message from service: " + pService + " msg: " + new String(tRcvBuf));
+				return null;
+			}
+
+
 			if (((MgmtMessageResponse) tResponse) instanceof MgmtStatusResponse) {
 				JOptionPane.showMessageDialog(this,
 						"Error from service \"" + pService + "\"\n" +

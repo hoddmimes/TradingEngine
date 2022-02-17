@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.TeIpcServices;
 import com.hoddmimes.te.messages.generated.MgmtGetWalletRequest;
 import com.hoddmimes.te.messages.generated.MgmtGetWalletResponse;
@@ -31,7 +32,7 @@ import java.awt.*;
 
 public class CryptoWalletPanel extends JPanel
 {
-	String[] mWalletTypes = {"Bitcoin", "Ethereum"};
+	String[] mWalletTypes = {TEDB.CoinType.BTC.name(), TEDB.CoinType.ETH.name()};
 	JComboBox<String> mWalletComboBox;
 	MgmtGetWalletResponse mWalletMsg;
 	JTextArea             mWalletText;

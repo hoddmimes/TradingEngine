@@ -137,18 +137,19 @@ public class TEDB extends MongoAux
 	}
 
 
-	public void updateAccountCryptoDeposit( String pAccount, String pCoinType, long pAmount ) {
+	public UpdateResult updateAccountCryptoDeposit( String pAccount, String pCoinType, long pAmount ) {
 		DbCryptoDeposit tDeposit = (DbCryptoDeposit) dbEntryFound(super.findDbCryptoDepositByAccountId(pAccount));
 		if (tDeposit == null) {
 			tDeposit = new DbCryptoDeposit().setAccountId(pAccount);
 		}
 		DbDepositHolding tHolding = tDeposit.findHolding(pCoinType);
 		if (tHolding == null) {
-			tHolding = new DbDepositHolding().setSid(pCoinType);
+			tHolding = new DbDepositHolding().setSid(pCoinType).setHolding(0L);
+			tDeposit.addHoldings( tHolding );
 		}
-		tHolding.setHolding(pAmount);
+		tHolding.updateHolding(pAmount);
 
-		super.updateDbCryptoDeposit( tDeposit, true);
+		return super.updateDbCryptoDeposit( tDeposit, true);
 	}
 
 

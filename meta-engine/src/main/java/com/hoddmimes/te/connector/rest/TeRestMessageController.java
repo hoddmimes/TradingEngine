@@ -242,7 +242,7 @@ public class TeRestMessageController
 		GetDepositEntryRequest tPayEntryRqst = new GetDepositEntryRequest();
 		tPayEntryRqst.setRef(String.valueOf(mInternalRef.getAndIncrement()));
 
-		if (AuxJson.navigateBoolean( TeAppCntx.getInstance().getTeConfiguration(),"TeConfiguration/cryptoGateway/enable")) {
+		if (!AuxJson.navigateBoolean( TeAppCntx.getInstance().getTeConfiguration(),"TeConfiguration/cryptoGateway/enable")) {
 			return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
 		}
 
@@ -262,7 +262,7 @@ public class TeRestMessageController
 		SetReDrawEntryRequest tRedrawEntryRqst = new SetReDrawEntryRequest();
 		tRedrawEntryRqst.setRef(String.valueOf(mInternalRef.getAndIncrement()));
 
-		if (AuxJson.navigateBoolean( TeAppCntx.getInstance().getTeConfiguration(),"TeConfiguration/cryptoGateway/enable")) {
+		if (!AuxJson.navigateBoolean( TeAppCntx.getInstance().getTeConfiguration(),"TeConfiguration/cryptoGateway/enable")) {
 			return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
 		}
 
@@ -280,6 +280,10 @@ public class TeRestMessageController
 
 	@PostMapping( path = "/redrawCrypto" )
 	ResponseEntity<?> redrawCrypto(HttpSession pSession, @RequestBody String pJsonRqstString ) {
+		if (!AuxJson.navigateBoolean( TeAppCntx.getInstance().getTeConfiguration(),"TeConfiguration/cryptoGateway/enable")) {
+			return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
+		}
+
 		String jRqstMsgString  = AuxJson.tagMessageBody(CryptoReDrawRequest.NAME, pJsonRqstString);
 		CryptoReDrawRequest tRedrawCryptoRequest = new CryptoReDrawRequest( jRqstMsgString );
 		if (tRedrawCryptoRequest.getRef().isEmpty()) {

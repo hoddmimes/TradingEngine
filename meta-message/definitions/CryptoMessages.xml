@@ -45,7 +45,7 @@
     <Message name="DbCryptoPayment" rootMessage="false"  db="true" dbCollection="CryptoPayment">
         <Attribute name="accountId" type="String" mandatory="true" />
         <Attribute name="address" type="String" mandatory="true"/>
-        <Attribute name="time" type="String" mandatory="true"/>
+        <Attribute name="time" type="String" mandatory="true" dbKey="not-unique"/>
         <Attribute name="amount" type="String" mandatory="true"/>
         <Attribute name="coinType" type="String" mandatory="true" /> <!-- bitcoin/ethereum -->
         <Attribute name="actionType" type="String" mandatory="true"/> <!-- deposit/redraw -->

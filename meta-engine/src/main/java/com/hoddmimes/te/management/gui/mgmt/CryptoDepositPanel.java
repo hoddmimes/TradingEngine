@@ -82,8 +82,6 @@ public class CryptoDepositPanel extends JPanel {
 		MgmtGetCryptoDepositAccountsResponse tResponse = (MgmtGetCryptoDepositAccountsResponse) mServiceInterface.transceive( TeIpcServices.CryptoGwy,
 															new MgmtGetCryptoDepositAccountsRequest().setRef("cad"));
 
-
-
 		mDepositTableModel.clear();
 		if (tResponse.getAccounts().isPresent()) {
 			List<DbCryptoDeposit> tDepositList = tResponse.getAccounts().get();

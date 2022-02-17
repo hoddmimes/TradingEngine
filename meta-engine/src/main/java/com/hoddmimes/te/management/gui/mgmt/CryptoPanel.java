@@ -64,13 +64,13 @@ public class CryptoPanel extends BasePanel
 		mTabbedPane.addTab("Wallets", mWalletPanel );
 		mTabbedPane.addTab("Account Deposit", mDepositPanel );
 		mTabbedPane.addTab("Account Addresses", mAddressesPanel );
-		mTabbedPane.addTab("Account Deposit", mDepositPanel );
 		mTabbedPane.addTab("Account Transfers", mTransfersPanel );
 		this.add( mTabbedPane, BorderLayout.CENTER);
 
 		mTabbedPane.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
+				loadDepositAccounts();
 				JTabbedPane tabPane = (JTabbedPane) e.getSource();
 				Component c = tabPane.getSelectedComponent();
 				if (c instanceof CryptoWalletPanel) {
@@ -102,6 +102,10 @@ public class CryptoPanel extends BasePanel
 
 	void loadData() {
 		mWalletPanel.loadData();
+		loadDepositAccounts();
+	}
+
+	private void loadDepositAccounts() {
 
 		MgmtGetCryptoDepositAccountsResponse tResponse = (MgmtGetCryptoDepositAccountsResponse) mServiceInterface.transceive(TeIpcServices.CryptoGwy,
 				new MgmtGetCryptoDepositAccountsRequest().setRef("cad"));
