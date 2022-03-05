@@ -1,0 +1,7 @@
+{ "baseHttp": {"uri": "https://localhost:8883/te-trading/"},
+  "baseWss": {"uri": "wss://localhost:8883/te-marketdata/"},
+  "requests" : [
+    { "method" : "POST", "endpoint" :  "logon", "body" : {"account":"USER01", "password":"test","ref" : "sr-71"}},
+    { "method" : "GET", "endpoint" : "addRedrawEntry/BTC/bcrt1qw2rg6k2c4rudmlnn2eg73y6u6egtuu2lq4sd69"}
+  ]
+}

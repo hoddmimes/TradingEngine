@@ -199,7 +199,7 @@ public class TestClient implements  TeWebsocketClient.WssCallback {
                 msglog( tRqst );
 
                 if (tRqst.get("method").getAsString().contentEquals("POST")) {
-                    if (tRqst.get("endpoint").getAsString().contentEquals("te-marketdata")) {
+                    if (tRqst.get("endpoint").getAsString().contentEquals("marketdata")) {
                         tRspMsg = sendSubscriptionRequest( tRqst.get("body").getAsJsonObject() );
                     } else {
                         tRspMsg = tTEHttpClient.post(tRqst.get("body").getAsJsonObject().toString(), tRqst.get("endpoint").getAsString());

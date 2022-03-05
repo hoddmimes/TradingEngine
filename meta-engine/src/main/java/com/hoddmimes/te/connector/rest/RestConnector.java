@@ -21,7 +21,9 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AppProperties;
 import com.hoddmimes.te.common.AuxJson;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.connector.ConnectorBase;
+import com.hoddmimes.te.sessionctl.SessionController;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
@@ -57,7 +59,7 @@ public class RestConnector extends ConnectorBase implements Runnable
 
 
 	public RestConnector() {
-		super(TeAppCntx.getInstance().getTeConfiguration(),TeAppCntx.getInstance().getSessionController());
+		super(TeAppCntx.getInstance().getTeConfiguration(), (ConnectorCallbackInterface) TeAppCntx.getInstance().getService( TeService.SessionService));
 	}
 
 	public RestConnector(JsonObject pTeConfiguration, ConnectorCallbackInterface pCallback) {
@@ -87,7 +89,7 @@ public class RestConnector extends ConnectorBase implements Runnable
 			String args[] = new String[0];
 			SpringApplication tApplication = new SpringApplication(RestConnector.class);
 
-			String tConfigFile = AuxJson.navigateString( mConfiguration,"configuration/appConfiguration");
+			String tConfigFile = AuxJson.navigateString(mConnectorConfig,"configuration/appConfiguration");
 			mLog.info("appConfiguration : " + tConfigFile);
 			Properties tAppProperties = AppProperties.mapPropertyFileToProperties( tConfigFile );
 
@@ -103,3 +105,4 @@ public class RestConnector extends ConnectorBase implements Runnable
 
 
 }
+

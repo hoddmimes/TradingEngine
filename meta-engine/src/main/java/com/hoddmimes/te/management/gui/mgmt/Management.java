@@ -18,13 +18,8 @@
 package com.hoddmimes.te.management.gui.mgmt;
 
 import com.hoddmimes.jsontransform.MessageInterface;
-import com.hoddmimes.te.TeAppCntx;
-import com.hoddmimes.te.common.AuxJson;
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.common.ipc.IpcService;
-import com.hoddmimes.te.common.transport.IpmgPublisher;
-import com.hoddmimes.te.common.transport.IpmgSubscriber;
-import com.hoddmimes.te.common.transport.IpmgSubscriberListenerInterface;
 import com.hoddmimes.te.common.transport.tcpip.TcpClient;
 import com.hoddmimes.te.common.transport.tcpip.TcpThread;
 import com.hoddmimes.te.messages.MgmtMessageRequest;
@@ -132,7 +127,7 @@ public class Management extends JFrame implements  ServiceInterface
 
 		mWaitForServerFrame = new WaitForServerFrame( mIpcService );
 		mWaitForServerFrame.setVisible( true );
-		mWaitForServerFrame.waitForNamedService(TeIpcServices.MatchingService);
+		mWaitForServerFrame.waitForNamedService(TeService.MatchingService.name());
 		mWaitForServerFrame = null;
 	}
 

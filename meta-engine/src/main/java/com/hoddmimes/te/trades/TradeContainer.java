@@ -22,18 +22,20 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.jaux.txlogger.*;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
+import com.hoddmimes.te.TeCoreService;
 import com.hoddmimes.te.common.AuxJson;
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
+import com.hoddmimes.te.common.ipc.IpcService;
 import com.hoddmimes.te.engine.InternalTrade;
 import com.hoddmimes.te.engine.Order;
+import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.instrumentctl.MarketX;
-import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
 import com.hoddmimes.te.common.ipc.IpcComponentInterface;
 import com.hoddmimes.te.messages.MgmtMessageRequest;
-import com.hoddmimes.te.messages.MgmtMessageResponse;
 import com.hoddmimes.te.messages.SID;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
+import com.hoddmimes.te.positions.PositionController;
 import com.hoddmimes.te.sessionctl.RequestContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,7 +46,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TradeContainer implements IpcRequestCallbackInterface
+public class TradeContainer extends TeCoreService
 {
 	private SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private Logger mLog = LogManager.getLogger( TradeContainer.class);
@@ -56,74 +58,77 @@ public class TradeContainer implements IpcRequestCallbackInterface
 		}
 	}
 
-	private JsonObject mConfiguration;
-	private ConcurrentHashMap<Integer, List<TradeX>>                        mTradesByMkt;
-	private ConcurrentHashMap<String, List<TradeX>>                         mTradesBySid;
+	private InstrumentContainer mInstrumentContainer;
+	private PositionController mPositionController;
+	private JsonObject mTradeContainerConfig;
+	private ConcurrentHashMap<Integer, List<InternalTrade>>                        mTradesByMkt;
+	private ConcurrentHashMap<String, List<InternalTrade>>                         mTradesBySid;
 
 	private ConcurrentHashMap<Integer,ConcurrentHashMap<String, TradePriceX>>   mTradePricesMap;
 
 	private ConcurrentHashMap<Integer,ConcurrentHashMap<String, BdxTrade>>      mBdxTrade;
 	private TxLoggerWriterInterface mTradeLogger;
 
-	public TradeContainer( JsonObject pTeConfiguration ) {
+	public TradeContainer(JsonObject pTeConfiguration, IpcService pIpcService) {
+		super( pTeConfiguration, pIpcService );
 		mTradesByMkt = new ConcurrentHashMap<>();
 		mTradesBySid = new ConcurrentHashMap<>();
 		mTradePricesMap = new ConcurrentHashMap<>();
 		mBdxTrade = new ConcurrentHashMap<>();
 
-		mConfiguration = AuxJson.navigateObject( pTeConfiguration,"TeConfiguration/tradeContainer/configuration");
+		mTradeContainerConfig = AuxJson.navigateObject( pTeConfiguration,"TeConfiguration/tradeContainer/configuration");
+		mPositionController = (PositionController) TeAppCntx.getInstance().getService( TeService.PositionData);
+		mInstrumentContainer = (InstrumentContainer) TeAppCntx.getInstance().getService( TeService.InstrumentData);
 
 		if (!TeAppCntx.getInstance().getTestMode()) {
 			loadTrades();
 		}
 		openTradelog();
+		TeAppCntx.getInstance().registerService( this );
+	}
 
-		TeAppCntx.getInstance().setTradeContainer( this );
-		IpcComponentInterface tMgmt = TeAppCntx.getInstance().getIpcService().registerComponent( TeIpcServices.TradeData, 0, this );
+	@Override
+	public TeService getServiceId() {
+		return TeService.TradeData;
 	}
 
 
-
-	private String getLogDir() {
-		return AuxJson.navigateString( mConfiguration,"txlogDir");
-	}
-
-	private void logTrade( TradeX pTrade ) {
+	private void logTrade( InternalTrade pTrade ) {
 		mTradeLogger.write(pTrade.toJson().toString().getBytes(StandardCharsets.UTF_8));
 	}
 
 	private void openTradelog() {
 
 		TxLoggerConfigInterface tTxConfig = TxLoggerFactory.getConfiguration();
-		tTxConfig.setWriteStatistics( AuxJson.navigateBoolean(mConfiguration, "txStatistics"));
-		tTxConfig.setSyncDisabled(AuxJson.navigateBoolean(mConfiguration, "txSyncDisabled"));
+		tTxConfig.setWriteStatistics( AuxJson.navigateBoolean(mTradeContainerConfig, "txStatistics"));
+		tTxConfig.setSyncDisabled(AuxJson.navigateBoolean(mTradeContainerConfig, "txSyncDisabled"));
 		mTradeLogger = TxLoggerFactory.getWriter(
-				AuxJson.navigateString(mConfiguration, "txlogDir"),
-				AuxJson.navigateString(mConfiguration, "txlogName"));
+				AuxJson.navigateString(mTradeContainerConfig, "txlogDir"),
+				AuxJson.navigateString(mTradeContainerConfig, "txlogName"));
 
 
 	}
 
-	private void toTrades( TradeX pTrade ) {
+	private void toTrades( InternalTrade pTrade ) {
 
 		// Update the position holdings
-		TeAppCntx.getInstance().getPositionController().tradeExcution( pTrade );
+		mPositionController.tradeExcution( pTrade );
 
 		// Add trade by Market
-		List<TradeX> tTrdLst = mTradesByMkt.get( pTrade.getMarketId().get());
+		List<InternalTrade> tTrdLst = mTradesByMkt.get( pTrade.getMarketId());
 		if (tTrdLst == null) {
 			tTrdLst = new LinkedList<>();
-			mTradesByMkt.put( pTrade.getMarketId().get(), tTrdLst);
+			mTradesByMkt.put( pTrade.getMarketId(), tTrdLst);
 		}
 		synchronized( tTrdLst ) {
 			tTrdLst.add( pTrade);
 		}
 
 		// Add trade by SID
-		tTrdLst = mTradesBySid.get( pTrade.getSid().get());
+		tTrdLst = mTradesBySid.get( pTrade.getSid());
 		if (tTrdLst == null) {
 			tTrdLst = new LinkedList<>();
-			mTradesBySid.put( pTrade.getSid().get(), tTrdLst);
+			mTradesBySid.put( pTrade.getSid(), tTrdLst);
 		}
 		synchronized( tTrdLst ) {
 			tTrdLst.add( pTrade);
@@ -135,15 +140,15 @@ public class TradeContainer implements IpcRequestCallbackInterface
 	private void loadTrades() {
 		int tCount = 0;
 		TxLoggerReplayInterface txReplay = TxLoggerFactory.getReplayer(
-				AuxJson.navigateString(mConfiguration, "txlogDir"),
-				AuxJson.navigateString(mConfiguration, "txlogName"));
+				AuxJson.navigateString(mTradeContainerConfig, "txlogDir"),
+				AuxJson.navigateString(mTradeContainerConfig, "txlogName"));
 		TxLoggerReplayIterator tItr = txReplay.replaySync(TxLoggerReplayInterface.DIRECTION.Backward, new Date());
 
 		try {
 			while (tItr.hasMore()) {
 				TxLoggerReplayEntry txEntry = tItr.next();
 				String jObjectString = new String(txEntry.getData());
-				TradeX trd = new TradeX( jObjectString );
+				InternalTrade trd = new InternalTrade(jObjectString);
 				toTrades( trd );
 				updateTradePrice(  trd );
 				tCount++;
@@ -158,12 +163,10 @@ public class TradeContainer implements IpcRequestCallbackInterface
 
 
 	public BdxTrade addTrade(InternalTrade pInternalTrade) {
-		TradeX tTrade = new TradeX( pInternalTrade);
-		mTradeLogger.write(tTrade.toJson().toString().getBytes(StandardCharsets.UTF_8));
-
-		toTrades( tTrade );
-		updateTradePrice(  tTrade );
-		return updateBdxTrade( tTrade );
+		mTradeLogger.write(pInternalTrade.toJson().toString().getBytes(StandardCharsets.UTF_8));
+		toTrades( pInternalTrade );
+		updateTradePrice(  pInternalTrade );
+		return updateBdxTrade( pInternalTrade );
 	}
 
 	public synchronized MessageInterface queryTradePrices(QueryTradePricesRequest pRqstMsg, RequestContext pRequestContext)
@@ -172,10 +175,9 @@ public class TradeContainer implements IpcRequestCallbackInterface
 		tRspMsg.setRef( pRqstMsg.getRef().get());
 
 
-		if (!TeAppCntx.getInstance().getInstrumentContainer().marketDefined( pRqstMsg.getMarketId().get() )) {
+		if (!mInstrumentContainer.marketDefined( pRqstMsg.getMarketId().get() )) {
 			return StatusMessageBuilder.error("No such market (" + pRqstMsg.getMarketId().get() + ")", pRqstMsg.getRef().get());
 		}
-
 
 
 		if (pRqstMsg.getSid().isPresent()) {
@@ -207,35 +209,35 @@ public class TradeContainer implements IpcRequestCallbackInterface
 		QueryOwnTradesResponse tRspMsg = new QueryOwnTradesResponse();
 		tRspMsg.setRef( pRequest.getRef().get());
 
-		List<TradeX> tTrdLst = mTradesByMkt.get( pRequest.getMarketId().get());
+		List<InternalTrade> tTrdLst = mTradesByMkt.get( pRequest.getMarketId().get());
 		if (tTrdLst == null) {
 			tRspMsg.setTrades( new ArrayList<>());
 			return tRspMsg;
 		}
 		synchronized( tTrdLst ) {
-			for (TradeX trd : tTrdLst) {
-				if (trd.getBuyer().get().contentEquals(pRequestContext.getAccountId())) {
+			for (InternalTrade trd : tTrdLst) {
+				if (trd.getBuyOrder().getAccountId().contentEquals(pRequestContext.getAccountId())) {
 					OwnTrade ot = new OwnTrade();
-					ot.setOrderId(Long.toHexString(trd.getBuyerOrderId().get()));
-					ot.setPrice(trd.getPrice().get());
-					ot.setTime(SDF.format(trd.getTradeTime().get()));
-					ot.setSid(trd.getSid().get());
-					ot.setTradeId(Long.toHexString(trd.getTradeId().get()));
-					ot.setQuantity(trd.getQuantity().get());
+					ot.setOrderId(Long.toHexString(trd.getBuyOrder().getOrderId()));
+					ot.setPrice(trd.getPrice());
+					ot.setTime(SDF.format(trd.getTradeTime()));
+					ot.setSid(trd.getSid());
+					ot.setTradeId(Long.toHexString(trd.getTradeNo()));
+					ot.setQuantity(trd.getQuantity());
 					ot.setSide(Order.Side.BUY.name());
-					ot.setOrderRef(trd.getBuyerOrderRef().get());
+					ot.setOrderRef(trd.getBuyOrder().getUserRef());
 					tRspMsg.addTrades(ot);
 				}
-				if (trd.getSeller().get().contentEquals(pRequestContext.getAccountId())) {
+				if (trd.getSellOrder().getAccountId().contentEquals(pRequestContext.getAccountId())) {
 					OwnTrade ot = new OwnTrade();
-					ot.setOrderId(Long.toHexString(trd.getSellerOrderId().get()));
-					ot.setPrice(trd.getPrice().get());
-					ot.setTime(SDF.format(trd.getTradeTime().get()));
-					ot.setSid(trd.getSid().get());
-					ot.setTradeId(Long.toHexString(trd.getTradeId().get()));
-					ot.setQuantity(trd.getQuantity().get());
+					ot.setOrderId(Long.toHexString(trd.getSellOrder().getOrderId()));
+					ot.setPrice(trd.getPrice());
+					ot.setTime(SDF.format(trd.getTradeTime()));
+					ot.setSid(trd.getSid());
+					ot.setTradeId(Long.toHexString(trd.getSellOrder().getOrderId()));
+					ot.setQuantity(trd.getQuantity());
 					ot.setSide(Order.Side.SELL.name());
-					ot.setOrderRef(trd.getSellerOrderRef().get());
+					ot.setOrderRef(trd.getSellOrder().getUserRef());
 					tRspMsg.addTrades(ot);
 				}
 			}
@@ -243,25 +245,25 @@ public class TradeContainer implements IpcRequestCallbackInterface
 		return tRspMsg;
 	}
 
-	private synchronized BdxTrade updateBdxTrade( TradeX pTrade ) {
+	private synchronized BdxTrade updateBdxTrade( InternalTrade pTrade ) {
 		ConcurrentHashMap<String,BdxTrade> tTrdBdxMap = mBdxTrade.get( pTrade.getMarketId());
 		if (tTrdBdxMap == null) {
 			tTrdBdxMap = new ConcurrentHashMap<>();
-			mBdxTrade.put( pTrade.getMarketId().get(), tTrdBdxMap);
+			mBdxTrade.put( pTrade.getMarketId(), tTrdBdxMap);
 		}
 		BdxTrade trd = tTrdBdxMap.get( pTrade.getSid());
 		if (trd == null) {
 			trd = new BdxTrade();
-			trd.setQuantity( pTrade.getQuantity().get());
-			trd.setSid( pTrade.getSid().get());
-			trd.setHigh( pTrade.getPrice().get());
-			trd.setLow( pTrade.getPrice().get());
-			trd.setOpen( pTrade.getPrice().get());
-			trd.setLast( pTrade.getPrice().get());
-			trd.setTotQuantity( pTrade.getQuantity().get());
+			trd.setQuantity( pTrade.getQuantity());
+			trd.setSid( pTrade.getSid());
+			trd.setHigh( pTrade.getPrice());
+			trd.setLow( pTrade.getPrice());
+			trd.setOpen( pTrade.getPrice());
+			trd.setLast( pTrade.getPrice());
+			trd.setTotQuantity( pTrade.getQuantity());
 		} else {
-			long tPrice = pTrade.getPrice().get();
-			trd.setTotQuantity((trd.getQuantity().get() + pTrade.getQuantity().get()));
+			long tPrice = pTrade.getPrice();
+			trd.setTotQuantity((trd.getQuantity().get() + pTrade.getQuantity()));
 			trd.setLast( tPrice );
 			if (tPrice > trd.getHigh().get()) {
 				trd.setHigh( tPrice );
@@ -273,17 +275,17 @@ public class TradeContainer implements IpcRequestCallbackInterface
 		return trd;
 	}
 
-	private synchronized void updateTradePrice(  TradeX pTrade ) {
+	private synchronized void updateTradePrice(  InternalTrade pTrade ) {
 
 		ConcurrentHashMap<String,TradePriceX> tTrdPrcMap = mTradePricesMap.get( pTrade.getMarketId());
 		if (tTrdPrcMap == null) {
 			tTrdPrcMap = new ConcurrentHashMap<>();
-			mTradePricesMap.put( pTrade.getMarketId().get(), tTrdPrcMap);
+			mTradePricesMap.put( pTrade.getMarketId(), tTrdPrcMap);
 		}
 		TradePriceX tp = tTrdPrcMap.get( pTrade.getSid());
 		if (tp == null) {
 			tp = new TradePriceX( pTrade );
-			tTrdPrcMap.put( pTrade.getSid().get(), tp);
+			tTrdPrcMap.put( pTrade.getSid(), tp);
 		} else {
 			tp.update( pTrade );
 		}
@@ -303,12 +305,11 @@ public class TradeContainer implements IpcRequestCallbackInterface
 
 	MgmtGetTradesResponse getTradesForMgmt(MgmtMessageRequest pMgmtRequest) {
 		MgmtGetTradesResponse tRsp = new MgmtGetTradesResponse().setRef( pMgmtRequest.getRef().get());
-		Iterator<List<TradeX>> tMktItr = mTradesByMkt.values().iterator();
+		Iterator<List<InternalTrade>> tMktItr = mTradesByMkt.values().iterator();
 		while( tMktItr.hasNext()) {
-			List<TradeX> tTrdLst = tMktItr.next();
+			List<InternalTrade> tTrdLst = tMktItr.next();
 			synchronized ( tTrdLst) {
-				List<ContainerTrade> tList = new ArrayList<ContainerTrade>( tTrdLst );
-				tRsp.addTrades(tList);
+				tTrdLst.stream().forEach( it -> tRsp.addTrades( it.toTradeExecution()));
 			}
 		}
 		return tRsp;
@@ -324,25 +325,25 @@ public class TradeContainer implements IpcRequestCallbackInterface
 
 		HashMap<Integer, MgmtMarketTradeEntry> tMarketStatMap = new HashMap<>();
 
-		Iterator<List<TradeX>> tSidItr = mTradesBySid.values().iterator();
+		Iterator<List<InternalTrade>> tSidItr = mTradesBySid.values().iterator();
 		while( tSidItr.hasNext()) {
-			List<TradeX> tTrdLst = tSidItr.next();
+			List<InternalTrade> tTrdLst = tSidItr.next();
 			int tVolume = 0, tExecutions = 0;
 			long tMinPrice = Long.MAX_VALUE, tMaxPrice = 0, tAvgPrice = 0, tTurnover = 0;
-			String tSid = tTrdLst.get(0).getSid().get();
+			String tSid = tTrdLst.get(0).getSid();
 			synchronized ( tTrdLst ) {
-				for (TradeX trd : tTrdLst) {
-					tAvgPrice = (tAvgPrice == 0) ? trd.getPrice().get() :
-							((tVolume * tAvgPrice) + (trd.getQuantity().get() * trd.getPrice().get())) / (tVolume + trd.getQuantity().get());
+				for (InternalTrade trd : tTrdLst) {
+					tAvgPrice = (tAvgPrice == 0) ? trd.getPrice() :
+							((tVolume * tAvgPrice) + (trd.getQuantity() * trd.getPrice())) / (tVolume + trd.getQuantity());
 
-					tVolume += trd.getQuantity().get();
-					tTurnover += trd.getQuantity().get() * trd.getPrice().get();
+					tVolume += trd.getQuantity();
+					tTurnover += trd.getQuantity() * trd.getPrice();
 					tExecutions++;
-					if (trd.getPrice().get() < tMinPrice) {
-						tMinPrice = trd.getPrice().get();
+					if (trd.getPrice() < tMinPrice) {
+						tMinPrice = trd.getPrice();
 					}
-					if (trd.getPrice().get() > tMaxPrice) {
-						tMaxPrice = trd.getPrice().get();
+					if (trd.getPrice() > tMaxPrice) {
+						tMaxPrice = trd.getPrice();
 					}
 				}
 
@@ -353,7 +354,7 @@ public class TradeContainer implements IpcRequestCallbackInterface
 				SID s = new SID(tSid);
 				MgmtMarketTradeEntry tMrktStat = tMarketStatMap.get(s.getMarket());
 				if (tMrktStat == null) {
-					MarketX tMarketX = TeAppCntx.getInstance().getInstrumentContainer().getMarket( s.getMarket());
+					MarketX tMarketX = mInstrumentContainer.getMarket( s.getMarket());
 					tMrktStat = new MgmtMarketTradeEntry().setMarket( tMarketX.getName().get()).setMarketId( s.getMarket());
 					tMarketStatMap.put( s.getMarket(), tMrktStat);
 				}

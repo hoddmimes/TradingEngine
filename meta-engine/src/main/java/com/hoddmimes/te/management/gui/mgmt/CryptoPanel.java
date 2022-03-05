@@ -17,14 +17,13 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
-import com.hoddmimes.te.messages.generated.Account;
-import com.hoddmimes.te.messages.generated.DbCryptoDeposit;
+import com.hoddmimes.te.common.interfaces.TeService;
+
+import com.hoddmimes.te.messages.DbCryptoDeposit;
 import com.hoddmimes.te.messages.generated.MgmtGetCryptoDepositAccountsRequest;
 import com.hoddmimes.te.messages.generated.MgmtGetCryptoDepositAccountsResponse;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -95,6 +94,8 @@ public class CryptoPanel extends BasePanel
 	ServiceInterface getServiceInterface() {
 		return mServiceInterface;
 	}
+
+
 	CryptoAccountComboModel getAccountModel() {
 		return mCryptoAccountComboModel;
 	}
@@ -107,14 +108,14 @@ public class CryptoPanel extends BasePanel
 
 	private void loadDepositAccounts() {
 
-		MgmtGetCryptoDepositAccountsResponse tResponse = (MgmtGetCryptoDepositAccountsResponse) mServiceInterface.transceive(TeIpcServices.CryptoGwy,
+		MgmtGetCryptoDepositAccountsResponse tResponse = (MgmtGetCryptoDepositAccountsResponse) mServiceInterface.transceive(TeService.CryptoGwy.name(),
 				new MgmtGetCryptoDepositAccountsRequest().setRef("cad"));
 		if (tResponse == null) {
 			JOptionPane.showMessageDialog( this, "Crypto gateway is not available" , "No CryptoGwy", JOptionPane.WARNING_MESSAGE );
 			return;
 		}
 		if ((tResponse.getAccounts().isPresent()) && (tResponse.getAccounts().get().size() > 0)) {
-			mCryptoAccountComboModel = new CryptoAccountComboModel( tResponse.getAccounts().get() );
+			mCryptoAccountComboModel = new CryptoAccountComboModel( tResponse.getAccountsIdentities() );
 		}
 	}
 
@@ -135,12 +136,12 @@ public class CryptoPanel extends BasePanel
 			super();
 		}
 
-		CryptoAccountComboModel( List<DbCryptoDeposit> pAccounts ) {
+		CryptoAccountComboModel( List<String> pAccounts ) {
 			super();
 			this.removeAllElements();
-			Collections.sort(pAccounts,  new AccountDepositSort());
-			for( DbCryptoDeposit tDepositAccount : pAccounts ) {
-				this.addElement( tDepositAccount.getAccountId().get());
+			Collections.sort(pAccounts);
+			for( String tAccountId : pAccounts ) {
+				this.addElement( tAccountId);
 			}
 		}
 	}

@@ -1,0 +1,11 @@
+{ "baseHttp": {"uri": "https://localhost:8883/te-trading/"},
+  "baseWss": {"uri": "wss://localhost:8883/te-marketdata/"},
+  "requests" : [
+      { "method" : "POST", "endpoint" :  "logon", "body" : {"account":"USER02", "password":"test","ref" : "sr-71"}},
+      { "method" : "POST", "endpoint" :  "marketdata", "body":  {"command":"ADD", "topic" :  "/BdxBBO/..."}},
+      { "method" : "POST", "endpoint" :  "marketdata", "body":  {"command":"ADD", "topic" :  "/BdxOwnOrderbookChange/..."}},
+      { "method" : "POST", "endpoint" :  "marketdata", "body":  {"command":"ADD", "topic" :  "/BdxOwnTrade/..."}},
+
+      { "method" : "POST", "endpoint" : "addOrder", "body" : {"sid":"2:BTC","price":49.00,"quantity": 11,"side":"SELL","ref" : "0011"}}
+  ]
+}

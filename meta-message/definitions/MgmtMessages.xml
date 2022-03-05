@@ -124,17 +124,17 @@
 
     <Message name="MgmtGetTradesResponse" implements="MgmtMessageResponse" rootMessage="true">
         <Attribute name="ref" type="String" mandatory="true"/>
-        <Attribute name="trades" type="ContainerTrade" list="array" mandatory="true"/>
+        <Attribute name="trades" type="TradeExecution" list="array" mandatory="true"/>
     </Message>
 
     <Message name="MgmtRevertTradeRequest" implements="MgmtMessageRequest" rootMessage="true">
         <Attribute name="ref" type="String" mandatory="true"/>
-        <Attribute name="trade" type="ContainerTrade" mandatory="true"/>
+        <Attribute name="trade" type="TradeExecution" mandatory="true"/>
     </Message>
 
     <Message name="MgmtRevertTradeResponse" implements="MgmtMessageResponse" rootMessage="true">
         <Attribute name="ref" type="String" mandatory="true"/>
-        <Attribute name="revertedTrades" type="ContainerTrade" mandatory="true"/>
+        <Attribute name="revertedTrades" type="TradeExecution" mandatory="true"/>
     </Message>
 
     <Message name="MgmtGetLogMessagesRequest" implements="MgmtMessageRequest" rootMessage="true">
@@ -321,9 +321,29 @@
         <Attribute name="ref" type="String" mandatory="true"/>
     </Message>
 
+    <Message name="MgmtGetCryptoDepositAccount" rootMessage="false">
+        <Attribute name="accountId" type="String" />
+        <Attribute name="coin" type="String"/>
+        <Attribute name="amount" type="String"/>
+    </Message>
+
+
     <Message name="MgmtGetCryptoDepositAccountsResponse" implements="MgmtMessageResponse" rootMessage="true">
         <Attribute name="ref" type="String" mandatory="true"/>
-        <Attribute name="accounts" type="DbCryptoDeposit" list="array"/>
+        <Attribute name="accounts" type="MgmtGetCryptoDepositAccount" list="array"/>
+        <code>
+            public List&lt;String&gt; getAccountsIdentities() {
+               if (mAccounts == null) {
+                 return null;
+               }
+               List&lt;String&gt; tList = new ArrayList();
+               for( MgmtGetCryptoDepositAccount cda : mAccounts) {
+                  tList.add( cda.getAccountId().get() );
+               }
+               java.util.Collections.sort(tList);
+               return tList;
+            }
+        </code>
     </Message>
 
     <Message name="MgmtGetCryptoAccountsAddressesRequest" implements="MgmtMessageRequest" rootMessage="true">

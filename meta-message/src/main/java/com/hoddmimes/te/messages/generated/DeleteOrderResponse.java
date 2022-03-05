@@ -56,7 +56,7 @@ import com.google.gson.GsonBuilder;
 
             
                     private String mRef;
-                    private Integer mRemaining;
+                    private Long mRemaining;
                     private String mOrderId;
                public DeleteOrderResponse()
                {
@@ -77,11 +77,11 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mRef);
             }
         
-            public DeleteOrderResponse setRemaining( Integer pRemaining ) {
+            public DeleteOrderResponse setRemaining( Long pRemaining ) {
             mRemaining = pRemaining;
             return this;
             }
-            public Optional<Integer> getRemaining() {
+            public Optional<Long> getRemaining() {
               return  Optional.ofNullable(mRemaining);
             }
         
@@ -114,7 +114,7 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mRef Type: String List: false
             tEncoder.add( "ref", mRef );
         
-            //Encode Attribute: mRemaining Type: int List: false
+            //Encode Attribute: mRemaining Type: long List: false
             tEncoder.add( "remaining", mRemaining );
         
             //Encode Attribute: mOrderId Type: String List: false
@@ -131,8 +131,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mRef Type:String List: false
             mRef = tDecoder.readString("ref");
         
-            //Decode Attribute: mRemaining Type:int List: false
-            mRemaining = tDecoder.readInteger("remaining");
+            //Decode Attribute: mRemaining Type:long List: false
+            mRemaining = tDecoder.readLong("remaining");
         
             //Decode Attribute: mOrderId Type:String List: false
             mOrderId = tDecoder.readString("orderId");
@@ -166,7 +166,7 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setRemaining( Integer pValue ) {
+                        public Builder setRemaining( Long pValue ) {
                         mInstance.setRemaining( pValue );
                         return this;
                     }

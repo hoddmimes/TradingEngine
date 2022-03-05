@@ -1,0 +1,7 @@
+{ "baseHttp": {"uri": "https://localhost:8883/te-trading/"},
+  "baseWss": {"uri": "wss://localhost:8883/te-marketdata/"},
+  "requests" : [
+    { "method" : "POST", "endpoint" :  "logon", "body" : {"account":"USER01", "password":"test","ref" : "sr-71"}},
+    { "method" : "GET", "endpoint" : "addDepositEntry/ETH/0x85025f58ef1d1d1e86ba0d84c272fc0b37ca58bb"}
+  ]
+}

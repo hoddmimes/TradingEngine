@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
+import com.hoddmimes.te.common.Crypto;
 import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.DbConfirmation;
@@ -51,7 +52,7 @@ public class ConfirmationRestController {
 	ResponseEntity<String> addPaymentEntry(HttpSession pSession, @PathVariable String confirmationId)
 	{
 
-			TEDB mDb = TeAppCntx.getInstance().getDb();
+			TEDB mDb = TeAppCntx.getDatabase();
 			List<DbConfirmation> tConfirmations = mDb.findDbConfirmationByConfirmationId( confirmationId );
 			if (tConfirmations.size() != 1) {
 				cLog.warn("confirmation object not found (id: " + confirmationId + ")");
@@ -60,11 +61,11 @@ public class ConfirmationRestController {
 
 			DbConfirmation tConfirmation = tConfirmations.get(0);
 
-			if (tConfirmation.getConfirmationType().get().contentEquals( TEDB.ConfirmationType.ACCOUNT.name())) {
+			if (tConfirmation.getConfirmationType().get().contentEquals( Crypto.ConfirmationType.ACCOUNT.name())) {
 				mDb.confirmAccount(tConfirmation.getAccount().get());
 				cLog.info("account: " + tConfirmation.getAccount().get() + " confirmed id: " + confirmationId);
 			}
-			if (tConfirmation.getConfirmationType().get().contentEquals(TEDB.ConfirmationType.PAYMENT.name())) {
+			if (tConfirmation.getConfirmationType().get().contentEquals(Crypto.ConfirmationType.PAYMENT.name())) {
 				boolean tDone = mDb.confirmPaymentEntry(tConfirmation.getAccount().get(), confirmationId);
 				cLog.info("payment : " + tConfirmation.getAccount().get() + " confirmed id: " + confirmationId + " done: " + String.valueOf( tDone ));
 			}

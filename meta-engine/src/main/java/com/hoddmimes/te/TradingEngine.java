@@ -23,10 +23,10 @@ import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.common.ipc.IpcService;
 import com.hoddmimes.te.cryptogwy.CryptoGateway;
 import com.hoddmimes.te.engine.MatchingEngine;
-import com.hoddmimes.te.engine.MatchingEngineFrontend;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.positions.PositionController;
 import com.hoddmimes.te.sessionctl.SessionController;
@@ -39,6 +39,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -51,15 +52,8 @@ import static com.hoddmimes.te.sessionctl.SessionController.INTERNAL_SESSION_ID;
 public class TradingEngine
 {
 	private Logger mLog = LogManager.getLogger( TradingEngine.class );
-	private SessionController           mSessionController;
-	private ConnectorInterface          mConnector;
-	private MatchingEngine              mMatchingEngine;
-	private MatchingEngineFrontend      mMatchingEngineFrontend;
-	private InstrumentContainer         mInstrumentContainer;
-	private TradeContainer              mTradeContainer;
 	private JsonObject                  mConfiguration;
-	private PositionController          mPositionController;
-	private CryptoGateway               mCryptoGateway;
+	private IpcService                  mIpcService;
 	private TEDB                        mDb;
 
 
@@ -87,7 +81,9 @@ public class TradingEngine
 		mLog.info("current working dir: " + currentWorkingDirURI());
 
 		// Setup Management Service
-		setupIpcService();
+		 mIpcService = new IpcService( AuxJson.navigateObject( mConfiguration, "TeConfiguration/ipc"));
+		 mLog.info("IPC Service successfully started");
+
 
 		// Connect the database
 		 String tDbHost = AuxJson.navigateString( mConfiguration, "TeConfiguration/dbConfiguration/dbHost");
@@ -95,83 +91,69 @@ public class TradingEngine
 		 String tDbName = AuxJson.navigateString( mConfiguration, "TeConfiguration/dbConfiguration/dbName");
 		 mDb = new TEDB( tDbName, tDbHost, tDbPort );
 		 mDb.connectToDatabase();
-		 TeAppCntx.getInstance().setDb( mDb );
+		 TeAppCntx.getInstance().setDatabase( mDb );
+
+		 mIpcService = new IpcService( AuxJson.navigateObject( mConfiguration, "TeConfiguration/ipc"));
+		TeAppCntx.getInstance().setIpcService( mIpcService );
+
 
 		// Instansiate Instrument Container
-		mInstrumentContainer = new InstrumentContainer( mConfiguration );
-		mLog.info("successfully loaded InstrumentContainer");
+		InstrumentContainer tInstrumentContainer = new InstrumentContainer( mConfiguration, mIpcService );
 
 		// Instansiate Position Controller
-		 mPositionController = new PositionController( mConfiguration );
-		 mLog.info("successfully loaded PositionController");
+		 PositionController tPositionController = new PositionController( mConfiguration, mIpcService, mDb );
 
-		 // Instansiate Crypto Gatway Controller
-		 mCryptoGateway = new CryptoGateway( mConfiguration );
-		 mLog.info("successfully loaded CryptoGateway");
-
-		 //Instansiate Matching Engine Frontend
-		mMatchingEngineFrontend = new MatchingEngineFrontend( mConfiguration, mMatchingEngine);
-		mLog.info("successfully loaded MatchingEngineFrontend");
+		 // Instansiate Crypto Gateway Controller
+		 CryptoGateway CryptoGateway = new CryptoGateway( mConfiguration, mIpcService );
 
 		// Instansiate Trade container
-		mTradeContainer = new TradeContainer( mConfiguration );
-		mLog.info("successfully loaded TradeContainer");
+		TradeContainer tTradeContainer = new TradeContainer( mConfiguration, mIpcService );
 
-		// Instansiate Session Control
-		try {
-			mSessionController = new SessionController( mConfiguration );
-			mLog.info("successfully loaded SessionController");
-		} catch (IOException e) {
-			mLog.fatal("fatal to instansiate session controller", e);
-			System.exit(-1);
-		}
-
-		// Instansiate Controller
+		// Instansiate Session Control, will start the Rest Controller and the WebSocket distributor
 		initConnector();
 
 		//Instansiate Matching Engine
-		mMatchingEngine = new MatchingEngine( mConfiguration, mInstrumentContainer, TeAppCntx.getInstance().getMarketDataDistributor() );
-		mLog.info("successfully loaded MatchingEngine");
-
-		//Instansiate Matching Engine Frontend
-		mMatchingEngineFrontend = new MatchingEngineFrontend( mConfiguration, mMatchingEngine);
-		mLog.info("successfully loaded MatchingEngineFrontend");
+		TeAppCntx.getInstance().waitForServiceToStart( TeService.MarketData );
+		MatchingEngine tMatchingEngine = new MatchingEngine( mConfiguration, mIpcService );
 	}
 	private String currentWorkingDirURI() {
 		return FileSystems.getDefault().getPath("").toAbsolutePath().toUri().toString();
 	}
 
 	private void initConnector() {
+		SessionController tSessionController = null;
+		ConnectorInterface tConnector = null;
+
+		try {
+			tSessionController = new SessionController( mConfiguration, mIpcService );
+		} catch (IOException e) {
+			mLog.fatal("fatal to instansiate session controller", e);
+			System.exit(-1);
+		}
+
+
 		String tConnImplClsString = AuxJson.navigateString( mConfiguration, "TeConfiguration/connectorConfiguration/implementaion");
 		try {
 			Class[] cArg = new Class[2];
 			cArg[0] = JsonObject.class;
 			cArg[1] = ConnectorInterface.ConnectorCallbackInterface.class;
 			Class c = Class.forName(tConnImplClsString);
-			mConnector = (ConnectorInterface) c.getDeclaredConstructor( cArg ).newInstance(mConfiguration, mSessionController);
-			TeAppCntx.getInstance().setConnector( mConnector );
-			mLog.info("successfully loaded Connector ( " + mConnector.getClass().getSimpleName() + " )");
+			tConnector = (ConnectorInterface) c.getDeclaredConstructor( cArg ).newInstance(mConfiguration, tSessionController);
 		} catch (Exception e) {
 			mLog.error("Failed to instansiate Connector class \"" + tConnImplClsString +"\" reason: " + e.getMessage());
 		}
 
 		try {
-			mConnector.declareAndStart();
+			tConnector.declareAndStart();
+			TeAppCntx.getInstance().registerService( tSessionController);
 		}
 		catch( IOException e) {
-			mLog.fatal("fatail to declare and run connector ( " + mConnector.getClass().getSimpleName() + "), reason:  " + e.getMessage(), e );
+			mLog.fatal("fatail to declare and run connector ( " + tConnector.getClass().getSimpleName() + "), reason:  " + e.getMessage(), e );
 			System.exit(-1);
 		}
 		synchronized (this) {
 			this.notifyAll();
 		}
-	}
-
-	private void setupIpcService() {
-
-		IpcService tIpcService = new IpcService( AuxJson.navigateObject( mConfiguration, "TeConfiguration/ipc"));
-		TeAppCntx.getInstance().setIpcService( tIpcService );
-		mLog.info("IPC Service successfully started");
 	}
 
 	private boolean isComment( String pString )
@@ -188,22 +170,50 @@ public class TradingEngine
 	}
 
 	 public void parsePargument( String pArgs[]) {
-		if (pArgs.length == 0) {
-			mLog.error("configuration URI source program argument is missing");
-			System.exit(-1);
-		}
+		 URI tConfigURI = null;
+
+		 try {
+			 if (System.getenv("teconfiguration") != null) {
+				 tConfigURI = new URI(System.getenv("teconfiguration"));
+			 } else {
+				 if (pArgs.length == 0) {
+					 mLog.error("configuration URI source program argument is missing");
+					 System.exit(-1);
+				 }
+				 tConfigURI = new URI(pArgs[0]);
+			 }
+		 } catch (URISyntaxException ue) {
+			 mLog.error("invalid configuration URI syntax \"" + pArgs[0] + "\", reason: " + ue.getMessage());
+			 System.exit(-1);
+		 }
 
 		InputStream tInStream = null;
 		StringBuilder tStringBuilder = new StringBuilder();
 		try {
-			URI tConfigURI = new URI(pArgs[0]);
 			tInStream = tConfigURI.toURL().openConnection().getInputStream();
 			BufferedReader tReader = new BufferedReader(new InputStreamReader(tInStream));
 			mConfiguration = JsonParser.parseReader(tReader).getAsJsonObject();
 			TeAppCntx.getInstance().setTeConfiguration( mConfiguration );
 			mLog.info("successfully load TE configuration from \"" + pArgs[0] + "\"");
-		} catch (URISyntaxException ue) {
-			mLog.error("invalid configuration URI syntax \"" + pArgs[0] + "\", reason: " + ue.getMessage());
+
+			if (System.getenv("usecrypto") != null) {
+				JsonObject jObject = AuxJson.navigateObject(mConfiguration,"TeConfiguration/cryptoGateway").getAsJsonObject();
+				boolean tEnableFlag = Boolean.parseBoolean( System.getenv("usecrypto"));
+				jObject.addProperty("enable", tEnableFlag );
+
+				JsonObject jBtcObject = AuxJson.navigateObject(mConfiguration,"TeConfiguration/cryptoGateway/bitcoin").getAsJsonObject();
+				jObject.addProperty("enable", tEnableFlag );
+
+				JsonObject jEthereumObject = AuxJson.navigateObject(mConfiguration,"TeConfiguration/cryptoGateway/ethereum").getAsJsonObject();
+				jObject.addProperty("enable", tEnableFlag );
+
+				mLog.info("JUNIT TEST TeConfiguration/cryptoGateway/enable == " + tEnableFlag );
+
+			}
+
+
+		} catch (MalformedURLException ue) {
+			mLog.error("invalid malformed URI syntax \"" + pArgs[0] + "\", reason: " + ue.getMessage());
 			System.exit(-1);
 		} catch (IOException e) {
 			mLog.error("failed to read configuration file \"" + pArgs[0] + "\", reason: " + e.getMessage());
@@ -212,7 +222,7 @@ public class TradingEngine
 	}
 
 	public MessageInterface testMessage(JsonObject pRequestMessage ) {
-		return TeAppCntx.getInstance().getSessionController().connectorMessage( INTERNAL_SESSION_ID, pRequestMessage.toString() );
+		return ((SessionController) TeAppCntx.getInstance().getService(TeService.SessionService)).connectorMessage( INTERNAL_SESSION_ID, pRequestMessage.toString() );
 	}
 
 }

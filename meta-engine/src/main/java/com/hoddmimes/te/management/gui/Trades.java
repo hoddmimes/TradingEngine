@@ -17,18 +17,17 @@
 
 package com.hoddmimes.te.management.gui;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.hoddmimes.jaux.txlogger.TxLoggerFactory;
 import com.hoddmimes.jaux.txlogger.TxLoggerReplayEntry;
 import com.hoddmimes.jaux.txlogger.TxLoggerReplayInterface;
 import com.hoddmimes.jaux.txlogger.TxLoggerReplayIterator;
+import com.hoddmimes.te.engine.InternalTrade;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
 import com.hoddmimes.te.management.gui.table.TableModel;
-import com.hoddmimes.te.messages.generated.ContainerTrade;
-import com.hoddmimes.te.trades.TradeX;
+
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -165,7 +164,7 @@ public class Trades  extends JFrame implements TableCallbackInterface<Trades.Tra
 			while (tItr.hasMore()) {
 				TxLoggerReplayEntry txEntry = tItr.next();
 				String jObjectString = new String(txEntry.getData());
-				TradeX tTrade = new TradeX( jObjectString );
+				InternalTrade tTrade = new InternalTrade( jObjectString );
 				TradeEntry tTradeEntry = new TradeEntry( tTrade, Side.BUY);
 				if (tFilter.filter( tTradeEntry)) {
 					mTradeTableModel.addEntry(tTradeEntry);
@@ -739,20 +738,20 @@ public class Trades  extends JFrame implements TableCallbackInterface<Trades.Tra
 		public String mAccount;
 		public long mOrderId;
 		public double mPrice;
-		public int mQuantity;
+		public long mQuantity;
 		public long mTradeId;
 		public long mTime;
 
-		public TradeEntry(ContainerTrade pTrade, Side pSide )
+		public TradeEntry(InternalTrade pTrade, Side pSide )
 		{
-			mSid = pTrade.getSid().get();
+			mSid = pTrade.getSid();
 			mSide = pSide;
-			mAccount = (pSide == Side.BUY) ? pTrade.getBuyer().get() : pTrade.getSeller().get();
-			mOrderId = (pSide == Side.BUY) ? pTrade.getBuyerOrderId().get() : pTrade.getSellerOrderId().get();
-			mPrice = pTrade.getPrice().get();
-			mQuantity = pTrade.getQuantity().get();
-			mTradeId = pTrade.getTradeId().get();
-			mTime = pTrade.getTradeTime().get();
+			mAccount = (pSide == Side.BUY) ? pTrade.getBuyOrder().getAccountId() : pTrade.getSellOrder().getAccountId();
+			mOrderId = (pSide == Side.BUY) ? pTrade.getBuyOrder().getOrderId() : pTrade.getSellOrder().getOrderId();
+			mPrice = pTrade.getPrice();
+			mQuantity = pTrade.getQuantity();
+			mTradeId = pTrade.getTradeNo();
+			mTime = pTrade.getTradeTime();
 		}
 
 

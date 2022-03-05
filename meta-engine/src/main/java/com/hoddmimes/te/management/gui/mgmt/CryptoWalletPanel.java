@@ -21,18 +21,20 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.hoddmimes.te.common.db.TEDB;
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.Crypto;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.messages.generated.MgmtGetWalletRequest;
 import com.hoddmimes.te.messages.generated.MgmtGetWalletResponse;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class CryptoWalletPanel extends JPanel
 {
-	String[] mWalletTypes = {TEDB.CoinType.BTC.name(), TEDB.CoinType.ETH.name()};
+	String[] mWalletTypes = {Crypto.CoinType.BTC.name(), Crypto.CoinType.ETH.name()};
 	JComboBox<String> mWalletComboBox;
 	MgmtGetWalletResponse mWalletMsg;
 	JTextArea             mWalletText;
@@ -57,7 +59,7 @@ public class CryptoWalletPanel extends JPanel
 		String tData = null;
 		mWalletMsg = null;
 		tRqst.setCoin( (String) mWalletComboBox.getSelectedItem());
-		mWalletMsg = (MgmtGetWalletResponse) mServiceInterface.transceive( TeIpcServices.CryptoGwy, tRqst );
+		mWalletMsg = (MgmtGetWalletResponse) mServiceInterface.transceive( TeService.CryptoGwy.name(), tRqst );
 
 		if ((mWalletMsg == null) || (!mWalletMsg.getWalletData().isPresent()) || (mWalletMsg.getWalletData().isEmpty())) {
 			tData = "no wallet data is available";
@@ -92,6 +94,13 @@ public class CryptoWalletPanel extends JPanel
 		gc.gridx++;
 		gc.insets.left = 10;
 		mWalletComboBox = new JComboBox<>( mWalletTypes);
+
+		mWalletComboBox.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				getAndUpdateWallet();
+			}
+		});
 
 		tRootPanel.add( mWalletComboBox, gc );
 

@@ -56,7 +56,7 @@ import com.google.gson.GsonBuilder;
 
             
                     private Long mPrice;
-                    private Integer mQuantity;
+                    private Long mQuantity;
                public PriceLevel()
                {
                 
@@ -76,11 +76,11 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mPrice);
             }
         
-            public PriceLevel setQuantity( Integer pQuantity ) {
+            public PriceLevel setQuantity( Long pQuantity ) {
             mQuantity = pQuantity;
             return this;
             }
-            public Optional<Integer> getQuantity() {
+            public Optional<Long> getQuantity() {
               return  Optional.ofNullable(mQuantity);
             }
         
@@ -104,7 +104,7 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mPrice Type: long List: false
             tEncoder.add( "price", mPrice );
         
-            //Encode Attribute: mQuantity Type: int List: false
+            //Encode Attribute: mQuantity Type: long List: false
             tEncoder.add( "quantity", mQuantity );
         
         }
@@ -118,8 +118,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mPrice Type:long List: false
             mPrice = tDecoder.readLong("price");
         
-            //Decode Attribute: mQuantity Type:int List: false
-            mQuantity = tDecoder.readInteger("quantity");
+            //Decode Attribute: mQuantity Type:long List: false
+            mQuantity = tDecoder.readLong("quantity");
         
 
         }
@@ -157,7 +157,7 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setQuantity( Integer pValue ) {
+                        public Builder setQuantity( Long pValue ) {
                         mInstance.setQuantity( pValue );
                         return this;
                     }

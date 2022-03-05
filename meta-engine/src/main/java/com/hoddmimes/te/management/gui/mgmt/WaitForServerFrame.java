@@ -17,8 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.google.gson.JsonObject;
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.common.ipc.IpcService;
 
 import javax.swing.*;
@@ -75,6 +74,6 @@ public class WaitForServerFrame extends JFrame
 		IpcService tIpcService = new IpcService( "224.20.20.20", 3939, null);
 		WaitForServerFrame f = new WaitForServerFrame(tIpcService);
 		f.setVisible(true);
-		f.waitForNamedService(TeIpcServices.MatchingService );
+		f.waitForNamedService(TeService.MatchingService.name() );
 	}
 }

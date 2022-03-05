@@ -17,13 +17,17 @@
 
 package com.hoddmimes.te.engine;
 
+import com.google.gson.JsonObject;
+import com.hoddmimes.jsontransform.JsonDecoder;
+import com.hoddmimes.jsontransform.JsonEncoder;
+import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.common.TXIDFactory;
 import com.hoddmimes.te.messages.generated.BdxOwnTrade;
-import com.hoddmimes.te.messages.generated.BdxTrade;
+import com.hoddmimes.te.messages.generated.TradeExecution;
 
 import java.text.SimpleDateFormat;
 
-public class InternalTrade
+public class InternalTrade implements MessageInterface
 {
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
@@ -32,12 +36,14 @@ public class InternalTrade
     private long        mTradeTime;
     private long        mTradeNo;
     private long        mPrice;
-    private int         mQuantity;
+    private long        mQuantity;
     private Order       mBuyOrder;
     private Order       mSellOrder;
 
 
-    public InternalTrade(String pSid, int pMarketId, long pPrice, int pQuantity, Order pOrder1, Order pOrder2 ) {
+
+
+    public InternalTrade(String pSid, int pMarketId, long pPrice, long pQuantity, Order pOrder1, Order pOrder2 ) {
         mSid = pSid;
         mMarketId = pMarketId;
         mTradeTime = System.currentTimeMillis();
@@ -47,6 +53,47 @@ public class InternalTrade
         mBuyOrder = (pOrder1.getSide() == Order.Side.BUY) ? pOrder1 : pOrder2;
         mSellOrder = (pOrder1.getSide() == Order.Side.SELL) ? pOrder1 : pOrder2;
     }
+
+    public InternalTrade( String pJsonString ) {
+        JsonDecoder tDecoder = new JsonDecoder( pJsonString );
+        this.decode( tDecoder );
+    }
+
+    @Override
+    public String getMessageName() {
+        return this.getClass().getSimpleName();
+    }
+
+    @Override
+    public void encode(JsonEncoder pJsonEncoder) {
+        pJsonEncoder.add("sid", mSid);
+        pJsonEncoder.add("marketId", mMarketId);
+        pJsonEncoder.add("tradeTime", mTradeTime);
+        pJsonEncoder.add("tradeNo", mTradeNo);
+        pJsonEncoder.add("price", mPrice);
+        pJsonEncoder.add("quantity", mQuantity);
+        pJsonEncoder.add("buyOrder", mBuyOrder);
+        pJsonEncoder.add( "sellOrder", mSellOrder);
+    }
+
+    @Override
+    public void decode(JsonDecoder pJsonDecoder) {
+        mSid = pJsonDecoder.readString("sid");
+        mMarketId = pJsonDecoder.readInteger("marketId");
+        mTradeTime = pJsonDecoder.readLong("tradeTime");
+        mTradeNo = pJsonDecoder.readLong("tradeNo");
+        mPrice = pJsonDecoder.readLong("price");
+        mQuantity = pJsonDecoder.readLong("quantity");
+        mBuyOrder = (Order) pJsonDecoder.readMessage("buyOrder", Order.class);
+        mSellOrder = (Order) pJsonDecoder.readMessage("sellOrder", Order.class);
+    }
+
+    public JsonObject toJson() {
+        JsonEncoder tEncoder = new JsonEncoder();
+        this.encode( tEncoder );
+        return tEncoder.toJson();
+    }
+
 
     @Override
     public String toString() {
@@ -105,7 +152,7 @@ public class InternalTrade
         return mPrice;
     }
 
-    public int getQuantity() {
+    public long getQuantity() {
         return mQuantity;
     }
 
@@ -115,5 +162,27 @@ public class InternalTrade
 
     public Order getSellOrder() {
         return mSellOrder;
+    }
+
+    public long getTeBuySeqno() {return (mTradeNo << 1);}
+    public long getTeSellSeqno() {
+        return (mTradeNo << 1) + 1;
+    }
+
+    public TradeExecution toTradeExecution() {
+        TradeExecution te = new TradeExecution();
+        te.setSid( mSid );
+        te.setMarketId( mMarketId );
+        te.setBuyer(  mBuyOrder.getAccountId() );
+        te.setSeller( mSellOrder.getAccountId() );
+        te.setBuyerOrderId( mBuyOrder.getOrderId());
+        te.setSellerOrderId(mSellOrder.getOrderId());
+        te.setBuyerOrderRef(mBuyOrder.getUserRef());
+        te.setSellerOrderRef(mSellOrder.getUserRef());
+        te.setPrice( mPrice );
+        te.setQuantity( mQuantity);
+        te.setTradeId( mTradeNo);
+        te.setTradeTime( mTradeTime);
+        return te;
     }
 }

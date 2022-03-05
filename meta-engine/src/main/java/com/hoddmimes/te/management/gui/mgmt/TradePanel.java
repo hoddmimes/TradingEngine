@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
@@ -50,7 +50,7 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 	JComboBox<SidEntry> mSidComboBox;
 
 	JButton mRevertTradeBtn;
-	List<ContainerTrade> mTrades;
+	List<TradeExecution> mTrades;
 	List<Symbol> mSymbols;
 	List<Market> mMarkets = null;
 
@@ -139,7 +139,7 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 			return;
 		}
 
-		MgmtRevertTradeResponse tResponse = (MgmtRevertTradeResponse) mServiceInterface.transceive( TeIpcServices.MatchingService, new MgmtRevertTradeRequest().setRef("rt").setTrade( pTrade.getTrade()));
+		MgmtRevertTradeResponse tResponse = (MgmtRevertTradeResponse) mServiceInterface.transceive( TeService.MatchingService.name(), new MgmtRevertTradeRequest().setRef("rt").setTrade( pTrade.getTrade()));
 		if (tResponse != null) {
 			mTrades.add(tResponse.getRevertedTrades().get());
 			filterTrades();
@@ -188,7 +188,7 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 		if (mAccountComboBox.getItemCount() == 0) {
 			mAccountComboBox.addItem(new AccountEntry(null));
 
-			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, new MgmtGetAccountsRequest().setRef("ga"));
+			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeService.Autheticator.name(), new MgmtGetAccountsRequest().setRef("ga"));
 			if (tAccountsResponse == null) {
 				return;
 			}
@@ -201,13 +201,13 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 		}
 
 		if (mMarkets == null) {
-			MgmtGetMarketsResponse tMktRsp = (MgmtGetMarketsResponse) mServiceInterface.transceive(TeIpcServices.InstrumentData, new MgmtGetMarketsRequest().setRef("gm"));
+			MgmtGetMarketsResponse tMktRsp = (MgmtGetMarketsResponse) mServiceInterface.transceive(TeService.InstrumentData.name(), new MgmtGetMarketsRequest().setRef("gm"));
 			mMarkets = tMktRsp.getMarkets().get();
 
 			mSidComboBox.addItem(new SidEntry(null));
 			for( Market mkt : mMarkets) {
 				// Load SID Data
-				MgmtGetSymbolsResponse tSymRsp = (MgmtGetSymbolsResponse) mServiceInterface.transceive(TeIpcServices.InstrumentData, new MgmtGetSymbolsRequest().setRef("gs").setMarketId( mkt.getId().get()));
+				MgmtGetSymbolsResponse tSymRsp = (MgmtGetSymbolsResponse) mServiceInterface.transceive(TeService.InstrumentData.name(), new MgmtGetSymbolsRequest().setRef("gs").setMarketId( mkt.getId().get()));
 
 				if (tSymRsp == null) {
 					return;
@@ -224,7 +224,7 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 
 	public void loadTradeData() {
 
-			MgmtGetTradesResponse tTradeResponse = (MgmtGetTradesResponse) mServiceInterface.transceive(TeIpcServices.TradeData, new MgmtGetTradesRequest().setRef("gt"));
+			MgmtGetTradesResponse tTradeResponse = (MgmtGetTradesResponse) mServiceInterface.transceive(TeService.TradeData.name(), new MgmtGetTradesRequest().setRef("gt"));
 			if (tTradeResponse == null) {
 				return;
 			}
@@ -244,7 +244,7 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 
 		AccountEntry tAccount = (AccountEntry) mAccountComboBox.getSelectedItem();
 		SidEntry tSid = (SidEntry) mSidComboBox.getSelectedItem();
-		for( ContainerTrade tTrade : mTrades ) {
+		for( TradeExecution tTrade : mTrades ) {
 			if ((tSid.getSid() == null) || (tSid.getSid().contentEquals(tTrade.getSid().get()))) {
 				if ((tAccount.getAccountId() == null) || (tAccount.getAccountId().contentEquals(tTrade.getBuyer().get())) ||
 						(tAccount.getAccountId().contentEquals(tTrade.getSeller().get()))) {
@@ -278,10 +278,10 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 	public static class TradeEntry {
 		static SimpleDateFormat sdfTime = new SimpleDateFormat("HH:mm:ss.SSS");
 		NumberFormat          nbf;
-		public ContainerTrade mTrade;
+		public TradeExecution mTrade;
 
 
-		public TradeEntry(ContainerTrade pTrade ) {
+		public TradeEntry(TradeExecution pTrade ) {
 			mTrade = pTrade;
 			nbf = NumberFormat.getInstance(Locale.US);
 			nbf.setMaximumFractionDigits(2);
@@ -329,7 +329,7 @@ public class TradePanel extends JPanel implements TableCallbackInterface {
 			return Long.toHexString(mTrade.getTradeId().get());
 		}
 
-		public ContainerTrade getTrade() {
+		public TradeExecution getTrade() {
 			return mTrade;
 		}
 	}

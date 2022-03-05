@@ -81,7 +81,7 @@ public class Account extends JFrame implements TableCallbackInterface<Account.Ac
 	}
 
 	private void init() {
-		mDb = TeAppCntx.getInstance().getDb();
+		mDb = TeAppCntx.getDatabase();
 		loadAccounts();
 
 		JPanel tRootPanel = new JPanel( new BorderLayout());

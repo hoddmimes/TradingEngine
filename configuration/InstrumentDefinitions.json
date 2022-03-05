@@ -8,8 +8,12 @@
     "marketClose": "23:30",
     "minPricePctChg": 20,
     "maxPricePctChg": 20,
+    "minOrderSize":1,
+    "maxOrderSize": 9223372036854775807,
     "enabled": true,
+    "scaleFactor" : 1,
     "closed":false,
+    "isCryptoMarket":false,
     "symbols" :[
         { "symbol":"APPL", "tickSize": 0.01 },
         { "symbol":"MSFT", "tickSize":0.01, "suspended": false },
@@ -50,16 +54,14 @@
     "marketClose": "23:30",
     "minPricePctChg": 40,
     "maxPricePctChg": 40,
+    "minOrderSize":1,
+    "maxOrderSize": 9223372036854775807,
+    "scaleFactor" : 1,
     "enabled": true,
     "closed":false,
+    "isCryptoMarket": true,
     "symbols" :[
-      { "symbol":"BTC", "description":"Bitcoin", "tickSize":0.01 },
-      { "symbol":"ETH", "description":"Ethereum", "tickSize":0.01 },
-      { "symbol":"BNB", "description":"Binance Coin", "tickSize":0.01 },
-      { "symbol":"USDT", "description":"Tether", "tickSize":0.01 },
-      { "symbol":"SOL", "description":"Solana", "tickSize":0.01 },
-      { "symbol":"ADA", "description":"Cardano", "tickSize":0.01 },
-      { "symbol":"LTC", "description":"Litecoin", "tickSize":0.01 },
-      { "symbol":"XRP", "description":"XRP", "tickSize":0.01 }
+      { "symbol":"BTC", "description":"Bitcoin", "tickSize":0.01, "scaleFactor" : 100000 },
+      { "symbol":"ETH", "description":"Ethereum", "tickSize":0.01, "scaleFactor" : 100000000000000 }
     ]}
   ]}

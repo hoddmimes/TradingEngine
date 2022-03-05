@@ -17,10 +17,8 @@
 
 package com.hoddmimes.te.positions;
 
-import com.hoddmimes.te.engine.InternalTrade;
 import com.hoddmimes.te.engine.Order;
 import com.hoddmimes.te.messages.generated.MgmtPositionEntry;
-import com.hoddmimes.te.trades.TradeX;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,46 +33,61 @@ public class AccountPosition
 	private         HashMap<String, HoldingEntry> mPosition;
 	private long    mCash;
 
-	public AccountPosition(String pAccount, long pCash  ) {
+	 AccountPosition(String pAccount, long pCash  ) {
 		mAccount = pAccount;
 		mCash = pCash;
 		mPosition = new HashMap<>();
 	}
 
-	public void updatePosition( String pSid, long pDeltaPosition, long pTxNo ) {
-		HoldingEntry tHolding = mPosition.get( pSid );
-		if (tHolding == null)  {
-			tHolding = new HoldingEntry(pSid, pDeltaPosition, pTxNo );
-			mPosition.put( pSid, tHolding);
-		} else {
-			tHolding.updateHolding( pDeltaPosition, pTxNo );
-		}
-	}
 
 
-	public void updateCashPosition( long pDeltaCash ) {
+
+	 void updateCashPosition( long pDeltaCash ) {
 		mCash += pDeltaCash;
 	}
-	public long getCashPosition() { return mCash; }
-	public HoldingEntry getHoldingPosition( String pSid ) {
-		return mPosition.get( pSid );
+	 long getCashPosition() { return mCash; }
+
+
+	private HoldingEntry getHoldingPositionEntry( String pSid ) {
+		HoldingEntry tHolding = mPosition.get(pSid);
+		if (tHolding == null) {
+			tHolding = new HoldingEntry(pSid, 0L, 0L);
+			mPosition.put(pSid, tHolding);
+		}
+		return tHolding;
 	}
-	public String getAccount() {
+
+	 List<HoldingEntry> getHoldings() {
+		return mPosition.values().stream().toList();
+	}
+
+
+	 String getAccount() {
 		return mAccount;
 	}
 
-	public void setPosition( String pSid, long pHolding ) {
-		HoldingEntry tHolding = mPosition.get(pSid);
-		if (tHolding == null) {
-			tHolding = new HoldingEntry(pSid, pHolding, 0);
-			mPosition.put( pSid, tHolding);
-		} else {
-			tHolding.setHolding(pHolding, 0);
-		}
+	 long getHolding( String pSid ) {
+		HoldingEntry tHoldingEntry = getHoldingPositionEntry(pSid);
+		return tHoldingEntry.getHolding();
+	}
+
+	 void updatePosition( String pSid, long pDeltaPosition, long pTxNo ) {
+		HoldingEntry tHolding = getHoldingPositionEntry( pSid );
+		tHolding.updateHolding( pDeltaPosition, pTxNo );
+	}
+
+	 void updatePosition( String pSid, long pDeltaPosition ) {
+		HoldingEntry tHolding = getHoldingPositionEntry( pSid );
+		tHolding.updateHolding( pDeltaPosition, 0L );
+	}
+
+	 void setPosition( String pSid, long pHolding ) {
+		HoldingEntry tHolding = getHoldingPositionEntry(pSid);
+		tHolding.setHolding(pHolding, 0);
 	}
 
 
-	public boolean validateBuyOrder(Order pOrder, long pExposure ) {
+	 boolean validateBuyOrder(Order pOrder, long pExposure ) {
 		// if a buy validate that the money is there.
 		if (pOrder.getSide() != Order.Side.BUY) {
 			throw new RuntimeException("Invalid Holding Validation");
@@ -89,7 +102,7 @@ public class AccountPosition
 	    return true;
 	}
 
-	public boolean validateSellOrder( Order pOrder, int pMarketPosition ) {
+	 boolean validateSellOrder( Order pOrder, int pMarketPosition ) {
 		// if a buy validate that the money is there.
 		if (pOrder.getSide() != Order.Side.SELL) {
 			throw new RuntimeException("Invalid Holding Validation");
@@ -109,73 +122,17 @@ public class AccountPosition
 		return true;
 	}
 
-
-	// Method invoked when starting and  loading trades from a previous instansiating, same day.
-	public void execution( TradeX pTradeX )
+	void execution(String pSid, Order.Side pSide, long pPrice, long pQuantity, long pTeTradeTxid)
 	{
-		if (pTradeX.getBuyer().get().contentEquals(mAccount)) {
-			mCash -= (pTradeX.getPrice().get() * pTradeX.getQuantity().get());
-			if (mCash < 0) {
-				cLog.warn("load of old trades resulted in account " + mAccount + " now has exceeded the cash limit, cash holding: " + mCash );
-			}
+		long tQuantityChange = (pSide == Order.Side.BUY) ? pQuantity : (-1L * pQuantity);
 
-			HoldingEntry tHolding = mPosition.get( pTradeX.getSid().get());
-			if (tHolding == null) {
-				tHolding.setHolding(pTradeX.getQuantity().get(), pTradeX.getTradeId().get());
-			} else {
-				if (pTradeX.getTradeId().get() > tHolding.getTxNo()) {
-					tHolding.addHolding(pTradeX.getQuantity().get(), pTradeX.getTradeId().get());
-				}
-			}
-		}
-
-		if (pTradeX.getSeller().get().contentEquals(mAccount)) {
-			mCash += (pTradeX.getPrice().get() * pTradeX.getQuantity().get());
-
-			HoldingEntry tHolding = mPosition.get( pTradeX.getSid().get());
-			if (tHolding == null) {
-				throw new RuntimeException( mAccount + " sold " + pTradeX.getSid().get() + " and deposit is now negative (" + (-1 * pTradeX.getTradeId().get()) +")");
-			} else {
-				if (pTradeX.getTradeId().get() > tHolding.getTxNo()) {
-					tHolding.addHolding((-1 * pTradeX.getQuantity().get()), pTradeX.getTradeId().get());
-				}
-			}
+		mCash += (pSide == Order.Side.BUY) ? (-1L * pPrice * pQuantity) : (pPrice * pQuantity);
+		HoldingEntry tHolding = getHoldingPositionEntry( pSid );
+		if (tHolding.getTxNo() < pTeTradeTxid) {
+			tHolding.updateHolding(tQuantityChange, tHolding.getTxNo());
 		}
 	}
 
-
-	// Executed when a trade is done.
-	public void execution( InternalTrade pInternalTrade )
-	{
-		if (pInternalTrade.isOnBuySide(mAccount)) {
-			mCash -= (pInternalTrade.getPrice() * pInternalTrade.getQuantity());
-			if (mCash < 0) {
-				cLog.error(mAccount + " bougth sid:" + pInternalTrade.getSid() + " and now got a negative cash position, cash: " + mCash);
-			}
-
-			HoldingEntry tHolding = mPosition.get(pInternalTrade.getSid());
-			if (tHolding == null) {
-				tHolding.setHolding(pInternalTrade.getQuantity(), pInternalTrade.getTradeNo());
-			} else {
-				if (pInternalTrade.getTradeNo() > tHolding.getTxNo()) {
-					tHolding.addHolding(pInternalTrade.getQuantity(), pInternalTrade.getTradeNo());
-				}
-			}
-		}
-
-		if (pInternalTrade.isOnSellSide(mAccount)) {
-			mCash += (pInternalTrade.getPrice() * pInternalTrade.getQuantity());
-
-			HoldingEntry tHolding = mPosition.get( pInternalTrade.getSid());
-			if (tHolding == null) {
-				throw new RuntimeException( mAccount + " sold " + pInternalTrade.getSid() + " and deposit is now negative (" + (-1 * pInternalTrade.getQuantity()) +")");
-			} else {
-				if (pInternalTrade.getTradeNo()> tHolding.getTxNo()) {
-					tHolding.addHolding((-1 * pInternalTrade.getQuantity()), pInternalTrade.getTradeNo());
-				}
-			}
-		}
-	}
 
 	public List<MgmtPositionEntry> getPositionsForMgmt() {
 		List<MgmtPositionEntry> tPositions = new ArrayList<>();

@@ -17,66 +17,121 @@
 
 package com.hoddmimes.te.common.db;
 
+import com.hoddmimes.te.common.Crypto;
+import com.hoddmimes.te.messages.DbCryptoDeposit;
 import com.hoddmimes.te.messages.generated.*;
-
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
-import org.springframework.beans.PropertyAccessException;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TEDB extends MongoAux
-{
+public class TEDB extends MongoAux {
 	private static final long CONFIRM_EXPIRATION_INTERVAL = (86400L * 2L * 1000L); // 48 hrs
-	public static enum CoinType {BTC, ETH};
-	public static enum ActionType {DEPOSIT, REDRAW};
-	public static enum StateType {CONFIRM, PENDING};
-	public static enum ConfirmationType {ACCOUNT, PAYMENT};
+	private MongoCollection mCryptoDepositCollection;
+
 
 	private static final Logger cLog = LogManager.getLogger(TEDB.class);
 
 	public TEDB(String pDbName, String pDbHost, int pDbPort) {
 		super(pDbName, pDbHost, pDbPort);
+
 	}
 
+	@Override
+	public void connectToDatabase() {
+		super.connectToDatabase();
+		mCryptoDepositCollection = super.getDb().getCollection("CryptoDeposit");
+	}
 
 	public List<DbCryptoPaymentEntry> findPaymentEntryByConfirmationId(String pConfirmationId) {
 		List<DbCryptoPaymentEntry> tResult = new ArrayList<>();
 
 		Bson tKeyFilter = Filters.eq("confirmationId", pConfirmationId);
 
-		return super.findDbCryptoPaymentEntry( tKeyFilter );
+		return super.findDbCryptoPaymentEntry(tKeyFilter);
 	}
 
-	public List<DbCryptoPayment> findDbCryptoPaymentByAccountId( String pAccountId ) {
+	public DbCryptoDeposit findDbCryptoDepositByAccountId( String pAccountId ) {
+		Bson tKeyFilter= Filters.and( Filters.eq("accountId", pAccountId ));
+		FindIterable<Document> tDocuments = this.mCryptoDepositCollection.find( tKeyFilter );
+
+		if (tDocuments == null) {
+			return null;
+		}
+
+		MongoCursor<Document> tIter = tDocuments.iterator();
+		if (tIter.hasNext()) {
+			Document tDoc = tIter.next();
+			DbCryptoDeposit tDbCryptoDeposit = new DbCryptoDeposit();
+			tDbCryptoDeposit.decodeMongoDocument( tDoc );
+			return tDbCryptoDeposit;
+		}
+		return null;
+	}
+
+	public UpdateResult updateDbCryptoDeposit( DbCryptoDeposit pDbCryptoDeposit, boolean pUpdateAllowInsert ) {
+		UpdateOptions tOptions = new UpdateOptions().upsert(pUpdateAllowInsert);
+		Bson tKeyFilter= Filters.and( Filters.eq("accountId", pDbCryptoDeposit.getAccountId().get()) );
+
+		Document tDocSet = new Document("$set", pDbCryptoDeposit.getMongoDocument());
+
+		UpdateResult tUpdSts = mCryptoDepositCollection.updateOne( tKeyFilter, tDocSet, tOptions);
+		return tUpdSts;
+	}
+
+	public List<DbCryptoDeposit> findAllDbCryptoDeposit() {
+		List<DbCryptoDeposit> tResult = new ArrayList<>();
+
+		FindIterable<Document> tDocuments  = this.mCryptoDepositCollection.find();
+		MongoCursor<Document> tIter = tDocuments.iterator();
+		while( tIter.hasNext()) {
+			Document tDoc = tIter.next();
+			DbCryptoDeposit tDbCryptoDeposit = new DbCryptoDeposit();
+			tDbCryptoDeposit.decodeMongoDocument( tDoc );
+			tResult.add(tDbCryptoDeposit);
+		}
+		return tResult;
+	}
+
+
+
+
+	public List<DbCryptoPayment> findDbCryptoPaymentByAccountId(String pAccountId) {
 		Bson tFilter = Filters.eq("accountId", pAccountId);
-		return super.findDbCryptoPayment( tFilter );
+		return super.findDbCryptoPayment(tFilter);
 	}
 
 	public List<DbCryptoPaymentEntry> findPaymentEntryByAccountId(String pAccountId) {
 		List<DbCryptoPaymentEntry> tResult = new ArrayList<>();
 
 		Bson tKeyFilter = Filters.eq("accountId", pAccountId);
-		return super.findDbCryptoPaymentEntry( tKeyFilter );
+		return super.findDbCryptoPaymentEntry(tKeyFilter);
 	}
 
 
-	public List<DbCryptoPaymentEntry> findPaymentEntryByAddressAndCoinType( String pAddress, String pCoinType ) {
+	public List<DbCryptoPaymentEntry> findPaymentEntryByAddressAndCoinType(String pAddress, Crypto.CoinType pCoinType) {
 		Bson tFilter = Filters.and(Filters.eq("address", pAddress),
-				       Filters.eq("coinType", pCoinType ));
+				Filters.eq("coinType", pCoinType.name()));
 
-		return super.findDbCryptoPaymentEntry( tFilter );
+		return super.findDbCryptoPaymentEntry(tFilter);
 	}
 
+	public List<DbCryptoPaymentEntry> findPaymentEntryByAddressdPaymentTypeCoinType(String pAddress, Crypto.PaymentType pPaymentType, Crypto.CoinType pCoinType) {
+		Bson tFilter = Filters.and(Filters.eq("address", pAddress),
+				Filters.eq("paymentType", pPaymentType.name()),
+				Filters.eq("coinType", pCoinType.name()));
+
+		return super.findDbCryptoPaymentEntry(tFilter);
+	}
 
 
 	public void cleanConfirmations() {
@@ -89,14 +144,14 @@ public class TEDB extends MongoAux
 				} else {
 					cLog.info("clean (deleted) expired confirmation : " + tConfirmation.toJson().toString());
 				}
-				if (tConfirmation.getConfirmationType().get().contentEquals(ConfirmationType.ACCOUNT.name())) {
+				if (tConfirmation.getConfirmationType().get().contentEquals(Crypto.ConfirmationType.ACCOUNT.name())) {
 					if (super.deleteAccountByAccountId(tConfirmation.getAccount().get()) == 0) {
 						cLog.warn("failed to clean (delete) unconfirmed account : " + tConfirmation.getAccount().get());
 					} else {
 						cLog.info("clean (deleted) expired account : " + tConfirmation.getAccount().get());
 					}
 				}
-				if (tConfirmation.getConfirmationType().get().contentEquals(ConfirmationType.PAYMENT.name())) {
+				if (tConfirmation.getConfirmationType().get().contentEquals(Crypto.ConfirmationType.PAYMENT.name())) {
 					Bson tKeyFilter = Filters.and(Filters.eq("confirmationId", tConfirmation.getConfirmationId().get()),
 							Filters.eq("mConfirmed", false));
 
@@ -110,51 +165,43 @@ public class TEDB extends MongoAux
 		}
 	}
 
-	public boolean  confirmPaymentEntry(String pAccountId, String pConfirmationId) {
+	public boolean confirmPaymentEntry(String pAccountId, String pConfirmationId) {
 		Bson tFilter = Filters.and(Filters.eq("confirmationId", pConfirmationId),
-				                   Filters.eq("mAccountId", pAccountId ));
-		List<DbCryptoPaymentEntry> tPaymentEtries = super.findDbCryptoPaymentEntry( tFilter  );
+				Filters.eq("accountId", pAccountId));
+		List<DbCryptoPaymentEntry> tPaymentEtries = super.findDbCryptoPaymentEntry(tFilter);
 		if (tPaymentEtries.size() != 1) {
 			cLog.warn("failed to locate unconfirmed payment entries accountId : " + pAccountId + " confirmationId: " + pConfirmationId);
 			return false;
 		}
 		DbCryptoPaymentEntry tCryptoPaymentEntry = tPaymentEtries.get(0);
-		tCryptoPaymentEntry.setConfirmed( true );
-		UpdateResult tUpdResult = super.updateDbCryptoPaymentEntry( tCryptoPaymentEntry, false);
+		tCryptoPaymentEntry.setConfirmed(true);
+		UpdateResult tUpdResult = super.updateDbCryptoPaymentEntry(tCryptoPaymentEntry, false);
 		return (tUpdResult.getModifiedCount() > 0) ? true : false;
 	}
 
-	public boolean  confirmAccount( String pAccountId ) {
-		List<Account> tAccounts = super.findAccount( pAccountId );
+	public boolean confirmAccount(String pAccountId) {
+		List<Account> tAccounts = super.findAccount(pAccountId);
 		if (tAccounts.size() != 1) {
 			cLog.warn("failed to locate unconfirmed account : " + pAccountId);
 			return false;
 		}
 		Account tAccount = tAccounts.get(0);
-		tAccount.setConfirmed( true );
-		UpdateResult tUpdResult = super.updateAccount( tAccount, false);
+		tAccount.setConfirmed(true);
+		UpdateResult tUpdResult = super.updateAccount(tAccount, false);
 		return (tUpdResult.getModifiedCount() > 0) ? true : false;
 	}
 
 
-	public UpdateResult updateAccountCryptoDeposit( String pAccount, String pCoinType, long pAmount ) {
-		DbCryptoDeposit tDeposit = (DbCryptoDeposit) dbEntryFound(super.findDbCryptoDepositByAccountId(pAccount));
-		if (tDeposit == null) {
-			tDeposit = new DbCryptoDeposit().setAccountId(pAccount);
-		}
-		DbDepositHolding tHolding = tDeposit.findHolding(pCoinType);
-		if (tHolding == null) {
-			tHolding = new DbDepositHolding().setSid(pCoinType).setHolding(0L);
-			tDeposit.addHoldings( tHolding );
-		}
-		tHolding.updateHolding(pAmount);
 
-		return super.updateDbCryptoDeposit( tDeposit, true);
+
+
+	public DbCryptoPayment findPaymentEntryByTxid(String pTxid) {
+		Bson tFilter = Filters.eq("txid", pTxid);
+		DbCryptoPayment tPayment = (DbCryptoPayment) dbEntryFound(super.findDbCryptoPayment(tFilter));
+		return tPayment;
 	}
 
-
-
-	public static Object dbEntryFound( List<?> pObjects ) {
+	public static Object dbEntryFound(List<?> pObjects) {
 		if ((pObjects == null) || (pObjects.size() != 1)) {
 			return null;
 		}

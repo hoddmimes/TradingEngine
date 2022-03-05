@@ -94,6 +94,20 @@ public class Orderbook
         return mPosition;
     }
 
+    public int getAccountPositionExposure( String pAccount, Order.Side pSide ) {
+        int tPositionExposure = 0;
+        Order tOrder = null;
+
+        Iterator<Order> tItr = (pSide == Order.Side.BUY) ? mBuySide.iterator() : mSellSide.iterator();
+        while(tItr.hasNext()) {
+            tOrder = tItr.next();
+            if (tOrder.getAccountId().contentEquals(pAccount)) {
+                tPositionExposure += tOrder.getQuantity();
+            }
+        }
+        return tPositionExposure;
+    }
+
     public int getAccountExposure( String pAccount, Order.Side pSide ) {
         int mExposure = 0;
         Order tOrder = null;
@@ -114,18 +128,18 @@ public class Orderbook
         if (mBuySide.size() > 0) {
             long tPrice = mBuySide.peek().getPrice();
             bbo.setBid( tPrice );
-            int tBuyQty = mBuySide.getOrders().stream().filter( o -> (o.getPrice() == tPrice)).mapToInt( o -> o.getQuantity()).sum();
+            long tBuyQty = mBuySide.getOrders().stream().filter( o -> (o.getPrice() == tPrice)).mapToLong( o -> o.getQuantity()).sum();
             bbo.setBidQty(tBuyQty);
         }
         if (mSellSide.size() > 0) {
             long tPrice = mSellSide.peek().getPrice();
             bbo.setOffer( tPrice );
-            int tSellQty = mSellSide.getOrders().stream().filter( o -> (o.getPrice() == tPrice)).mapToInt( o -> o.getQuantity()).sum();
+            long tSellQty = mSellSide.getOrders().stream().filter( o -> (o.getPrice() == tPrice)).mapToLong( o -> o.getQuantity()).sum();
             bbo.setOfferQty(tSellQty);
         }
         if (!mBBO.same( bbo )) {
             mBBO = bbo;
-            TeAppCntx.getInstance().getMarketDataDistributor().queueBdxPublic( mBBO );
+            TeAppCntx.getMarketDistributor().queueBdxPublic( mBBO );
         }
     }
 
@@ -166,14 +180,14 @@ public class Orderbook
 
         // If clean amend update the existing order
         if (tCleanAmend) {
-            int tNewVolume = (!pAmendRqst.getDeltaQuantity().isEmpty()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
+            long tNewVolume = (!pAmendRqst.getDeltaQuantity().isEmpty()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
             long tNewPrice = (!pAmendRqst.getPrice().isEmpty()) ? (pAmendRqst.getPrice().get()) : tOrderToAmend.getPrice();
 
             if (tNewVolume <= 0) {
                 this.deleteOrder(tOrderToAmend.getOrderId(), pAmendRqst.getRef().get(), pRqstCntx);
                 tAmendRsp = new AmendOrderResponse();
                 return tAmendRsp.setInserted(false).setOrderId(Long.toHexString(tOrderToAmend.getOrderId())).
-                        setRef(pAmendRqst.getRef().get()).setMatched(0);
+                        setRef(pAmendRqst.getRef().get()).setMatched(0L);
             } else {
                 tOrderToAmend.setQuantity(tNewVolume);
                 if (tOrderToAmend.getPrice() != tNewPrice) {
@@ -186,12 +200,12 @@ public class Orderbook
                 updateBBO();
                 tAmendRsp = new AmendOrderResponse();
                 return tAmendRsp.setInserted(false).setOrderId(Long.toHexString(tOrderToAmend.getOrderId())).
-                        setRef(pAmendRqst.getRef().get()).setMatched(0);
+                        setRef(pAmendRqst.getRef().get()).setMatched(0L);
             }
         }
 
         // Amend require the existing order to be deleted and possibly a new to be inserted
-        int tVolume = (!pAmendRqst.getDeltaQuantity().isEmpty()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
+        long tVolume = (!pAmendRqst.getDeltaQuantity().isEmpty()) ? (tOrderToAmend.getQuantity() + pAmendRqst.getDeltaQuantity().get()) : tOrderToAmend.getQuantity();
         String tSide = (!pAmendRqst.getSide().isEmpty()) ? pAmendRqst.getSide().get() : tOrderToAmend.getSide().name();
         long tPrice = (!pAmendRqst.getPrice().isEmpty()) ? pAmendRqst.getPrice().get() : tOrderToAmend.getPrice();
 
@@ -201,7 +215,7 @@ public class Orderbook
         if (tVolume <= 0) {
             tAmendRsp = new AmendOrderResponse();
             return tAmendRsp.setInserted(false).setOrderId(Long.toHexString(tOrderToAmend.getOrderId())).
-                    setRef(pAmendRqst.getRef().get()).setMatched(0);
+                    setRef(pAmendRqst.getRef().get()).setMatched(0L);
         } else {
             AddOrderRequest tAddOrderRqst = new AddOrderRequest().setPrice(tPrice).setRef(pAmendRqst.getRef().get()).setQuantity(tVolume).setSid(this.mSymbol.getSid().get()).setSide(tSide);
             Order tNewOrder = new Order(pRqstCntx.getAccountId(), tAddOrderRqst);
@@ -343,7 +357,7 @@ public class Orderbook
         }
     }
 
-    public InternalTrade revertTrade( ContainerTrade pTrade,  RequestContextInterface pRqstCntx ) {
+    public InternalTrade revertTrade( TradeExecution pTrade,  RequestContextInterface pRqstCntx ) {
         // Reverse
         Order tBuyOrder = new Order( pTrade.getSeller().get(),
                                      pTrade.getSid().get(),
@@ -380,7 +394,7 @@ public class Orderbook
 
 
     private MessageInterface matchBook(OrderMapInterface pBook, Order pNewOrder, RequestContextInterface pRqstCntx ) {
-        int tTotMatched = 0;
+        long tTotMatched = 0;
         boolean tEndOfMatch = false;
 
         mOrderCount++;
@@ -395,7 +409,7 @@ public class Orderbook
                 pRqstCntx.timestamp("find price level");
                 if (pNewOrder.match(tBookOrder)) {
                     pRqstCntx.timestamp("match first order on price level");
-                    int tMatchedSize = Math.min(tBookOrder.getQuantity(), pNewOrder.getQuantity());
+                    long tMatchedSize = Math.min(tBookOrder.getQuantity(), pNewOrder.getQuantity());
 
                     mLastTradePrice = tBookOrder.getPrice();
                     mLastTradeTime = System.currentTimeMillis();
@@ -465,7 +479,7 @@ public class Orderbook
 
         int tLevel = 0;
         long tPrice = pSide.peek().getPrice();
-        int tQty = 0;
+        long tQty = 0;
         Iterator<Order> tOrderItr = pSide.iterator();
 
         while( (tOrderItr.hasNext()) && (tLevel < pMaxLevels)) {
@@ -507,7 +521,7 @@ public class Orderbook
 
     private void validateOrder(Order pNewOrder  ) throws Exception {
         // Validate Order Price
-        mSymbol.validate(pNewOrder.getPrice(), mLastTradePrice );
+        mSymbol.validate( pNewOrder.getQuantity(), pNewOrder.getPrice(), mLastTradePrice );
     }
 
     MgmtSymbolMatcherEntry getStatistics() {

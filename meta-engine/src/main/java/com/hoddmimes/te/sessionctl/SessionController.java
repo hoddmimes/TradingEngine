@@ -23,16 +23,18 @@ import com.hoddmimes.jaux.AuxTimestamp;
 import com.hoddmimes.jsontransform.JsonSchemaValidator;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
+import com.hoddmimes.te.TeCoreService;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.TeException;
-import com.hoddmimes.te.common.interfaces.AuthenticateInterface;
-import com.hoddmimes.te.common.interfaces.ConnectorInterface;
-import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.*;
 import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
 import com.hoddmimes.te.common.ipc.IpcComponentInterface;
+import com.hoddmimes.te.common.ipc.IpcService;
+import com.hoddmimes.te.engine.MatchingEngine;
+import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.messages.*;
 import com.hoddmimes.te.messages.generated.*;
+import com.hoddmimes.te.trades.TradeContainer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -52,7 +54,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SessionController implements ConnectorInterface.ConnectorCallbackInterface, IpcRequestCallbackInterface
+public class SessionController extends TeCoreService implements ConnectorInterface.ConnectorCallbackInterface
 {
 	public static final String INTERNAL_SESSION_ID = UUID.randomUUID().toString();
 
@@ -79,8 +81,9 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 	private AtomicInteger mRequestCount;
 	private AtomicInteger mFailureCount;
 
-	public SessionController( JsonObject pTeConfigurationFile ) throws IOException
+	public SessionController(JsonObject pTeConfigurationFile, IpcService pIpcService) throws IOException
 	{
+		super( pTeConfigurationFile, pIpcService );
 		mRequestCount = new AtomicInteger(0);
 		mFailureCount = new AtomicInteger(0);
 		mStartTime = System.currentTimeMillis();
@@ -89,7 +92,11 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 		mSessionMapper.add(mInternalSession);
 		loadConfiguration( pTeConfigurationFile );
 		mMessageFactory = new MessageFactory();
-		TeAppCntx.getInstance().setSessionController( this );
+	}
+
+	@Override
+	public TeService getServiceId() {
+		return TeService.SessionService;
 	}
 
 	public SessionCntxInterface getInternalSessionContext()
@@ -122,7 +129,6 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 			mMsgLogger = new MessageLogger( tFilename, mMessageLoggerFlushMode, mMessagerLoggerFlushInterval);
 			mLog.info("Create message log file \"" + mMsgLogger.getFilename() + "\"");
 		}
-		IpcComponentInterface tMgmt = TeAppCntx.getInstance().getIpcService().registerComponent( TeIpcServices.SessionService, 0, this );
 	}
 
 	private void initializeAuthenticator() {
@@ -271,23 +277,22 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 		/****
 		 * Matchine Engine Messages
 		 */
+		MatchingEngine tMatchingEngine = (MatchingEngine) TeAppCntx.getInstance().getService( TeService.MatchingService);
 		MessageInterface tResponseMessage = null;
 		if (pRqstMsg instanceof EngineMsgInterface) {
 
 			if (pRqstMsg instanceof AddOrderRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().executeAddOrder((AddOrderRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = tMatchingEngine.executeAddOrder((AddOrderRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof DeleteOrderRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().executeDeleteOrder((DeleteOrderRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = tMatchingEngine.executeDeleteOrder((DeleteOrderRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof DeleteOrdersRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().executeDeleteOrders((DeleteOrdersRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = tMatchingEngine.executeDeleteOrders((DeleteOrdersRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof AmendOrderRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().executeAmendOrder((AmendOrderRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = tMatchingEngine.executeAmendOrder((AmendOrderRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof InternalPriceLevelRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().executePriceLevel((InternalPriceLevelRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = tMatchingEngine.executePriceLevel((InternalPriceLevelRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryOrderbookRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().executeQueryOrderbook((QueryOrderbookRequest) pRqstMsg, tRequestContext);
-			} else if (pRqstMsg instanceof CryptoReDrawRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().redrawCryptoRequest((CryptoReDrawRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = tMatchingEngine.executeQueryOrderbook((QueryOrderbookRequest) pRqstMsg, tRequestContext);
 			} else {
 				mLog.fatal("No execute implementation for ME request \"" + pRqstMsg.getMessageName() + "\"");
 				tResponseMessage = StatusMessageBuilder.error(("No execute implementation for ME request \"" + pRqstMsg.getMessageName() + "\""), pRqstMsg.getRef().get());
@@ -297,19 +302,21 @@ public class SessionController implements ConnectorInterface.ConnectorCallbackIn
 			 * Other messages
 			 *******/
 			if (pRqstMsg instanceof QueryTradePricesRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getTradeContainer().queryTradePrices((QueryTradePricesRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = ((TradeContainer)TeAppCntx.getInstance().getService(TeService.TradeData)).queryTradePrices((QueryTradePricesRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryPriceLevelsRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getMarketDataDistributor().queryPriceLevels((QueryPriceLevelsRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = ((MarketDataInterface) TeAppCntx.getInstance().getService(TeService.MarketData)).queryPriceLevels((QueryPriceLevelsRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryOwnTradesRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getTradeContainer().queryOwnTrades((QueryOwnTradesRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = ((TradeContainer)TeAppCntx.getInstance().getService(TeService.TradeData)).queryOwnTrades((QueryOwnTradesRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryOwnOrdersRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().executeQueryOwnOrders((QueryOwnOrdersRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = tMatchingEngine.executeQueryOwnOrders((QueryOwnOrdersRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QuerySymbolsRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getInstrumentContainer().querySymbols((QuerySymbolsRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = ((InstrumentContainer) TeAppCntx.getInstance().getService(TeService.InstrumentData)).querySymbols((QuerySymbolsRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryMarketsRequest) {
-				tResponseMessage = TeAppCntx.getInstance().getInstrumentContainer().queryMarkets((QueryMarketsRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = ((InstrumentContainer) TeAppCntx.getInstance().getService(TeService.InstrumentData)).queryMarkets((QueryMarketsRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryBBORequest) {
-				tResponseMessage = TeAppCntx.getInstance().getMatchingEngine().executeQueryBBO((QueryBBORequest) pRqstMsg, tRequestContext);
+				tResponseMessage = tMatchingEngine.executeQueryBBO((QueryBBORequest) pRqstMsg, tRequestContext);
+			}  else if (pRqstMsg instanceof CryptoRedrawRequest) {
+				tResponseMessage = tMatchingEngine.redrawCryptoRequest((CryptoRedrawRequest) pRqstMsg, tRequestContext);
 			}
 			else {
 				mLog.fatal("No execute implementation for request \"" + pRqstMsg.getMessageName() + "\"");

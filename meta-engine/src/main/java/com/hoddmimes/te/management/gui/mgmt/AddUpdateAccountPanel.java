@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.messages.generated.*;
 import com.hoddmimes.te.sessionctl.AccountX;
 
@@ -120,7 +120,7 @@ public class AddUpdateAccountPanel extends BasePanel
 		MgmtAddAccountRequest tRequest = new MgmtAddAccountRequest().setRef("aa");
 		tRequest.setAccount( tAccount );
 
-		MgmtAddAccountResponse tResponse = (MgmtAddAccountResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, tRequest);
+		MgmtAddAccountResponse tResponse = (MgmtAddAccountResponse) mServiceInterface.transceive(TeService.Autheticator.name(), tRequest);
 		if (tResponse.getIsAddded().get()) {
 			JOptionPane.showMessageDialog( this, "Account successfully added " , "Account Added", JOptionPane.PLAIN_MESSAGE );
 			mAccountsPanel.loadAccountData();
@@ -174,7 +174,7 @@ public class AddUpdateAccountPanel extends BasePanel
 		tRequest.setAccountId( mAccountTxt.getText());
 
 
-		MgmtUpdateAccountResponse tResponse = (MgmtUpdateAccountResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, tRequest);
+		MgmtUpdateAccountResponse tResponse = (MgmtUpdateAccountResponse) mServiceInterface.transceive(TeService.Autheticator.name(), tRequest);
 		if (tResponse.getIsUpdated().get()) {
 			JOptionPane.showMessageDialog( this, "Account successfully updated " , "Account Updates", JOptionPane.PLAIN_MESSAGE );
 			mAccountsPanel.loadAccountData();

@@ -22,8 +22,11 @@ import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.common.interfaces.MarketDataInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
+import com.hoddmimes.te.common.interfaces.TeService;
+import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
 import com.hoddmimes.te.common.ipc.IpcService;
 import com.hoddmimes.te.cryptogwy.CryptoGateway;
+import com.hoddmimes.te.engine.MatchingEngine;
 import com.hoddmimes.te.engine.MatchingEngineInterface;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.positions.PositionController;
@@ -32,38 +35,24 @@ import com.hoddmimes.te.trades.TradeContainer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 
 public class TeAppCntx {
 	public static final long PRICE_MULTIPLER = 10000L;
-
 	private static final Logger mLog = LogManager.getLogger( TeAppCntx.class );
-	private static TeAppCntx mInstance;
-	private ConnectorInterface  mConnector;
-	private SessionController mSessionController;
-	private InstrumentContainer mInstrumentContainer;
-	private MarketDataInterface mMarketDataDistributor;
-	private MatchingEngineInterface mMatchingEngine;
-	private TradeContainer mTradeContainer;
-	private PositionController mPositionController;
-	private JsonObject mTeConfiguration;
-	private Object mMarketDataDistributorMutex;
-	private IpcService mIpcService;
-	private CryptoGateway mCryptoGateway;
-	private TEDB mDb;
+	private static TeAppCntx mInstance = null;
+	private ConcurrentHashMap<TeService, TeCoreService> mServices;
 	private boolean mTestMode;
+	private JsonObject mTeConfiguration;
+	private TEDB mDatabase;
+	private IpcService mIpcService;
+
+
+
 
 	private TeAppCntx() {
-		mMarketDataDistributorMutex = new Object();
-		setConnector(null);
-		setPositionController( null );
-		setSessionController(null);
-		setInstrumentContainer(null);
-		setMatchingEngine(null);
-		setTeConfiguration(null);
-		setMarketDataDistributor(null);
-		setTradeContainer(null);
-		setCryptoGateway(null);
-		setDb(null);
+		mServices = new ConcurrentHashMap<>();
 		mTestMode = false;
 	}
 
@@ -76,163 +65,97 @@ public class TeAppCntx {
 		}
 	}
 
+	public void setTeConfiguration( JsonObject pTeConfiguration ) {
+		mTeConfiguration = pTeConfiguration;
+	}
+	public static JsonObject getTeConfiguration() {
+		TeAppCntx tInstance = TeAppCntx.getInstance();
+		if (tInstance.mTeConfiguration == null) {
+			mLog.fatal("try to retrieve TEConfiguration implementation before setting it ", new Exception("TEConfiguration is null"));
+			System.exit(-1);
+		}
+		return tInstance.mTeConfiguration;
+	}
+
+
+	public void setDatabase( TEDB pDatabase ) { mDatabase = pDatabase; }
+	public static TEDB getDatabase() {
+		TeAppCntx tInstance = TeAppCntx.getInstance();
+		if (tInstance.mDatabase == null) {
+			mLog.fatal("try to retrieve TE Database implementation before setting it ", new Exception("mDatabase is null"));
+			System.exit(-1);
+		}
+		return tInstance.mDatabase;
+	}
+	public void setIpcService( IpcService pIpcService ) { mIpcService = pIpcService; }
+	public static IpcService getIpcService() {
+		TeAppCntx tInstance = TeAppCntx.getInstance();
+		if (tInstance.mIpcService == null) {
+			mLog.fatal("try to retrieve IPC service implementation before setting it ", new Exception("mIpcService is null"));
+			System.exit(-1);
+		}
+		return tInstance.mIpcService;
+	}
+
+
+
+	public void waitForServiceToStart( TeService pService ) {
+		TeCoreService tService = null;
+		while( tService == null) {
+			tService = mServices.get( pService );
+			try { Thread.sleep( 100L);}
+			catch( InterruptedException e) {}
+		}
+		mServices.get( pService ).waitForService();
+	}
+
 	public void setTestMode() {
 		mTestMode = true;
 	}
-
 	public boolean getTestMode() {
 		return mTestMode;
 	}
 
+	public TeCoreService getService(TeService pService) {
+		TeCoreService tCoreService = mServices.get( pService );
+		if (tCoreService == null) {
+			throw new RuntimeException("tried to access service: " + pService.name() + " before declared ");
+		}
+		return tCoreService;
+	}
+
+	public void registerService( TeCoreService pCoreService ) {
+		mServices.put( pCoreService.getServiceId(), pCoreService );
+		mIpcService.registerComponent(pCoreService.getServiceId(), 0, pCoreService);
+		mLog.info("TE service [ " +pCoreService.getServiceId().name() + "] is successfully started");
+	}
+
+
+
 	public SessionCntxInterface getIntenalSessionContext() {
-		return this.getSessionController().getInternalSessionContext();
+		SessionController tSessionController = (SessionController) mServices.get( TeService.SessionService );
+		return tSessionController.getInternalSessionContext();
 	}
 
-	public ConnectorInterface getConnector() {
-		if (mConnector == null) {
-			mLog.fatal("try to retrieve Connector implementation before setting it ", new Exception("Connector is null"));
-			System.exit(-1);
-		}
-		return mConnector;
+	public static SessionController getSessionController() {
+		return (SessionController) TeAppCntx.getInstance().getService( TeService.SessionService );
 	}
-
-	public void setIpcService(IpcService pIpcService)  {
-		mIpcService = pIpcService;
+	public static InstrumentContainer getInstrumentContainer() {
+		return (InstrumentContainer) TeAppCntx.getInstance().getService( TeService.InstrumentData );
 	}
-
-	public IpcService getIpcService() {
-		if (mIpcService == null) {
-			mLog.fatal("try to retrieve IPC Service implementation before setting it ", new Exception("mIpcService is null"));
-			System.exit(-1);
-		}
-		return mIpcService;
+	public static TradeContainer getTradeContainer() {
+		return (TradeContainer) TeAppCntx.getInstance().getService( TeService.TradeData );
 	}
-
-	public void setCryptoGateway(CryptoGateway pGateway)  {
-		mCryptoGateway = pGateway;
+	public static CryptoGateway getCryptoGateway() {
+		return (CryptoGateway) TeAppCntx.getInstance().getService( TeService.CryptoGwy );
 	}
-
-	public CryptoGateway getCryptoGateway() {
-		if (mCryptoGateway == null) {
-			mLog.fatal("try to retrieve Crypto Gateway  implementation before setting it ", new Exception("mCryptoGateway is null"));
-			System.exit(-1);
-		}
-		return mCryptoGateway;
+	public static MarketDataInterface getMarketDistributor() {
+		return (MarketDataInterface) TeAppCntx.getInstance().getService( TeService.MarketData );
 	}
-
-
-	public void setDb( TEDB pDB ) {
-		mDb = pDB;
+	public static MatchingEngine getMatchingEngine() {
+		return (MatchingEngine) TeAppCntx.getInstance().getService( TeService.MatchingService );
 	}
-
-	public TEDB getDb() {
-		if (mDb == null) {
-			mLog.fatal("try to retrieve TE Database  implementation before setting it ", new Exception("mDb is null"));
-			System.exit(-1);
-		}
-		return mDb;
-	}
-
-	public void setConnector(ConnectorInterface pConnector) {
-		mConnector = pConnector;
-	}
-
-	public SessionController getSessionController() {
-		if (mSessionController == null) {
-			mLog.fatal("try to retrieve SessionController implementation before setting it ", new Exception("SessionController is null"));
-			System.exit(-1);
-		}
-		return mSessionController;
-	}
-
-	public void setSessionController(SessionController pSessionController) {
-		mSessionController = pSessionController;
-	}
-
-
-	public PositionController getPositionController() {
-		if (mPositionController == null) {
-			mLog.fatal("try to retrieve PositionController implementation before setting it ", new Exception("PositionController is null"));
-			System.exit(-1);
-		}
-		return mPositionController;
-	}
-
-	public void setPositionController(PositionController pPositionController) {
-		mPositionController = pPositionController;
-	}
-
-
-
-	public InstrumentContainer getInstrumentContainer() {
-		if (mInstrumentContainer == null) {
-			mLog.fatal("try to retrieve InstrumentContainer implementation before setting it ", new Exception("InstrumentContainer is null"));
-			System.exit(-1);
-		}
-		return mInstrumentContainer;
-	}
-
-	public void setInstrumentContainer(InstrumentContainer pInstrumentContainer) {
-		mInstrumentContainer = pInstrumentContainer;
-	}
-
-	public MatchingEngineInterface getMatchingEngine() {
-		if (mMatchingEngine == null) {
-			mLog.fatal("try to retrieve MatchingEngine implementation before setting it ", new Exception("MatchingEngine is null"));
-			System.exit(-1);
-		}
-		return mMatchingEngine;
-	}
-
-	public void setMatchingEngine(MatchingEngineInterface pMatchingEngine) {
-		mMatchingEngine = pMatchingEngine;
-	}
-
-	public void setTeConfiguration( JsonObject pTeConfiguration ) {
-		mTeConfiguration = pTeConfiguration;
-	}
-
-	public JsonObject getTeConfiguration() {
-		if (mTeConfiguration == null) {
-			mLog.fatal("try to retrieve TEConfiguration implementation before setting it ", new Exception("TEConfiguration is null"));
-			System.exit(-1);
-		}
-		return mTeConfiguration;
-	}
-
-	public MarketDataInterface getMarketDataDistributor() {
-		synchronized (mMarketDataDistributorMutex) {
-			if (mMarketDataDistributor != null) {
-				return mMarketDataDistributor;
-			}
-			try {
-				mMarketDataDistributorMutex.wait(5000L);
-			} catch (InterruptedException e) {
-			}
-		}
-		if (mMarketDataDistributor == null) {
-			mLog.fatal("try to retrieve MarketData implementation before setting it ", new Exception("MarketData is null"));
-			System.exit(-1);
-		}
-		return mMarketDataDistributor;
-	}
-
-	public void setMarketDataDistributor(MarketDataInterface pMarketDataDistributor) {
-		synchronized (mMarketDataDistributorMutex) {
-			mMarketDataDistributor = pMarketDataDistributor;
-			mMarketDataDistributorMutex.notifyAll();
-		}
-	}
-
-	public TradeContainer getTradeContainer() {
-		if (mTradeContainer == null) {
-			mLog.fatal("try to retrieve Trade Container implementation before setting it ", new Exception("TradeContainer is null"));
-			System.exit(-1);
-		}
-		return mTradeContainer;
-	}
-
-	public void setTradeContainer(TradeContainer pTradeContainer) {
-		mTradeContainer = pTradeContainer;
+	public static PositionController getPositionController() {
+		return (PositionController) TeAppCntx.getInstance().getService( TeService.PositionData );
 	}
 }

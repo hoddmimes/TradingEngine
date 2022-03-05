@@ -26,16 +26,22 @@ public class HoldingEntry
 	private long    mTxNo;
 	private long    mTime;
 
-	public HoldingEntry( String pSid, long pHolding, long pTxNo ) {
+	 HoldingEntry( String pSid, long pHolding, long pTxNo ) {
 		mSid = pSid;
 		mHolding = pHolding;
 		mTxNo = pTxNo;
 		mTime = System.currentTimeMillis();
 	}
 
+	 String getSid() {
+		return mSid;
+	}
+
 	void updateHolding( long pDeltaHolding, long pTxNo ) {
 		mHolding += pDeltaHolding;
-		mTxNo = pTxNo;
+		if (pTxNo > 0 ) {
+			mTxNo = pTxNo;
+		}
 		mTime = System.currentTimeMillis();
 	}
 
@@ -45,11 +51,6 @@ public class HoldingEntry
 		mTime = System.currentTimeMillis();
 	}
 
-	void addHolding( long pDeltaHolding, long pTxNo ) {
-		mHolding += pDeltaHolding;
-		mTxNo = pTxNo;
-		mTime = System.currentTimeMillis();
-	}
 
 	long getHolding() {
 		return mHolding;

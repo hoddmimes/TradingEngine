@@ -69,12 +69,22 @@
     },
     "cryptoGateway" : {
       "enable" : true,
+      "ethereum" : {
+        "enable" : false,
+        "verbose" : false,
+        "gasPrice" : 3,
+        "gasLimit" : 21000,
+        "gasTip" : 0,
+        "httpService" : "http://localhost:8545/",
+        "dataDir" : "./cryptogwy/ethereum"
+      },
       "bitcoin" : {
+        "enable" : false,
+        "txFeePerKb" : 50000,
         "verbose" : false,
         "network" : "REGTEST",
         "dataDir" : "./cryptogwy/bitcoin",
-        "wallet" : "bitcoinWallet.bin",
-        "walletPassword" : "test"
+        "wallet" : "teBitcoinWallet.bin"
       }
     }
   }

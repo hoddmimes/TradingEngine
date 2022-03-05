@@ -34,5 +34,7 @@ public interface MatchingEngineInterface
 	MessageInterface executePriceLevel( InternalPriceLevelRequest pInternalPriceLevelRequest,  RequestContextInterface pRequestContext );
 	MessageInterface executeQueryOwnOrders( QueryOwnOrdersRequest pQueryOwnOrdersRequest,  RequestContextInterface pRequestContext );
 	MessageInterface executeQueryBBO( QueryBBORequest pQueryBBORequest,  RequestContextInterface pRequestContext );
-	MessageInterface redrawCryptoRequest( CryptoReDrawRequest pCryptoReDrawRequest, RequestContextInterface pRequestContext );
+	MessageInterface redrawCryptoRequest( CryptoRedrawRequest pCryptoReDrawRequest, RequestContextInterface pRequestContext );
+	void updateCryptoPosition(String pAccountId, String pSid, long tNaDeltaAmmount, String pTxid );
+
 }

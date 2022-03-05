@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  Hoddmimes Solution AB 2021.
+ * Copyright (c)  Hoddmimes Solution AB 2022.
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,10 @@
 
 package com.hoddmimes.te.engine;
 
-import com.hoddmimes.te.common.TXIDFactory;
+import com.google.gson.JsonObject;
+import com.hoddmimes.jsontransform.JsonDecoder;
+import com.hoddmimes.jsontransform.JsonEncoder;
+import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.messages.generated.AddOrderRequest;
 import com.hoddmimes.te.messages.generated.BdxOrderbookChange;
 import com.hoddmimes.te.messages.generated.BdxOwnOrderbookChange;
@@ -30,8 +33,82 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Locale;
 
-public class Order implements Comparable<Order>
+public class Order implements Comparable<Order>, MessageInterface
 {
+	public enum Side {BUY,SELL};
+	public enum ChangeAction {ADD,REMOVE,MODIFY };
+
+
+	private String     mSid;
+	private long       mPrice;
+	private Side       mSide;
+	private long       mQuantity;
+	private long       mCreationTime;
+	private String     mUserRef;
+	private long       mOrderId;
+	private String     mAccountId;
+
+
+	public Order(String pUserId, AddOrderRequest pAddOrderRequest) {
+		this(  pUserId,
+				pAddOrderRequest.getSid().get(),
+				pAddOrderRequest.getPrice().get(),
+				pAddOrderRequest.getQuantity().get(),
+				Side.valueOf( pAddOrderRequest.getSide().get().toUpperCase()),
+				pAddOrderRequest.getRef().orElse(null),
+				System.currentTimeMillis());
+	}
+
+	 Order( String pUserId,  String pSymbol, long pPrice, long pVolume, Side pSide, String pRef, long pCreationTime ) {
+		this.mSid = pSymbol;
+		this.mPrice = pPrice;
+		this.mQuantity = pVolume;
+		this.mSide = pSide;
+		this.mUserRef = pRef;
+		this.mOrderId = OrderId.get( mSide );
+		this.mAccountId = pUserId;
+		this.mCreationTime = pCreationTime;
+	}
+
+	public Order( JsonObject pJsonString) {
+		JsonDecoder tDecoder = new JsonDecoder( pJsonString );
+		this.decode( tDecoder );
+	}
+
+
+	@Override
+	public String getMessageName() {
+		return this.getClass().getSimpleName();
+	}
+
+	@Override
+	public void encode(JsonEncoder pJsonEncoder) {
+		pJsonEncoder.add("account", mAccountId);
+		pJsonEncoder.add("price", mPrice);
+		pJsonEncoder.add("quantity", mQuantity);
+		pJsonEncoder.add("side", mSide.name());
+		pJsonEncoder.add("ref", mUserRef);
+		pJsonEncoder.add("orderId", mOrderId);
+		pJsonEncoder.add("createTime", mCreationTime);
+	}
+
+	@Override
+	public void decode(JsonDecoder pJsonDecoder) {
+		mAccountId = pJsonDecoder.readString("account");
+		mPrice = pJsonDecoder.readLong("price");
+		mQuantity = pJsonDecoder.readLong("quantity");
+		mSide = Side.valueOf( pJsonDecoder.readString("side"));
+		mUserRef = pJsonDecoder.readString("ref");
+		mOrderId = pJsonDecoder.readLong("orderId");
+		mCreationTime = pJsonDecoder.readLong("createTime");
+	}
+
+	public JsonObject toJson() {
+		JsonEncoder tEncoder = new JsonEncoder();
+		this.encode( tEncoder );
+		return tEncoder.toJson();
+	}
+
 	public String getSid() {
 		return mSid;
 	}
@@ -44,7 +121,7 @@ public class Order implements Comparable<Order>
 		return mSide;
 	}
 
-	public int getQuantity() {
+	public long getQuantity() {
 		return mQuantity;
 	}
 
@@ -64,7 +141,7 @@ public class Order implements Comparable<Order>
 		return mAccountId;
 	}
 
-	public void setQuantity(int pQuantity) {
+	public void setQuantity(long pQuantity) {
 		mQuantity = pQuantity;
 	}
 
@@ -73,18 +150,6 @@ public class Order implements Comparable<Order>
 	}
 
 
-	public enum Side {BUY,SELL};
-	public enum ChangeAction {ADD,REMOVE,MODIFY };
-	private static SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-
-	private String     mSid;
-	private long       mPrice;
-	private Side       mSide;
-	private int        mQuantity;
-	private long       mCreationTime;
-	private String     mUserRef;
-	private long       mOrderId;
-	private String     mAccountId;
 
 	@Override
 	public int compareTo(Order pOrder) {
@@ -176,49 +241,14 @@ public class Order implements Comparable<Order>
 	}
 
 
-	public Order(String pUserId, AddOrderRequest pAddOrderRequest) {
-		mSid = pAddOrderRequest.getSid().get();
-		mPrice = pAddOrderRequest.getPrice().get();
-		mQuantity = pAddOrderRequest.getQuantity().get();
-		mSide = Side.valueOf( pAddOrderRequest.getSide().get().toUpperCase());
-		mUserRef = pAddOrderRequest.getRef().orElse(null);
-		mCreationTime = System.currentTimeMillis();
-		mOrderId = OrderId.get( mSide );
-		mAccountId = pUserId;
-	}
 
-	 Order( String pUserId,  String pSymbol, long pPrice, int pVolume, Side pSide, String pRef, long pCreationTime ) {
-		this.mSid = pSymbol;
-		this.mPrice = pPrice;
-		this.mQuantity = pVolume;
-		this.mSide = pSide;
-		this.mUserRef = pRef;
-		this.mOrderId = OrderId.get( mSide );
-		this.mAccountId = pUserId;
-		this.mCreationTime = pCreationTime;
-	}
 
-	private Order( String pUserId,  String pSymbol, long pPrice, int pVolume, Side pSide, String pRef, String pCreationTime  ) {
-		this.mSid = pSymbol;
-		this.mPrice = pPrice;
-		this.mQuantity = pVolume;
-		this.mSide = pSide;
-		this.mUserRef = pRef;
-		mOrderId = OrderId.get( mSide );
-		this.mAccountId = pUserId;
-		try {
-			this.mCreationTime = SDF.parse( pCreationTime ).getTime();
-		}
-		catch( ParseException e) {
-			e.printStackTrace();
-		}
-	}
 
 	@Override
 	public String toString() {
-
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		return "Symbol: " + mSid + " " + mQuantity + "@" + fmtprice(mPrice)  + " " + mSide.toString() +
-				" ref: " + mUserRef + " time: " + SDF.format( mCreationTime ) + " user: " + mAccountId +
+				" ref: " + mUserRef + " time: " + sdf.format( mCreationTime ) + " user: " + mAccountId +
 				" ordid: " + Long.toHexString( mOrderId );
 	}
 
@@ -235,13 +265,13 @@ public class Order implements Comparable<Order>
 		LinkedList<Order> tList = new LinkedList<>();
 
 
-		tList.add( new Order(null, "FOO", 100700, 1, Side.BUY, "1", "2020-11-1 10:01:00.000"));
-		tList.add( new Order(null, "FOO", 104000, 1, Side.BUY, "2", "2020-11-1 10:03:00.000"));
-		tList.add( new Order(null, "FOO", 104000, 1, Side.BUY, "3", "2020-11-1 10:02:00.000"));
-		tList.add( new Order(null, "FOO", 102300, 1, Side.BUY, "4", "2020-11-1 10:04:00.000"));
-		tList.add( new Order(null, "FOO", 101400, 1, Side.BUY, "5", "2020-11-1 10:05:00.000"));
-		tList.add( new Order(null, "FOO", 106100, 1, Side.BUY, "6", "2020-11-1 10:06:00.000"));
-		tList.add( new Order(null, "FOO", 105200, 1, Side.BUY, "7", "2020-11-1 10:07:00.000"));
+		tList.add( new Order(null, "FOO", 100700, 1, Side.BUY, "1", cvtTimStr("10:01:00.000")));
+		tList.add( new Order(null, "FOO", 104000, 1, Side.BUY, "2", cvtTimStr("10:03:00.000")));
+		tList.add( new Order(null, "FOO", 104000, 1, Side.BUY, "3", cvtTimStr("10:02:00.000")));
+		tList.add( new Order(null, "FOO", 102300, 1, Side.BUY, "4", cvtTimStr("10:04:00.000")));
+		tList.add( new Order(null, "FOO", 101400, 1, Side.BUY, "5", cvtTimStr("10:05:00.000")));
+		tList.add( new Order(null, "FOO", 106100, 1, Side.BUY, "6", cvtTimStr("10:06:00.000")));
+		tList.add( new Order(null, "FOO", 105200, 1, Side.BUY, "7", cvtTimStr("10:07:00.000")));
 
 		Collections.sort( tList );
 		tList.stream().forEach( t -> System.out.println(t));
@@ -249,18 +279,23 @@ public class Order implements Comparable<Order>
 		tList.clear();
 		System.out.println("=============================================================");
 
-		tList.add( new Order(null, "FOO", 100000, 1, Side.SELL, "1", "2020-11-1 10:01:00.000"));
-		tList.add( new Order(null, "FOO", 104000, 1, Side.SELL, "2", "2020-11-1 10:03:00.000"));
-		tList.add( new Order(null, "FOO", 104000, 1, Side.SELL, "3", "2020-11-1 10:02:00.000"));
-		tList.add( new Order(null, "FOO", 102000, 1, Side.SELL, "4", "2020-11-1 10:04:00.000"));
-		tList.add( new Order(null, "FOO", 101000, 1, Side.SELL, "5", "2020-11-1 10:05:00.000"));
-		tList.add( new Order(null, "FOO", 106000, 1, Side.SELL, "6", "2020-11-1 10:06:00.000"));
-		tList.add( new Order(null, "FOO", 105000, 1, Side.SELL, "7", "2020-11-1 10:07:00.000"));
+		tList.add( new Order(null, "FOO", 100000, 1, Side.SELL, "1", cvtTimStr("10:01:00.000")));
+		tList.add( new Order(null, "FOO", 104000, 1, Side.SELL, "2", cvtTimStr("10:03:00.000")));
+		tList.add( new Order(null, "FOO", 104000, 1, Side.SELL, "3", cvtTimStr("10:02:00.000")));
+		tList.add( new Order(null, "FOO", 102000, 1, Side.SELL, "4", cvtTimStr("10:04:00.000")));
+		tList.add( new Order(null, "FOO", 101000, 1, Side.SELL, "5", cvtTimStr("10:05:00.000")));
+		tList.add( new Order(null, "FOO", 106000, 1, Side.SELL, "6", cvtTimStr("10:06:00.000")));
+		tList.add( new Order(null, "FOO", 105000, 1, Side.SELL, "7", cvtTimStr("10:07:00.000")));
 
 		Collections.sort( tList );
 		tList.stream().forEach( t -> System.out.println(t));
 	}
 
-
+	private static long cvtTimStr(String timstr) {
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+		try {sdf.parse(timstr).getTime();}
+		catch (ParseException e) {e.printStackTrace();}
+		return 0;
+	}
 
 }

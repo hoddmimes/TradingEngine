@@ -18,7 +18,7 @@
 package com.hoddmimes.te.management.gui.mgmt;
 
 import com.hoddmimes.te.TeAppCntx;
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableModel;
@@ -159,7 +159,7 @@ public class PositionPanel extends JPanel  {
 	public void loadAccountData() {
 		// Load market data if not already loaded
 		if (mAccountComboBox.getItemCount() == 0) {
-			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, new MgmtGetAccountsRequest().setRef("ga"));
+			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeService.Autheticator.name(), new MgmtGetAccountsRequest().setRef("ga"));
 			if (tAccountsResponse == null) {
 				return;
 			}
@@ -176,7 +176,7 @@ public class PositionPanel extends JPanel  {
 
 
 	void loadPositions( String pAccount, boolean pNoOrderInfo ) {
-		MgmtGetAccountPositionsResponse tPositionResponse = (MgmtGetAccountPositionsResponse) mServiceInterface.transceive(TeIpcServices.PositionData, new MgmtGetAccountPositionsRequest().setRef("X").setAccount(pAccount));
+		MgmtGetAccountPositionsResponse tPositionResponse = (MgmtGetAccountPositionsResponse) mServiceInterface.transceive(TeService.PositionData.name(), new MgmtGetAccountPositionsRequest().setRef("X").setAccount(pAccount));
 
 		mCashTxt.setText("");
 		mPositionTableModel.clear();

@@ -49,9 +49,6 @@ public class SymbolX extends Symbol
 		return (!mMarket.isClosed());
 	}
 
-
-
-
 	private boolean isTickSizeAligned( long pPrice ) {
 		if (super.getTickSize().get() == 0) {
 			return true;
@@ -62,12 +59,53 @@ public class SymbolX extends Symbol
 		return ((tRest % tTickSize) == 0);
 	}
 
+	/**
+	 * This method will scale a position / quantity from an extrnal unit to and internal unit
+	 * This will typically be used for crypto coins where the external unit is the smallest
+	 * nominator. Fort BTC that will be satoshi where 1 BTC == 100.000.000 satoshi and for etherreum
+	 * where 1 ETH = 1.000.000.000.000.000.000 wei.
+	 * Assume that the scaling Factor is 100.000 for BTC this implicates that
+	 *  - A user holding 1.234 BTC internally will hold 1234 TE BTC satoshi units.
+	 *  - The smallest trading unit is 1/1000 BTC roughly having a price of 5$
+	 *
+	 * @param pOutSidePosition, typicall satoshi or wei
+	 * @return, internal unit notation
+	 */
+	public long scaleFromOutsideNotation( long pOutSidePosition ) {
+		long tScalingFactor = (super.getScaleFactor().isPresent()) ? super.getScaleFactor().get() : mMarket.getScaleFactor().get();
+		return ( pOutSidePosition / tScalingFactor);
+	}
+
+	public long scaleToOutsideNotation( long pTeInternalPosition ) {
+		long tScalingFactor = (super.getScaleFactor().isPresent()) ? super.getScaleFactor().get() : mMarket.getScaleFactor().get();
+		return ( pTeInternalPosition  * tScalingFactor);
+	}
 
 
-	public void validate( long pPrice, long pLastKnownTradingPrice ) throws Exception {
+	public void validate( long pOrderSize, long pPrice, long pLastKnownTradingPrice ) throws Exception {
 		// Validate that price is a multiple of the tick size
 		if (!isTickSizeAligned( pPrice )) {
 			throw new Exception("order price is not tick size aligned");
+		}
+
+		if (!super.getMinOrderSize().isEmpty()) {
+			if (super.getMinOrderSize().get() > pOrderSize) {
+				throw new Exception("order size less than min size ( " + super.getMinOrderSize().get() + " )");
+			}
+		} else {
+			if (mMarket.getMinOrderSize().get() > pOrderSize) {
+				throw new Exception("order size less than min size ( " + mMarket.getMinOrderSize().get() + " )");
+			}
+		}
+
+		if (!super.getMaxOrderSize().isEmpty()) {
+			if (super.getMaxOrderSize().get() < pOrderSize) {
+				throw new Exception("order size larger than max size size ( " + super.getMaxOrderSize().get() + " )");
+			}
+		} else {
+			if (mMarket.getMaxOrderSize().get() < pOrderSize) {
+				throw new Exception("order size larger than max size size ( " + mMarket.getMaxOrderSize().get() + " )");
+			}
 		}
 
 		if (!super.getMinPricePctChg().isEmpty()) {

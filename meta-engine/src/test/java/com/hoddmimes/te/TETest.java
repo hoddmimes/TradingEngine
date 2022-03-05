@@ -46,8 +46,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 
 public class TETest implements TeWebsocketClient.WssCallback {
-	private static final String TE_HTTP_URI = "https://localhost:8883/te/";
-	private static final String TE_WSS_URI = "wss://localhost:8883/marketdata";
+	private static final String TE_HTTP_URI = "https://localhost:8883/te-trading/";
+	private static final String TE_WSS_URI = "wss://localhost:8883/te-marketdata/";
 
 	private  TeWebsocketClient   mWssClient;
 	private  TeHttpClient        mHttpClient;
@@ -88,7 +88,7 @@ public class TETest implements TeWebsocketClient.WssCallback {
 	public void test_connect() throws Exception {
 
 		mHttpClient = new TeHttpClient( TE_HTTP_URI, false);
-		JsonObject jRsp = mHttpClient.post( toJsonString("{'account':'test', 'password': 'test','ref' : 'test-1'}"),"logon");
+		JsonObject jRsp = mHttpClient.post( toJsonString("{'account':'TEST', 'password': 'test','ref' : 'test-1'}"),"logon");
 		if (!jRsp.has("sessionAuthId")) {
 			assertTrue(false, ("Login failure: " + jRsp.toString()));
 			System.exit(0);

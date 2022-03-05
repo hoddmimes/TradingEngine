@@ -17,23 +17,19 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.db.TEDB;
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
-import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
 import com.hoddmimes.te.management.gui.table.TableModel;
 import com.hoddmimes.te.messages.generated.*;
-import org.bitcoinj.core.Coin;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.NumberFormat;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -79,14 +75,14 @@ public class CryptoDepositPanel extends JPanel {
 	}
 
 	public  void loadData( ) {
-		MgmtGetCryptoDepositAccountsResponse tResponse = (MgmtGetCryptoDepositAccountsResponse) mServiceInterface.transceive( TeIpcServices.CryptoGwy,
+		MgmtGetCryptoDepositAccountsResponse tResponse = (MgmtGetCryptoDepositAccountsResponse) mServiceInterface.transceive( TeService.CryptoGwy.name(),
 															new MgmtGetCryptoDepositAccountsRequest().setRef("cad"));
 
 		mDepositTableModel.clear();
 		if (tResponse.getAccounts().isPresent()) {
-			List<DbCryptoDeposit> tDepositList = tResponse.getAccounts().get();
-			Collections.sort(tDepositList, new CryptoPanel.AccountDepositSort());
-			for (DbCryptoDeposit tDeposit : tResponse.getAccounts().get()) {
+			List<MgmtGetCryptoDepositAccount> tDepositList = tResponse.getAccounts().get();
+			Collections.sort(tDepositList, new CryptoDepositAccountSort());
+			for (MgmtGetCryptoDepositAccount tDeposit : tResponse.getAccounts().get()) {
 				mDepositTableModel.addEntry(new CryptoDepositEntry(tDeposit));
 			}
 		}
@@ -99,11 +95,11 @@ public class CryptoDepositPanel extends JPanel {
 	}
 
 	public static class CryptoDepositEntry {
-		public DbCryptoDeposit mDeposit;
+		public MgmtGetCryptoDepositAccount mDeposit;
 		NumberFormat nbf;
 
 
-		public CryptoDepositEntry(DbCryptoDeposit pDeposit ) {
+		public CryptoDepositEntry(MgmtGetCryptoDepositAccount pDeposit ) {
 			mDeposit = pDeposit;
 			nbf = NumberFormat.getInstance(Locale.US);
 			nbf.setMaximumFractionDigits(2);
@@ -117,18 +113,28 @@ public class CryptoDepositPanel extends JPanel {
 			return mDeposit.getAccountId().get();
 		}
 
-		@TableAttribute(header = "Bitcoins", column = 2, width = 90, alignment = JLabel.RIGHT)
+		@TableAttribute(header = "coin", column = 2, width = 90, alignment = JLabel.RIGHT)
 		public String getBitCoins()
 		{
-			Coin tCoin = Coin.valueOf(mDeposit.findHolding(TEDB.CoinType.BTC.name()).getHolding().get());
-			return tCoin.toFriendlyString();
+			return mDeposit.getCoin().get();
 		}
 
-		@TableAttribute(header = "Ether", column = 3, width = 90, alignment = JLabel.RIGHT)
-		public String getEther() {
-			return "0.00"; //TODO: fix conversion
+		@TableAttribute(header = "holding", column = 3, width = 90, alignment = JLabel.RIGHT)
+		public String getAmount() {
+			return mDeposit.getAmount().get();
 		}
 
 	}
+
+	static class CryptoDepositAccountSort implements Comparator<MgmtGetCryptoDepositAccount>
+	{
+		@Override
+		public int compare(MgmtGetCryptoDepositAccount A1, MgmtGetCryptoDepositAccount A2) {
+			return A1.getAccountId().get().compareTo( A2.getAccountId().get());
+		}
+	}
+
+
+
 
 }

@@ -18,25 +18,22 @@
 package com.hoddmimes.te.common.ipc;
 
 import com.hoddmimes.jsontransform.MessageInterface;
-import com.hoddmimes.te.common.AuxJson;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.common.transport.tcpip.TcpServer;
 import com.hoddmimes.te.common.transport.tcpip.TcpServerCallbackIf;
 import com.hoddmimes.te.common.transport.tcpip.TcpThread;
 import com.hoddmimes.te.common.transport.tcpip.TcpThreadCallbackIf;
-import com.hoddmimes.te.messages.MgmtMessageRequest;
 import com.hoddmimes.te.messages.generated.IpcComponentConfiguration;
 import com.hoddmimes.te.messages.generated.MessageFactory;
-import com.hoddmimes.te.messages.generated.MgmtStatusResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
 
 public class IpcComponent implements IpcComponentInterface, TcpServerCallbackIf, TcpThreadCallbackIf {
-	private String      mName;
+	private TeService    mService;
 	private long        mCreateTime;
 	private String      mHost;
 	private int         mPort;
@@ -46,8 +43,8 @@ public class IpcComponent implements IpcComponentInterface, TcpServerCallbackIf,
 	private IpcRequestCallbackInterface mCallbacktHandler;
 
 
-	public IpcComponent(String pName, String pHost, int pPort, IpcRequestCallbackInterface pDefaultHandler ) {
-		mName = pName;
+	public IpcComponent(TeService pService, String pHost, int pPort, IpcRequestCallbackInterface pDefaultHandler ) {
+		mService = pService;
 		mHost = pHost;
 		mPort = pPort;
 		mCreateTime = System.currentTimeMillis();
@@ -62,10 +59,10 @@ public class IpcComponent implements IpcComponentInterface, TcpServerCallbackIf,
 		try {
 			mServer.declareServer( mPort );
 			mPort = mServer.getLocalPort();
-			mLog.info("declare mgmt server for component \"" + mName + "\" on port " + mPort );
+			mLog.info("declare mgmt server for component \"" + mService + "\" on port " + mPort );
 		}
 		catch ( IOException e) {
-			mLog.fatal("failed to declare mgmt server for component \"" + mName + "\" on port " + mPort, e );
+			mLog.fatal("failed to declare mgmt server for component \"" + mService + "\" on port " + mPort, e );
 			new RuntimeException( e );
 		}
 	}
@@ -121,7 +118,7 @@ public class IpcComponent implements IpcComponentInterface, TcpServerCallbackIf,
 		IpcComponentConfiguration tComp = new IpcComponentConfiguration();
 		tComp.setCretime( mCreateTime );
 		tComp.setLastTimeSeen( System.currentTimeMillis());
-		tComp.setName( mName );
+		tComp.setName( mService.name() );
 		tComp.setHost( mHost );
 		tComp.setPort( mPort );
 		return tComp;

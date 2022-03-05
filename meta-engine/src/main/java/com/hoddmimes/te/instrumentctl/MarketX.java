@@ -23,6 +23,7 @@ import com.hoddmimes.jsontransform.JsonSchemaValidator;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.interfaces.MarketStates;
+import com.hoddmimes.te.messages.SID;
 import com.hoddmimes.te.messages.generated.Market;
 import com.hoddmimes.te.messages.generated.Symbol;
 import org.apache.logging.log4j.LogManager;
@@ -66,6 +67,10 @@ public class MarketX extends Market
 			}
 
 		}
+	}
+
+	public boolean isCryptoMarket() {
+		return super.getIsCryptoMarket().get();
 	}
 
 	public SymbolX getSymbol( String pSid ) {

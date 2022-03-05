@@ -58,7 +58,7 @@ import com.google.gson.GsonBuilder;
                     private String mRef;
                     private String mOrderId;
                     private Boolean mInserted;
-                    private Integer mMatched;
+                    private Long mMatched;
                public AddOrderResponse()
                {
                 
@@ -94,11 +94,11 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mInserted);
             }
         
-            public AddOrderResponse setMatched( Integer pMatched ) {
+            public AddOrderResponse setMatched( Long pMatched ) {
             mMatched = pMatched;
             return this;
             }
-            public Optional<Integer> getMatched() {
+            public Optional<Long> getMatched() {
               return  Optional.ofNullable(mMatched);
             }
         
@@ -129,7 +129,7 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mInserted Type: boolean List: false
             tEncoder.add( "inserted", mInserted );
         
-            //Encode Attribute: mMatched Type: int List: false
+            //Encode Attribute: mMatched Type: long List: false
             tEncoder.add( "matched", mMatched );
         
         }
@@ -149,8 +149,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mInserted Type:boolean List: false
             mInserted = tDecoder.readBoolean("inserted");
         
-            //Decode Attribute: mMatched Type:int List: false
-            mMatched = tDecoder.readInteger("matched");
+            //Decode Attribute: mMatched Type:long List: false
+            mMatched = tDecoder.readLong("matched");
         
 
         }
@@ -191,7 +191,7 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setMatched( Integer pValue ) {
+                        public Builder setMatched( Long pValue ) {
                         mInstance.setMatched( pValue );
                         return this;
                     }

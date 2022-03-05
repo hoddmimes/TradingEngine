@@ -48,6 +48,7 @@ dependencies {
     implementation group: 'commons-codec', name: 'commons-codec', version: '1.15'
     implementation group: 'org.web3j', name: 'crypto', version: '5.0.0'
     implementation group: 'org.web3j', name: 'core', version: '5.0.0'
+    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '4.9.3'
 
     implementation project(':meta-message')
     implementation project(':meta-common')
@@ -58,8 +59,8 @@ dependencies {
 
 task createTEVersion() {
 
-    File dfh = new File( projectDir, versionFile );
-    dfh.delete();
+    File dfh = new File( projectDir, versionFile )
+    dfh.delete()
 
     def dateAndTime  = new Date().format('yyyy-MM-dd HH:mm:ss.SSS')
     File fh = new File( projectDir, versionFile )

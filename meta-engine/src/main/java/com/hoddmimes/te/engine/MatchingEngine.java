@@ -21,26 +21,26 @@ package com.hoddmimes.te.engine;
 import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
+import com.hoddmimes.te.TeCoreService;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.TeException;
-import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.MarketDataInterface;
 import com.hoddmimes.te.common.interfaces.RequestContextInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
+import com.hoddmimes.te.common.ipc.IpcService;
 import com.hoddmimes.te.instrumentctl.InstrumentContainer;
 import com.hoddmimes.te.instrumentctl.SymbolX;
 import com.hoddmimes.te.management.RateItem;
 import com.hoddmimes.te.management.RateStatistics;
-import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
 import com.hoddmimes.te.common.ipc.IpcComponentInterface;
 import com.hoddmimes.te.messages.MgmtMessageRequest;
-import com.hoddmimes.te.messages.MgmtMessageResponse;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
 import com.hoddmimes.te.positions.AccountPosition;
+import com.hoddmimes.te.positions.PositionController;
 import com.hoddmimes.te.sessionctl.RequestContext;
-import com.hoddmimes.te.trades.TradeX;
+import com.hoddmimes.te.trades.TradeContainer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,14 +48,16 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbackInterface
+public class MatchingEngine extends TeCoreService implements MatchingEngineInterface, MatchingEngineCallback
 {
 	private static SimpleDateFormat SDT_TIME = new SimpleDateFormat("HH:mm:ss.SSS");
 
 	private Logger mLog = LogManager.getLogger( MatchingEngine.class);
 	private InstrumentContainer         mInstrumentContainer;
-	private JsonObject                  mConfiguration;
+	private JsonObject                  mMeConfiguration;
 	private MarketDataInterface         mMarketDataDistributor;
+	private PositionController          mPositionController;
+	private TradeContainer              mTradeContainer;
 	private HashMap<String,Orderbook>   mOrderbooks;
 	private RateItem                    mOrderRate;
 	private boolean                     mPreTradeValidation;
@@ -70,19 +72,23 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 
 	private boolean mIsEnabledPrivateFlow, mIsEnabledPriceLevelFlow, mIsEnabledTradeflow, mIsEnabledOrderbookChangeFlow;
 
-	public MatchingEngine(JsonObject pTeConfiguration, InstrumentContainer pInstrumentContainer, MarketDataInterface pMarketDataInterface) {
+	public MatchingEngine(JsonObject pTeConfiguration, IpcService pIpcService) {
+		super(pTeConfiguration, pIpcService );
 		mAmendCount = new AtomicInteger(0);
 		mOrderCount = new AtomicInteger(0);
 		mDeleteCount = new AtomicInteger(0);
 
-		mInstrumentContainer = pInstrumentContainer;
-		mMarketDataDistributor = pMarketDataInterface;
-		mConfiguration = AuxJson.navigateObject(pTeConfiguration, "TeConfiguration/matchingEngineConfiguration");
+		mTradeContainer = (TradeContainer) TeAppCntx.getInstance().getService( TeService.TradeData );
+		mInstrumentContainer = (InstrumentContainer) TeAppCntx.getInstance().getService( TeService.InstrumentData );
+		mMarketDataDistributor = (MarketDataInterface)  TeAppCntx.getInstance().getService( TeService.MarketData );
+		mPositionController =  (PositionController) TeAppCntx.getInstance().getService( TeService.PositionData );
+		mMeConfiguration = AuxJson.navigateObject(pTeConfiguration, "TeConfiguration/matchingEngineConfiguration");
 		initializeOrderbooks();
+
 		configureDataDistribution(AuxJson.navigateObject(pTeConfiguration, "TeConfiguration/marketDataConfiguration"));
-		IpcComponentInterface tIpc = TeAppCntx.getInstance().getIpcService().registerComponent( TeIpcServices.MatchingService, 0, this );
 		mOrderRate = RateStatistics.getInstance().addRateItem("Order rate");
-		mPreTradeValidation = TeAppCntx.getInstance().getPositionController().isPreTradingValidationEnabled();
+		mPreTradeValidation = mPositionController.isPreTradingValidationEnabled();
+		TeAppCntx.getInstance().registerService(this);
 	}
 
 
@@ -105,7 +111,8 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 		}
 	}
 
-	MessageInterface processAddOrder(AddOrderRequest pAddOrderRequest, RequestContextInterface pRequestContext ) {
+	@Override
+	public MessageInterface executeAddOrder(AddOrderRequest pAddOrderRequest, RequestContextInterface pRequestContext) {
 		Orderbook tOrderbook = mOrderbooks.get(pAddOrderRequest.getSid().get());
 		pRequestContext.timestamp("retrieve orderbook");
 		if (tOrderbook == null) {
@@ -140,23 +147,36 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 
 	private void preTradeValidation( Orderbook pOrderbook, Order pOrder ) throws TeException
 	{
-		AccountPosition tAccount = TeAppCntx.getInstance().getPositionController().getAccount( pOrder.getAccountId() );
-		if (tAccount == null) {
+		if(!mPositionController.hasPosition( pOrder.getAccountId(), pOrder.getSid())) {
 			throw new TeException(0, StatusMessageBuilder.error("No deposit position defined for account: " + pOrder.getAccountId(), pOrder.getUserRef()));
 		}
 
 		if (pOrder.getSide() == Order.Side.BUY) {
-			if (!tAccount.validateBuyOrder(  pOrder, pOrderbook.getAccountExposure( pOrder.getAccountId(), Order.Side.BUY))) {
+			if (!mPositionController.validateBuyOrder(  pOrder, pOrderbook.getAccountExposure( pOrder.getAccountId(), Order.Side.BUY))) {
 				throw new TeException(0, StatusMessageBuilder.error("Order will exceed cash exposure limit ", pOrder.getUserRef()));
 			}
 		} else {
-			if (!tAccount.validateSellOrder(pOrder, pOrderbook.getAccountPosition(pOrder.getAccountId(), Order.Side.SELL))) {
+			if (!mPositionController.validateSellOrder(pOrder, pOrderbook.getAccountPosition(pOrder.getAccountId(), Order.Side.SELL))) {
 				throw new TeException(0, StatusMessageBuilder.error("Order will exceed selling position limit ", pOrder.getUserRef()));
 			}
 		}
 	}
 
-	MessageInterface processAmendOrder( AmendOrderRequest pAmendOrderRequest, RequestContextInterface pRequestContext) {
+	@Override
+	public void updateCryptoPosition(String pAccountId, String pSid, long pNaDeltaAmmount, String pTxid ) {
+		Orderbook tOrderbook = mOrderbooks.get(pSid);
+		if (tOrderbook == null) {
+			mLog.warn("(updateCryptoPosition) orderbook " + pSid + " does not exists ");
+			return;
+		}
+		synchronized (tOrderbook)
+		{
+			mPositionController.updateHolding( pAccountId, pSid, pNaDeltaAmmount, pTxid );
+		}
+	}
+
+	@Override
+	public MessageInterface executeAmendOrder( AmendOrderRequest pAmendOrderRequest, RequestContextInterface pRequestContext) {
 		long tOrderId;
 
 		Orderbook tOrderbook = mOrderbooks.get(pAmendOrderRequest.getSid().get());
@@ -251,7 +271,7 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 	}
 
 	InternalTrade mgmtRevertTrade( MgmtRevertTradeRequest pRequest ) {
-		ContainerTrade tTrade = pRequest.getTrade().get();
+		TradeExecution tTrade = pRequest.getTrade().get();
 
 		Orderbook tOrderbook = mOrderbooks.get( tTrade.getSid().get());
 		if (tOrderbook == null) {
@@ -267,7 +287,7 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 	}
 
 
-	MessageInterface processDeleteOrder( DeleteOrderRequest pDeleteOrderRequest, RequestContextInterface pRequestContext) {
+	public MessageInterface executeDeleteOrder( DeleteOrderRequest pDeleteOrderRequest, RequestContextInterface pRequestContext) {
 		long tOrderId;
 
 		Orderbook tOrderbook = mOrderbooks.get( pDeleteOrderRequest.getSid().get());
@@ -293,7 +313,7 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 		}
 	}
 
-	MessageInterface processQueryBBO( QueryBBORequest pRqstMsg, RequestContextInterface pRequestContext) {
+	public MessageInterface executeQueryBBO(QueryBBORequest pRqstMsg, RequestContextInterface pRequestContext) {
 		Iterator<Orderbook> tItr = mOrderbooks.values().iterator();
 		QueryBBOResponse tRspMsg = new QueryBBOResponse();
 		tRspMsg.setRef( pRqstMsg.getRef().get());
@@ -310,7 +330,7 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 
 
 
-	MessageInterface processDeleteOrders(  DeleteOrdersRequest pDeleteOrdersRequest, RequestContextInterface pRequestContext) {
+	public MessageInterface executeDeleteOrders(DeleteOrdersRequest pDeleteOrdersRequest, RequestContextInterface pRequestContext) {
 		Iterator<Orderbook> tItr = mOrderbooks.values().iterator();
 		int tOrdersDeleted = 0;
 
@@ -331,7 +351,7 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 	}
 
 
-	 MessageInterface processQueryOrderbook( QueryOrderbookRequest pQueryOrderbookRequest, RequestContextInterface  pRequestContext) {
+	 public MessageInterface executeQueryOrderbook(QueryOrderbookRequest pQueryOrderbookRequest, RequestContextInterface pRequestContext) {
 		Orderbook tOrderbook = mOrderbooks.get( pQueryOrderbookRequest.getSid().get());
 		if (tOrderbook == null) {
 			mLog.warn("orderbook " + pQueryOrderbookRequest.getSid().get() + " does not exists " + pRequestContext );
@@ -355,6 +375,29 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 		return tResponse;
 	}
 
+	@Override
+	public MessageInterface executeQueryOwnOrders(QueryOwnOrdersRequest pQueryOwnOrdersRequest, RequestContextInterface pRequestContext) {
+		QueryOwnOrdersResponse tQueryOwnOrdersResponse = new QueryOwnOrdersResponse();
+		tQueryOwnOrdersResponse.setRef( pQueryOwnOrdersRequest.getRef().get());
+
+		List<String> tSidLst = this.getOrderbookSymbolIds();
+		for( String tSid : tSidLst ) {
+			InternalOwnOrdersRequest tQryRqst = new InternalOwnOrdersRequest().setRef(pQueryOwnOrdersRequest.getRef().get()).setSid( tSid );
+			MessageInterface tRspMsg = this.processQueryOwnOrders( tQryRqst, pRequestContext );
+			if (tRspMsg instanceof StatusMessage) {
+				return tRspMsg;
+			}
+
+			InternalOwnOrdersResponse ior = (InternalOwnOrdersResponse) tRspMsg;
+			if (!ior.getOrders().isEmpty()) {
+				tQueryOwnOrdersResponse.addOrders(((InternalOwnOrdersResponse) tRspMsg).getOrders().get());
+			}
+		}
+		return tQueryOwnOrdersResponse;
+	}
+
+
+
 
 	MessageInterface processQueryOwnOrders( InternalOwnOrdersRequest pInternalOwnOrdersRequest, RequestContextInterface pRequestContext) {
 		Orderbook tOrderbook = mOrderbooks.get( pInternalOwnOrdersRequest.getSid().get());
@@ -369,7 +412,7 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 		}
 	}
 
-	 MessageInterface processPriceLevel(InternalPriceLevelRequest pInternalPriceLevelRequest, RequestContextInterface pRequestContext) {
+	 public MessageInterface executePriceLevel(InternalPriceLevelRequest pInternalPriceLevelRequest, RequestContextInterface pRequestContext) {
 		Orderbook tOrderbook = mOrderbooks.get( pInternalPriceLevelRequest.getSid().get());
 
 		if (tOrderbook == null) {
@@ -386,22 +429,27 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 		}
 	}
 
-	MessageInterface redrawCryptoRequest(CryptoReDrawRequest pCryptoReDrawRequest, RequestContextInterface pRequestContext) {
-		String tSid = (pCryptoReDrawRequest.getCoin().get().contentEquals(TEDB.CoinType.BTC.name())) ? InstrumentContainer.getBitcoinSID().toString() : InstrumentContainer.getEthereumSID().toString();
-
+	public MessageInterface redrawCryptoRequest(CryptoRedrawRequest pCryptoRedrawRequest, RequestContextInterface pRequestContext) {
+		pCryptoRedrawRequest.setAccountId( pRequestContext.getAccountId());
+		SymbolX tSymbol =  mInstrumentContainer.getCryptoInstrument( pCryptoRedrawRequest.getCoin().get());
+		if (tSymbol == null) {
+			mLog.warn("crypto asset " + pCryptoRedrawRequest.getCoin().get() + " does not exists " + pRequestContext );
+			return StatusMessageBuilder.error("crypto asset " + pCryptoRedrawRequest.getCoin().get() + " does not exists", pCryptoRedrawRequest.getRef().get());
+		}
+		String tSid = tSymbol.getSid().get();
 		Orderbook tOrderbook = mOrderbooks.get( tSid );
+
 
 		if (tOrderbook == null) {
 			mLog.warn("orderbook " + tSid + " does not exists " + pRequestContext );
-			return StatusMessageBuilder.error("orderbook " + tSid + " does not exists", pCryptoReDrawRequest.getRef().get());
+			return StatusMessageBuilder.error("orderbook " + tSid + " does not exists", pCryptoRedrawRequest.getRef().get());
 		}
 
 		synchronized (tOrderbook) {
-			long tSellOrderExposure = tOrderbook.getAccountExposure( pRequestContext.getAccountId(), Order.Side.SELL);
-			return TeAppCntx.getInstance().getPositionController().redrawCrypto( pCryptoReDrawRequest, tSellOrderExposure);
+			long tSellOrderPositionExposure = tOrderbook.getAccountPositionExposure( pRequestContext.getAccountId(), Order.Side.SELL);
+			return mPositionController.redrawCrypto( pCryptoRedrawRequest, tSellOrderPositionExposure);
 		}
 	}
-
 
 	public List<String> getOrderbookSymbolIds() {
 		ArrayList<String> tList = new ArrayList<>();
@@ -451,9 +499,9 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 	public void trade(InternalTrade pTrade, SessionCntxInterface pSessionCntx) {
 		String tSymbol =  pTrade.getSid();
 
-		BdxTrade tBdxTrade = TeAppCntx.getInstance().getTradeContainer().addTrade( pTrade );
+		BdxTrade tBdxTrade = mTradeContainer.addTrade( pTrade );
 
-		TeAppCntx.getInstance().getPositionController().tradeExcution ( pTrade );
+		mPositionController.tradeExcution ( pTrade );
 
 		if (mIsEnabledTradeflow) {
 			mMarketDataDistributor.queueBdxPublic(tBdxTrade);
@@ -504,12 +552,17 @@ public class MatchingEngine implements MatchingEngineCallback, IpcRequestCallbac
 		if (pMgmtRequest instanceof MgmtRevertTradeRequest) {
 			InternalTrade tTrade = mgmtRevertTrade((MgmtRevertTradeRequest) pMgmtRequest);
 			MgmtRevertTradeResponse tResponse = new MgmtRevertTradeResponse().setRef( ((MgmtMessageRequest) pMgmtRequest).getRef().get());
-			tResponse.setRevertedTrades( new TradeX( tTrade));
+			tResponse.setRevertedTrades( tTrade.toTradeExecution());
 			return tResponse;
 		}
 		if (pMgmtRequest instanceof MgmtQueryMatcherRequest) {
 			return  mgmtGetStatisticals((MgmtQueryMatcherRequest) pMgmtRequest);
 		}
 		throw new RuntimeException("no management entry for : " + pMgmtRequest.getMessageName());
+	}
+
+	@Override
+	public TeService getServiceId() {
+		return TeService.MatchingService;
 	}
 }

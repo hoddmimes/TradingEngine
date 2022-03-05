@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableModel;
@@ -30,10 +30,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.NumberFormat;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
 
 public class CryptoPaymentEntriesPanel extends BasePanel {
 	private enum CoinType {All,BTC,ETH};
@@ -44,6 +42,7 @@ public class CryptoPaymentEntriesPanel extends BasePanel {
 
 	JComboBox mAccountComboBox;
 	JComboBox mCoinComboBox;
+	List<DbCryptoPaymentEntry> mPaymentEntries;
 
 	TableModel<CryptoPaymentAddressEntry> mPaymentTableModel;
 	Table mPaymentTable;
@@ -51,7 +50,9 @@ public class CryptoPaymentEntriesPanel extends BasePanel {
 
 
 	public CryptoPaymentEntriesPanel(CryptoPanel pCryptoPanel ) {
+
 		super(pCryptoPanel.getServiceInterface());
+		mPaymentEntries = null;
 		mCryptoPanel = pCryptoPanel;
 		this.setLayout(new BorderLayout());
 
@@ -82,7 +83,7 @@ public class CryptoPaymentEntriesPanel extends BasePanel {
 		gc.gridx++;
 
 		String tCoinModel[] = { CoinType.All.name(), CoinType.BTC.name(), CoinType.ETH.name() };
-		mAccountComboBox = new JComboBox<>(tCoinModel);
+		mAccountComboBox = new JComboBox<>();
 		mAccountComboBox.setFont(Management.DEFAULT_FONT_BOLD);
 		tPanel.add( mAccountComboBox, gc  );
 
@@ -145,15 +146,30 @@ public class CryptoPaymentEntriesPanel extends BasePanel {
 		return tRootPanel;
 	}
 
+	private void requestPaymentEntries() {
+		MgmtGetCryptoAccountsAddressesRequest tRequest = new MgmtGetCryptoAccountsAddressesRequest().setRef("caa");
+		tRequest.setAccountId( (String) mAccountComboBox.getSelectedItem());
+		MgmtGetCryptoAccountsAddressesResponse tResponse = (MgmtGetCryptoAccountsAddressesResponse) mCryptoPanel.getServiceInterface().transceive( TeService.CryptoGwy.name(), tRequest );
+
+		if (tResponse.getPaymentEntries().isPresent()) {
+			mPaymentEntries = tResponse.getPaymentEntries().get();
+		} else {
+			mPaymentEntries = new ArrayList<>();
+		}
+		Set<String> tSet = new HashSet<>();
+		List<String> tAccounts = mPaymentEntries.stream().filter(pe-> tSet.add(pe.getAccountId().get())).map( pe-> pe.getAccountId().get()).toList();
+		mAccountComboBox.setModel( new DefaultComboBoxModel( tAccounts.toArray() ));
+	}
+
+
 	public  void loadData( ) {
-		mAccountComboBox.setModel( mCryptoPanel.getAccountModel());
+		requestPaymentEntries();
 		loadPaymentEntries();
 	}
 
 	private void loadPaymentEntries() {
-		mAccountComboBox.setModel( mCryptoPanel.getAccountModel());
 
-		if (mCryptoPanel.getAccountModel().getSize() == 0) {
+		if (mAccountComboBox.getItemCount() == 0) {
 			JOptionPane.showMessageDialog(this,
 					"No accounts with crypto deposits found",
 					"No Crypto Accounts",
@@ -164,7 +180,7 @@ public class CryptoPaymentEntriesPanel extends BasePanel {
 		CoinType tCointType = CoinType.valueOf( (String) mCoinComboBox.getSelectedItem());
 		MgmtGetCryptoAccountsAddressesRequest tRequest = new MgmtGetCryptoAccountsAddressesRequest().setRef("caa");
 		tRequest.setAccountId( (String) mAccountComboBox.getSelectedItem());
-		MgmtGetCryptoAccountsAddressesResponse tResponse = (MgmtGetCryptoAccountsAddressesResponse) mCryptoPanel.getServiceInterface().transceive( TeIpcServices.CryptoGwy, tRequest );
+		MgmtGetCryptoAccountsAddressesResponse tResponse = (MgmtGetCryptoAccountsAddressesResponse) mCryptoPanel.getServiceInterface().transceive( TeService.CryptoGwy.name(), tRequest );
 		mPaymentTableModel.clear();
 		if (tResponse.getPaymentEntries().isPresent()) {
 			List<DbCryptoPaymentEntry> tPaymentEntries = tResponse.getPaymentEntries().get();
@@ -191,9 +207,7 @@ public class CryptoPaymentEntriesPanel extends BasePanel {
 	}
 
 
-	public void resizeEvent( Dimension pSize) {
-		System.out.println("size: " + this.getSize());
-	}
+
 
 	public static class CryptoPaymentAddressEntry {
 		public DbCryptoPaymentEntry mPaymentEntry;
@@ -216,12 +230,12 @@ public class CryptoPaymentEntriesPanel extends BasePanel {
 		}
 
 		@TableAttribute(header = "Type", column = 2, width = 80, alignment = JLabel.RIGHT)
-		public String getAmount() {
-			return mPaymentEntry.getActionType().get();
+		public String getPaymentType() {
+			return mPaymentEntry.getPaymentType().get();
 		}
 
 		@TableAttribute(header = "Address", column = 3, width = 240, alignment = JLabel.RIGHT)
-		public String getType() {
+		public String getAddress() {
 			return mPaymentEntry.getAddress().get();
 		}
 

@@ -73,9 +73,9 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
-            case "EventBitcoinOnCoinsReceivedConfirm":
+            case "EventBitcoinOnCoinsConfirm":
             {
-            	EventBitcoinOnCoinsReceivedConfirm tMessage = new EventBitcoinOnCoinsReceivedConfirm();
+            	EventBitcoinOnCoinsConfirm tMessage = new EventBitcoinOnCoinsConfirm();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }
@@ -325,30 +325,30 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
-            case "SetReDrawEntryRequest":
+            case "SetRedrawEntryRequest":
             {
-            	SetReDrawEntryRequest tMessage = new SetReDrawEntryRequest();
+            	SetRedrawEntryRequest tMessage = new SetRedrawEntryRequest();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }
 			
-            case "SetReDrawEntryResponse":
+            case "SetRedrawEntryResponse":
             {
-            	SetReDrawEntryResponse tMessage = new SetReDrawEntryResponse();
+            	SetRedrawEntryResponse tMessage = new SetRedrawEntryResponse();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }
 			
-            case "CryptoReDrawRequest":
+            case "CryptoRedrawRequest":
             {
-            	CryptoReDrawRequest tMessage = new CryptoReDrawRequest();
+            	CryptoRedrawRequest tMessage = new CryptoRedrawRequest();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }
 			
-            case "CryptoReDrawResponse":
+            case "CryptoRedrawResponse":
             {
-            	CryptoReDrawResponse tMessage = new CryptoReDrawResponse();
+            	CryptoRedrawResponse tMessage = new CryptoRedrawResponse();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }
@@ -416,9 +416,9 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
-            case "ContainerTrade":
+            case "TradeExecution":
             {
-            	ContainerTrade tMessage = new ContainerTrade();
+            	TradeExecution tMessage = new TradeExecution();
             	tMessage.decode( new JsonDecoder(pJsonMessageString));
             	return tMessage;
             }

@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableModel;
@@ -164,7 +164,7 @@ public class CryptoPaymentsPanel extends BasePanel {
 		CoinType tCointType = CoinType.valueOf( (String) mCoinComboBox.getSelectedItem());
 		MgmtGetCryptoPaymentsRequest tRequest = new MgmtGetCryptoPaymentsRequest().setRef("cpe");
 		tRequest.setAccountId( (String) mAccountComboBox.getSelectedItem());
-		MgmtGetCryptoPaymentsResponse tResponse = (MgmtGetCryptoPaymentsResponse) mCryptoPanel.getServiceInterface().transceive( TeIpcServices.CryptoGwy, tRequest );
+		MgmtGetCryptoPaymentsResponse tResponse = (MgmtGetCryptoPaymentsResponse) mCryptoPanel.getServiceInterface().transceive( TeService.CryptoGwy.name(), tRequest );
 		mPaymentTableModel.clear();
 		if (tResponse.getPayments().isPresent()) {
 			List<DbCryptoPayment> tPayments = tResponse.getPayments().get();
@@ -227,7 +227,7 @@ public class CryptoPaymentsPanel extends BasePanel {
 
 		@TableAttribute(header = "Type", column = 4, width = 80, alignment = JLabel.RIGHT)
 		public String getType() {
-			return mPayment.getActionType().get();
+			return mPayment.getPaymentType().get();
 		}
 
 		@TableAttribute(header = "State", column = 5, width = 80, alignment = JLabel.RIGHT)
@@ -252,7 +252,7 @@ public class CryptoPaymentsPanel extends BasePanel {
 				return p1.getCoinType().get().compareTo(p2.getCoinType().get());
 			}
 
-			return p2.getTime().get().compareTo( p1.getTime().get());
+			return p2.getTime().get().compareTo( p1.getTime().get() );
 		}
 	}
 

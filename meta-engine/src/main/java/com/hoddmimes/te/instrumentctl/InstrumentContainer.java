@@ -22,13 +22,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
+import com.hoddmimes.te.TeCoreService;
 import com.hoddmimes.te.common.AuxJson;
-import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.MarketStates;
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
 import com.hoddmimes.te.common.ipc.IpcComponentInterface;
-import com.hoddmimes.te.messages.MgmtMessageRequest;
+import com.hoddmimes.te.common.ipc.IpcService;
 import com.hoddmimes.te.messages.MgmtMessageResponse;
 import com.hoddmimes.te.messages.SID;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
@@ -42,20 +42,21 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class InstrumentContainer implements IpcRequestCallbackInterface
+public class InstrumentContainer extends TeCoreService implements IpcRequestCallbackInterface
 {
 	private Logger mLog = LogManager.getLogger( InstrumentContainer.class );
 	private HashMap<Integer,  MarketX> mMarkets;
-	private JsonObject mConfiguration;
+	private JsonObject InstContainerConfig;
 	private Timer mPhaseTimer;
 	private ConcurrentHashMap<Integer,TradingPhaseEvent> mTradingPhaseEvents;
 
-   public InstrumentContainer( JsonObject pTeConfiguration ) {
-	 mMarkets = new HashMap<>();
-	 mTradingPhaseEvents = new ConcurrentHashMap<>();
+   public InstrumentContainer(JsonObject pTeConfiguration, IpcService pIpcService) {
+	   super( pTeConfiguration, pIpcService );
+	   mMarkets = new HashMap<>();
+	   mTradingPhaseEvents = new ConcurrentHashMap<>();
 
-	 mConfiguration = AuxJson.navigateObject( pTeConfiguration,"TeConfiguration/instrumentContainerConfiguration");
-	 String tDataStore = AuxJson.navigateString(mConfiguration,"dataStore");
+	 InstContainerConfig = AuxJson.navigateObject( pTeConfiguration,"TeConfiguration/instrumentContainerConfiguration");
+	 String tDataStore = AuxJson.navigateString(InstContainerConfig,"dataStore");
 	 mPhaseTimer = new Timer();
 
 	 try {
@@ -75,12 +76,16 @@ public class InstrumentContainer implements IpcRequestCallbackInterface
 		 mLog.fatal("Fail to load instruments configuration from \"" + tDataStore + "\"", e);
 		 System.exit(-1);
 	 }
-	 TeAppCntx.getInstance().setInstrumentContainer( this );
-	 IpcComponentInterface tMgmt = TeAppCntx.getInstance().getIpcService().registerComponent( TeIpcServices.InstrumentData, 0, this );
+	 TeAppCntx.getInstance().registerService( this );
    }
 
+	@Override
+	public TeService getServiceId() {
+		return TeService.InstrumentData;
+	}
 
-   private void adjustPriceValues( JsonObject pInstruments ) {
+
+	private void adjustPriceValues( JsonObject pInstruments ) {
       JsonArray jMarkets = pInstruments.get("MarketConfiguration").getAsJsonArray();
 	   for (int i = 0; i < jMarkets.size(); i++) {
 		   JsonObject jMarket = jMarkets.get(i).getAsJsonObject();
@@ -102,7 +107,7 @@ public class InstrumentContainer implements IpcRequestCallbackInterface
 		 * Market is not started normally. A hard state is set. Any further change to the market
 		 * state has to be done via the TE Management interface
 		 */
-		String tCfgState = AuxJson.navigateString(mConfiguration, "startState", "normal");
+		String tCfgState = AuxJson.navigateString(InstContainerConfig, "startState", "normal");
 		if (!tCfgState.contentEquals("normal")) {
 			pMarket.setState(MarketStates.valueOf(tCfgState.toUpperCase()).name());
 			return;
@@ -296,6 +301,11 @@ public class InstrumentContainer implements IpcRequestCallbackInterface
 
 	public MarketX getMarket( int pMarket ) { return mMarkets.get( pMarket ); }
 
+	public boolean isCryptoMarket( String pSid ) {
+		SID s = new SID( pSid );
+		MarketX m = getMarket( s.getMarket());
+		return m.isCryptoMarket();
+	}
 
    public SymbolX getSymbol(String pSymbolId ) {
 	   SymbolX tSymbol = null;
@@ -374,12 +384,18 @@ public class InstrumentContainer implements IpcRequestCallbackInterface
 		return -1L;
 	}
 
-	public static SID getBitcoinSID() {
-		return new SID(2, TEDB.CoinType.BTC.name()); // todo: internally "BITCOIN" is used as constant identifier a better mapping is needed
+	public SymbolX getCryptoInstrument( String pCoin ) {
+		Iterator<MarketX> tItr = mMarkets.values().iterator();
+		while( tItr.hasNext()) {
+			MarketX m = tItr.next();
+			if (m.isCryptoMarket()) {
+				SID tSID =  new SID( m.getId().get(), pCoin);
+				return m.getSymbol( tSID.toString());
+			}
+		}
+		return null;
 	}
-	public static SID getEthereumSID() {
-		return new SID(2,   TEDB.CoinType.ETH.name()); // todo: internally "ETHER" is used as constant identifier a better mapping is needed
-	}
+
 
 	class TradingPhaseEvent extends TimerTask
 	{

@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableModel;
@@ -82,7 +82,7 @@ public class StatSessionPanel extends BasePanel {
 
 	public void refreshStatistics() {
 		MgmtQueryActiveSessionsRequest tReq = new MgmtQueryActiveSessionsRequest().setRef("qss");
-		MgmtQueryActiveSessionsResponse tResp = (MgmtQueryActiveSessionsResponse) mServiceInterface.transceive(TeIpcServices.SessionService, tReq );
+		MgmtQueryActiveSessionsResponse tResp = (MgmtQueryActiveSessionsResponse) mServiceInterface.transceive(TeService.SessionService.name(), tReq );
 
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		mStartTimeLabel.setText( "System Starting Time " + sdf.format( tResp.getSysStarTime().get()));

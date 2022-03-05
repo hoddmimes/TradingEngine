@@ -5,38 +5,11 @@
        <Import path="com.hoddmimes.te.messages.*"/>
    </Imports>
 
-    <Message name="DbDepositHolding"  rootMessage="false" >
-        <Attribute name="sid" type = "String"/>
-        <Attribute name="holding" type="long" />
-        <code>
-            public void updateHolding( long pDeltaAmount ) {
-              mHolding += pDeltaAmount;
-            }
-        </code>
-    </Message>
-
-    <Message name="DbCryptoDeposit" rootMessage="false" db="true" dbCollection="CryptoDeposit">
-        <Attribute name="accountId" type="String" mandatory="true" dbKey="unique" />
-        <Attribute name="holdings" type="DbDepositHolding"  list="array" mandatory="true" />
-        <code>
-            public DbDepositHolding findHolding( String pSid ) {
-                if (mHoldings == null) {
-                    return null;
-                }
-                for( DbDepositHolding h : mHoldings ) {
-                    if (h.getSid().get().contentEquals( pSid )) {
-                        return h;
-                    }
-                }
-                return null;
-            }
-        </code>
-    </Message>
 
     <Message name="DbCryptoPaymentEntry" rootMessage="false" db="true" dbCollection="CryptoPaymentEntry">
         <Attribute name="accountId" type="String" mandatory="true"/>
         <Attribute name="coinType" type="String" mandatory="true"  /> <!-- bitcoin/ethereum -->
-        <Attribute name="actionType" type="String" mandatory="true"/> <!-- deposit/redraw -->
+        <Attribute name="paymentType" type="String" mandatory="true"/> <!-- deposit/redraw -->
         <Attribute name="address" type="String" mandatory="true"/>
         <Attribute name="confirmed" type="boolean" mandatory="true"/>
         <Attribute name="confirmationId" type="String" mandatory="true" dbKey="not-unique"/>
@@ -48,7 +21,7 @@
         <Attribute name="time" type="String" mandatory="true" dbKey="not-unique"/>
         <Attribute name="amount" type="String" mandatory="true"/>
         <Attribute name="coinType" type="String" mandatory="true" /> <!-- bitcoin/ethereum -->
-        <Attribute name="actionType" type="String" mandatory="true"/> <!-- deposit/redraw -->
+        <Attribute name="paymentType" type="String" mandatory="true"/> <!-- deposit/redraw -->
         <Attribute name="txid" type="String" mandatory="true" dbKey="not-unique"/>
         <Attribute name="state" type="String" mandatory="true"/> <!-- pending / confirmed -->
     </Message>
@@ -58,8 +31,7 @@
         <Attribute name="time" type="String" mandatory="true" /> <!-- bitcoin/ethereum -->
         <Attribute name="binTime" type="long" mandatory="true" /> <!-- bitcoin/ethereum -->
         <Attribute name="confirmationType" type="String" mandatory="true"/> <!-- account/transfer -->
-        <Attribute name="id" type="String" mandatory="true"/>
-        <Attribute name="confirmationId" type="String" mandatory="true" dbKey="not-unique"/>
+        <Attribute name="confirmationId" type="String" mandatory="true" dbKey="unique"/>
     </Message>
 
 
@@ -127,12 +99,11 @@
     </Message>
 
 
-    <Message name="EventBitcoinOnCoinsReceivedConfirm" rootMessage="true">
-        <Attribute name="walletId" type="String" mandatory="true"/>
+    <Message name="EventBitcoinOnCoinsConfirm" rootMessage="true">
         <Attribute name="coin" type="String" mandatory="true"/>
         <Attribute name="txid" type="String" mandatory="true"/>
-        <Attribute name="toAddress" type="String" mandatory="true"/>
-        <Attribute name="wallet" type="EventBitcoinWallet" mandatory="true"/>
+        <Attribute name="address" type="String" mandatory="true"/>
+        <Attribute name="paymentType" type="String"/>
         <Attribute name="amount" type="long" mandatory="true"/> <!-- satoshi or wei -->
         <Attribute name="amountFriendly" type="String" mandatory="true"/> <!-- satoshi or wei -->
     </Message>

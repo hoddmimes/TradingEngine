@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.management.gui.table.*;
 import com.hoddmimes.te.messages.generated.Account;
 import com.hoddmimes.te.messages.generated.MgmtDeleteAccountRequest;
@@ -112,7 +112,7 @@ public class RemoveUpdateAccountPanel extends BasePanel implements TableCallback
 			return;
 		}
 		MgmtDeleteAccountRequest pRequest = new MgmtDeleteAccountRequest().setRef("ra").setAccount( pAccountEntry.mAccount );
-		MgmtDeleteAccountResponse tResponse = (MgmtDeleteAccountResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, pRequest );
+		MgmtDeleteAccountResponse tResponse = (MgmtDeleteAccountResponse) mServiceInterface.transceive(TeService.Autheticator.name(), pRequest );
 		if (tResponse.getIsDeleted().get()) {
 			JOptionPane.showMessageDialog( this, "Account successfully deleted " , "Account Deleted", JOptionPane.PLAIN_MESSAGE );
 			mAccountsPanel.loadAccountData();

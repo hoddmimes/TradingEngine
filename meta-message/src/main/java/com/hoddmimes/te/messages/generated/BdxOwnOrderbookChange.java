@@ -59,7 +59,7 @@ import com.google.gson.GsonBuilder;
                     private String mSid;
                     private String mAction;
                     private Long mPrice;
-                    private Integer mQuantity;
+                    private Long mQuantity;
                     private String mSide;
                     private String mRef;
                     private Long mObSeqNo;
@@ -106,11 +106,11 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mPrice);
             }
         
-            public BdxOwnOrderbookChange setQuantity( Integer pQuantity ) {
+            public BdxOwnOrderbookChange setQuantity( Long pQuantity ) {
             mQuantity = pQuantity;
             return this;
             }
-            public Optional<Integer> getQuantity() {
+            public Optional<Long> getQuantity() {
               return  Optional.ofNullable(mQuantity);
             }
         
@@ -168,7 +168,7 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mPrice Type: long List: false
             tEncoder.add( "price", mPrice );
         
-            //Encode Attribute: mQuantity Type: int List: false
+            //Encode Attribute: mQuantity Type: long List: false
             tEncoder.add( "quantity", mQuantity );
         
             //Encode Attribute: mSide Type: String List: false
@@ -200,8 +200,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mPrice Type:long List: false
             mPrice = tDecoder.readLong("price");
         
-            //Decode Attribute: mQuantity Type:int List: false
-            mQuantity = tDecoder.readInteger("quantity");
+            //Decode Attribute: mQuantity Type:long List: false
+            mQuantity = tDecoder.readLong("quantity");
         
             //Decode Attribute: mSide Type:String List: false
             mSide = tDecoder.readString("side");
@@ -261,7 +261,7 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setQuantity( Integer pValue ) {
+                        public Builder setQuantity( Long pValue ) {
                         mInstance.setQuantity( pValue );
                         return this;
                     }

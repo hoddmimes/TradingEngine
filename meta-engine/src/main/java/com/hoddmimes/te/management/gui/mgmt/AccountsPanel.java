@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.messages.generated.Account;
 import com.hoddmimes.te.messages.generated.MgmtGetAccountsRequest;
 import com.hoddmimes.te.messages.generated.MgmtGetAccountsResponse;
@@ -68,7 +68,7 @@ public class AccountsPanel extends BasePanel
 
 
 	void loadAccountData() {
-		MgmtGetAccountsResponse tAccountResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, new MgmtGetAccountsRequest().setRef("ga"));
+		MgmtGetAccountsResponse tAccountResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeService.Autheticator.name(), new MgmtGetAccountsRequest().setRef("ga"));
 		if (tAccountResponse != null) {
 			mAccountList = tAccountResponse.getAccounts().get();
 			Collections.sort( mAccountList, new AccountSort());

@@ -21,7 +21,7 @@ import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.AuthenticateInterface;
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.common.ipc.IpcComponentInterface;
 import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
 import com.hoddmimes.te.messages.generated.*;
@@ -37,8 +37,8 @@ public class Authenticator implements AuthenticateInterface, IpcRequestCallbackI
 	private TEDB mDb;
 
 	public Authenticator() {
-		mDb = TeAppCntx.getInstance().getDb();
-		IpcComponentInterface tMgmt = TeAppCntx.getInstance().getIpcService().registerComponent( TeIpcServices.Autheticator, 0, this );
+		mDb = TeAppCntx.getDatabase();
+		IpcComponentInterface tMgmt = TeAppCntx.getInstance().getIpcService().registerComponent( TeService.Autheticator, 0, this );
 	}
 
 	@Override

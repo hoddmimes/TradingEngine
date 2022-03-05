@@ -57,11 +57,11 @@ import com.google.gson.GsonBuilder;
             
                     private String mSid;
                     private Long mLast;
-                    private Integer mQuantity;
+                    private Long mQuantity;
                     private Long mOpen;
                     private Long mLow;
                     private Long mHigh;
-                    private Integer mTotQuantity;
+                    private Long mTotQuantity;
                public BdxTrade()
                {
                 
@@ -89,11 +89,11 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mLast);
             }
         
-            public BdxTrade setQuantity( Integer pQuantity ) {
+            public BdxTrade setQuantity( Long pQuantity ) {
             mQuantity = pQuantity;
             return this;
             }
-            public Optional<Integer> getQuantity() {
+            public Optional<Long> getQuantity() {
               return  Optional.ofNullable(mQuantity);
             }
         
@@ -121,11 +121,11 @@ import com.google.gson.GsonBuilder;
               return  Optional.ofNullable(mHigh);
             }
         
-            public BdxTrade setTotQuantity( Integer pTotQuantity ) {
+            public BdxTrade setTotQuantity( Long pTotQuantity ) {
             mTotQuantity = pTotQuantity;
             return this;
             }
-            public Optional<Integer> getTotQuantity() {
+            public Optional<Long> getTotQuantity() {
               return  Optional.ofNullable(mTotQuantity);
             }
         
@@ -153,7 +153,7 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mLast Type: long List: false
             tEncoder.add( "last", mLast );
         
-            //Encode Attribute: mQuantity Type: int List: false
+            //Encode Attribute: mQuantity Type: long List: false
             tEncoder.add( "quantity", mQuantity );
         
             //Encode Attribute: mOpen Type: long List: false
@@ -165,7 +165,7 @@ import com.google.gson.GsonBuilder;
             //Encode Attribute: mHigh Type: long List: false
             tEncoder.add( "high", mHigh );
         
-            //Encode Attribute: mTotQuantity Type: int List: false
+            //Encode Attribute: mTotQuantity Type: long List: false
             tEncoder.add( "totQuantity", mTotQuantity );
         
         }
@@ -182,8 +182,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mLast Type:long List: false
             mLast = tDecoder.readLong("last");
         
-            //Decode Attribute: mQuantity Type:int List: false
-            mQuantity = tDecoder.readInteger("quantity");
+            //Decode Attribute: mQuantity Type:long List: false
+            mQuantity = tDecoder.readLong("quantity");
         
             //Decode Attribute: mOpen Type:long List: false
             mOpen = tDecoder.readLong("open");
@@ -194,8 +194,8 @@ import com.google.gson.GsonBuilder;
             //Decode Attribute: mHigh Type:long List: false
             mHigh = tDecoder.readLong("high");
         
-            //Decode Attribute: mTotQuantity Type:int List: false
-            mTotQuantity = tDecoder.readInteger("totQuantity");
+            //Decode Attribute: mTotQuantity Type:long List: false
+            mTotQuantity = tDecoder.readLong("totQuantity");
         
 
         }
@@ -236,7 +236,7 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setQuantity( Integer pValue ) {
+                        public Builder setQuantity( Long pValue ) {
                         mInstance.setQuantity( pValue );
                         return this;
                     }
@@ -256,7 +256,7 @@ import com.google.gson.GsonBuilder;
                         return this;
                     }
                 
-                        public Builder setTotQuantity( Integer pValue ) {
+                        public Builder setTotQuantity( Long pValue ) {
                         mInstance.setTotQuantity( pValue );
                         return this;
                     }

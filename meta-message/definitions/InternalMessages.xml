@@ -69,7 +69,7 @@
     </Message>
 
 
-    <Message name="ContainerTrade" rootMessage="true">
+    <Message name="TradeExecution" rootMessage="true">
         <Attribute name="sid" type="String"/>
         <Attribute name="marketId" type="int"/>
         <Attribute name="buyer" type="String"/>
@@ -79,7 +79,7 @@
         <Attribute name="buyerOrderRef" type="String"/>
         <Attribute name="sellerOrderRef" type="String"/>
         <Attribute name="price" type="long"/>
-        <Attribute name="quantity" type="int"/>
+        <Attribute name="quantity" type="long"/>
         <Attribute name="tradeId" type="long"/>
         <Attribute name="tradeTime" type="long"/>
     </Message>
@@ -93,7 +93,11 @@
         <Attribute name="marketClose" type="String" mandatory="true"/>
         <Attribute name="minPricePctChg" type="long" mandatory="true"/>
         <Attribute name="maxPricePctChg" type="long" mandatory="true"/>
+        <Attribute name="minOrderSize" type="long" mandatory="true"/>
+        <Attribute name="maxOrderSize" type="long" mandatory="true"/>
         <Attribute name="enabled" type="boolean" mandatory="true"/>
+        <Attribute name="scaleFactor" type="long" mandatory="true"/>
+        <Attribute name="isCryptoMarket" type="boolean" mandatory="true"/>
         <Attribute name="state" type="String" mandatory="false"/> <!-- will be set as part of the initial load -->
     </Message>
 
@@ -105,6 +109,9 @@
         <Attribute name="tickSize" type="long" mandatory="true"/>
         <Attribute name="minPricePctChg" type="long"/>
         <Attribute name="maxPricePctChg" type="long"/>
+        <Attribute name="minOrderSize" type="long" />
+        <Attribute name="maxOrderSize" type="long" />
+        <Attribute name="scaleFactor" type="long"/>
         <Attribute name="suspended" type="boolean"/>
     </Message>
 

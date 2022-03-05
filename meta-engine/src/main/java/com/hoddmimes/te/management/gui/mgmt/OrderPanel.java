@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
@@ -123,7 +123,7 @@ public class OrderPanel extends JPanel implements TableCallbackInterface {
 			return;
 		}
 
-		MgmtDeleteOrderResponse tResponse = (MgmtDeleteOrderResponse) mServiceInterface.transceive( TeIpcServices.MatchingService,
+		MgmtDeleteOrderResponse tResponse = (MgmtDeleteOrderResponse) mServiceInterface.transceive( TeService.MatchingService.name(),
 															new MgmtDeleteOrderRequest().setRef("do").setOrder(pOrder.getOrder()));
 
 		String tMsg = (tResponse.getDeleted().get()) ? "Order delete" : "Order not found";
@@ -146,7 +146,7 @@ public class OrderPanel extends JPanel implements TableCallbackInterface {
 			return;
 		}
 
-		MgmtDeleteAllOrdersResponse tResponse = (MgmtDeleteAllOrdersResponse) mServiceInterface.transceive( TeIpcServices.MatchingService,
+		MgmtDeleteAllOrdersResponse tResponse = (MgmtDeleteAllOrdersResponse) mServiceInterface.transceive( TeService.MatchingService.name(),
 				new MgmtDeleteAllOrdersRequest().setRef("do").setAccount( pAccount ));
 
 		String tMsg = String.valueOf( tResponse.getDeleted().get()) + " orders deleted";
@@ -213,7 +213,7 @@ public class OrderPanel extends JPanel implements TableCallbackInterface {
 	public void loadAccountData() {
 		// Load market data if not already loaded
 		if (mAccountComboBox.getItemCount() == 0) {
-			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, new MgmtGetAccountsRequest().setRef("ga"));
+			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeService.Autheticator.name(), new MgmtGetAccountsRequest().setRef("ga"));
 			if (tAccountsResponse == null) {
 				return;
 			}
@@ -230,7 +230,7 @@ public class OrderPanel extends JPanel implements TableCallbackInterface {
 
 
 	void loadOrders( String pAccount, boolean pNoOrderInfo ) {
-		MgmtGetAccountOrdersResponse tOrdersResponse = (MgmtGetAccountOrdersResponse) mServiceInterface.transceive(TeIpcServices.MatchingService, new MgmtGetAccountOrdersRequest().setRef("X").setAccount(pAccount));
+		MgmtGetAccountOrdersResponse tOrdersResponse = (MgmtGetAccountOrdersResponse) mServiceInterface.transceive(TeService.MatchingService.name(), new MgmtGetAccountOrdersRequest().setRef("X").setAccount(pAccount));
 
 		if (tOrdersResponse == null) {
 			return;

@@ -21,15 +21,15 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.AuxJson;
+import com.hoddmimes.te.common.Crypto;
 import com.hoddmimes.te.common.TeException;
-import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
-import com.hoddmimes.te.common.ipc.IpcProxy;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.common.ipc.IpcService;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
+import com.hoddmimes.te.sessionctl.SessionController;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Configuration;
@@ -38,7 +38,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
@@ -55,7 +54,7 @@ public class TeRestMessageController
 	private IpcService mIpcService;
 
 	public TeRestMessageController() {
-		mCallback = TeAppCntx.getInstance().getSessionController();
+		mCallback = (ConnectorInterface.ConnectorCallbackInterface) TeAppCntx.getInstance().getService(TeService.SessionService);
 		mConfiguration = AuxJson.navigateObject( TeAppCntx.getInstance().getTeConfiguration(), "TeConfiguration/connectorConfiguration/configuration");
 		mMessageFactory = new MessageFactory();
 		mIpcService = TeAppCntx.getInstance().getIpcService();
@@ -235,62 +234,129 @@ public class TeRestMessageController
 	}
 
 
+	/**
+	 * This entry is called when a client like to retreive and register a deposit entry
+	 * For Bitcoin the user will receive a unique deposit address being assoiciated with the client account
+	 * For Ethereum the address retorn will be the one and only address of the TE ethereum receive address. Instead the client
+	 * will be identified by the address the deposit is sent from, som the {fromAddress} is only applicable if the coin type is ETH
+	 * @param pSession
+	 * @param coin BTC or ETH
+	 * @return GetDepositEntryResponse
+	 */
 
+	@GetMapping( path = "/addDepositEntry/{coin}/{fromAddress}" )
+	ResponseEntity<String> getPaymentEntry(HttpSession pSession, @PathVariable String coin, @PathVariable String fromAddress) {
+		return addPaymentEntry(pSession, coin, fromAddress);
+	}
 
-	@GetMapping( path = "/getDepositEntry/{coin}" )
+	@GetMapping( path = "/addDepositEntry/{coin}" )
 	ResponseEntity<String> getPaymentEntry(HttpSession pSession, @PathVariable String coin) {
+		return addPaymentEntry(pSession, coin, null);
+	}
+
+
+	private ResponseEntity<String> addPaymentEntry(HttpSession pSession, String coin, String fromAddress) {
 		GetDepositEntryRequest tPayEntryRqst = new GetDepositEntryRequest();
 		tPayEntryRqst.setRef(String.valueOf(mInternalRef.getAndIncrement()));
 
-		if (!AuxJson.navigateBoolean( TeAppCntx.getInstance().getTeConfiguration(),"TeConfiguration/cryptoGateway/enable")) {
-			return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
+		if (coin == null) {
+			return buildResponse(StatusMessageBuilder.error("No crypto coin identifier was specified in the GET request", null));
 		}
 
-		if ((coin == null) && ((!coin.contentEquals(TEDB.CoinType.BTC.name())) && (!coin.contentEquals(TEDB.CoinType.ETH.name())))) {
-			return buildResponse(StatusMessageBuilder.error("Invalid coin type", null));
+		Crypto.CoinType tCoinType = Crypto.CoinType.valueOf(coin);
+		if ( tCoinType == null) {
+			return buildResponse(StatusMessageBuilder.error("Unknown coin type specified", null));
+		}
+
+
+		if (fromAddress == null) {
+			if (coin.contentEquals(Crypto.CoinType.ETH.name())) {
+				return buildResponse(StatusMessageBuilder.error("For ETH a from address has to be specified", null));
+			}
+		} else {
+			if (coin.contentEquals(Crypto.CoinType.BTC.name())) {
+				return buildResponse(StatusMessageBuilder.error("For BTC a from address must not be specified", null));
+			}
+			tPayEntryRqst.setFromAddress( fromAddress );
+		}
+
+		if (!TeAppCntx.getInstance().getCryptoGateway().isEnabled( tCoinType )) {
+			return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
 		}
 
 		tPayEntryRqst.setAccountId( mCallback.getSessionContext( pSession.getId()).getAccount());
 		tPayEntryRqst.setCoin( coin );
 
-		MessageInterface tResponse =  TeAppCntx.getInstance().getCryptoGateway().setDepositAddressEntry( tPayEntryRqst );
+
+		MessageInterface tResponse =  TeAppCntx.getInstance().getCryptoGateway().addDepositEntry( tPayEntryRqst );
 		return buildResponse( tResponse );
 	}
 
-	@GetMapping( path = "/setRedrawEntry/{coin}/{address}" )
-	ResponseEntity<String> setRedrawEntry(HttpSession pSession, @PathVariable String coin, @PathVariable String address) {
-		SetReDrawEntryRequest tRedrawEntryRqst = new SetReDrawEntryRequest();
+	/**
+	 * In order for a client to redraw coins there must be a confirmed redraw payment entry defined
+	 * This method is invoked when the client would like to add a redraw payment entry.
+	 * And before the client can redrawn any holdings the entry needs to be confirmed. Confirmation requests are
+	 * sent out via mail seprately
+	 * @param pSession
+	 * @param coin
+	 * @param  (redraw address)
+	 * @return SetRedrawEntryResponse
+	 */
+
+	@GetMapping( path = "/addRedrawEntry/{coin}/{address}" )
+	ResponseEntity<String> addRedrawEntry(HttpSession pSession, @PathVariable String coin, @PathVariable String address) {
+		SetRedrawEntryRequest tRedrawEntryRqst = new SetRedrawEntryRequest();
 		tRedrawEntryRqst.setRef(String.valueOf(mInternalRef.getAndIncrement()));
 
-		if (!AuxJson.navigateBoolean( TeAppCntx.getInstance().getTeConfiguration(),"TeConfiguration/cryptoGateway/enable")) {
-			return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
+		if (coin == null) {
+			return buildResponse(StatusMessageBuilder.error("No crypto coin identifier was specified in the GET request", null));
 		}
 
-		if ((coin == null) && ((!coin.contentEquals(TEDB.CoinType.BTC.name())) && (!coin.contentEquals(TEDB.CoinType.ETH.name())))) {
-			return buildResponse(StatusMessageBuilder.error("Invalid coin asset", null));
+		Crypto.CoinType tCoinType = Crypto.CoinType.valueOf(coin);
+		if ( tCoinType == null) {
+			return buildResponse(StatusMessageBuilder.error("Unknown coin type specified", null));
+		}
+		if ( address == null) {
+			return buildResponse(StatusMessageBuilder.error("No redraw address specified", null));
+		}
+
+		if (!TeAppCntx.getInstance().getCryptoGateway().isEnabled( tCoinType )) {
+			return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
 		}
 
 		tRedrawEntryRqst.setAddress( address );
 		tRedrawEntryRqst.setAccountId( mCallback.getSessionContext( pSession.getId()).getAccount());
 		tRedrawEntryRqst.setCoin( coin );
 
-		MessageInterface tResponse =  TeAppCntx.getInstance().getCryptoGateway().setRedrawAddressEntry( tRedrawEntryRqst );
+		MessageInterface tResponse =  TeAppCntx.getInstance().getCryptoGateway().addRedrawEntry( tRedrawEntryRqst );
 		return buildResponse( tResponse );
 	}
 
+
+	/**
+	 * Invoked by clients to redraw coins from its account. In order to do so a payment entry must previously  been
+	 * added and confirmed by the client.
+	 * @param pSession
+	 * @param pJsonRqstString
+	 * @return
+	 */
+
 	@PostMapping( path = "/redrawCrypto" )
 	ResponseEntity<?> redrawCrypto(HttpSession pSession, @RequestBody String pJsonRqstString ) {
-		if (!AuxJson.navigateBoolean( TeAppCntx.getInstance().getTeConfiguration(),"TeConfiguration/cryptoGateway/enable")) {
-			return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
-		}
+		try {
+			String jRqstMsgString = AuxJson.tagMessageBody(CryptoRedrawRequest.NAME, pJsonRqstString);
+			CryptoRedrawRequest tRedrawCryptoRequest = new CryptoRedrawRequest(jRqstMsgString);
 
-		String jRqstMsgString  = AuxJson.tagMessageBody(CryptoReDrawRequest.NAME, pJsonRqstString);
-		CryptoReDrawRequest tRedrawCryptoRequest = new CryptoReDrawRequest( jRqstMsgString );
-		if (tRedrawCryptoRequest.getRef().isEmpty()) {
-			tRedrawCryptoRequest.setRef( String.valueOf(mInternalRef.getAndIncrement()));
+			if (tRedrawCryptoRequest.getRef().isEmpty()) {
+				tRedrawCryptoRequest.setRef(String.valueOf(mInternalRef.getAndIncrement()));
+			}
+
+			MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), tRedrawCryptoRequest.toJson().toString());
+			return buildResponse(tResponseMessage);
+		} catch (Throwable t) {
+			mLog.fatal("(redrawCrypto) internal error", t);
+			throw t;
 		}
-		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), tRedrawCryptoRequest.toJson().toString() );
-		return buildResponse( tResponseMessage );
 	}
 
 

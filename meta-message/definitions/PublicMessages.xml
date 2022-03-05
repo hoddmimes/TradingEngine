@@ -12,7 +12,7 @@
     <Message name="AddOrderRequest" implements="EngineMsgInterface" rootMessage="true">
         <Attribute name="sid" type="String" mandatory="true" />
         <Attribute name="price" type="long" mandatory="true"/>
-        <Attribute name="quantity" type = "int" mandatory="true"/>
+        <Attribute name="quantity" type = "long" mandatory="true"/>
         <Attribute name="ref" type = "String" mandatory="true"/>
         <Attribute name="side" type="String" mandatory="true"/>
     </Message>
@@ -21,14 +21,14 @@
         <Attribute name="ref" type = "String"/>
         <Attribute name="orderId" type="String"/>
         <Attribute name="inserted" type = "boolean"/>
-        <Attribute name="matched" type = "int"/>
+        <Attribute name="matched" type = "long"/>
     </Message>
 
     <Message name="AmendOrderRequest" implements="EngineMsgInterface" rootMessage="true">
         <Attribute name="sid" type="String" mandatory="true" />
         <Attribute name="orderId" type="String" mandatory="true"/>
         <Attribute name="price" type="long"/>
-        <Attribute name="deltaQuantity" type = "int"/>
+        <Attribute name="deltaQuantity" type = "long"/>
         <Attribute name="ref" type = "String" mandatory="true"/>
         <Attribute name="side" type="String" />
     </Message>
@@ -37,7 +37,7 @@
         <Attribute name="ref" type = "String"/>
         <Attribute name="orderId" type="String"/>
         <Attribute name="inserted" type = "boolean"/>
-        <Attribute name="matched" type = "int"/>
+        <Attribute name="matched" type = "long"/>
     </Message>
 
 
@@ -50,7 +50,7 @@
 
     <Message name="DeleteOrderResponse" rootMessage="true" >
         <Attribute name="ref" type = "String"/>
-        <Attribute name="remaining" type="int"/>
+        <Attribute name="remaining" type="long"/>
         <Attribute name="orderId" type="String"/>
     </Message>
 
@@ -123,7 +123,7 @@
 
     <Message name="TradePrice">
         <Attribute name="sid" type = "String"/>
-        <Attribute name="quantity" type="int" />
+        <Attribute name="quantity" type="long" />
         <Attribute name="time" type="String" />
         <Attribute name="last" type="long" />
         <Attribute name="open" type="long" />
@@ -162,8 +162,8 @@
         <Attribute name="sid" type = "String"/>
         <Attribute name="bid" type = "long"/>
         <Attribute name="offer" type = "long"/>
-        <Attribute name="bidQty" type = "int"/>
-        <Attribute name="offerQty" type = "int"/>
+        <Attribute name="bidQty" type = "long"/>
+        <Attribute name="offerQty" type = "long"/>
     </Message>
 
     <Message name="QueryBBOResponse" rootMessage="true" >
@@ -195,7 +195,7 @@
       ********************************************************************************* -->
     <Message name="Order">
         <Attribute name="price" type="long"/>
-        <Attribute name="quantity" type = "int"/>
+        <Attribute name="quantity" type = "long"/>
         <Attribute name="orderId" type = "String"/>
         <Attribute name="side" type="String"/>
     </Message>
@@ -206,7 +206,7 @@
         <Attribute name="sid" type = "String"/>
         <Attribute name="action" type = "String"/> <!-- ADD, REMOVE, MODIFY -->
         <Attribute name="price" type = "long"/>
-        <Attribute name="quantity" type = "int"/>
+        <Attribute name="quantity" type = "long"/>
         <Attribute name="side" type = "String"/>
         <Attribute name="obSeqNo" type = "long"/>
         <code>
@@ -222,7 +222,7 @@
         <Attribute name="orderId" type = "String"/>
         <Attribute name="sid" type = "String"/>
         <Attribute name="price" type = "long"/>
-        <Attribute name="quantity" type = "int"/>
+        <Attribute name="quantity" type = "long"/>
         <Attribute name="tradeId" type = "String"/>
         <Attribute name="time" type = "String"/>
         <Attribute name="side" type = "String"/>
@@ -234,7 +234,7 @@
         <Attribute name="orderId" type = "String"/>
         <Attribute name="sid" type = "String"/>
         <Attribute name="price" type = "long"/>
-        <Attribute name="quantity" type = "int"/>
+        <Attribute name="quantity" type = "long"/>
         <Attribute name="tradeId" type = "String"/>
         <Attribute name="time" type = "String"/>
         <Attribute name="side" type = "String"/>
@@ -252,7 +252,7 @@
         <Attribute name="orderId" type = "String"/>
         <Attribute name="sid" type = "String"/>
         <Attribute name="price" type = "long"/>
-        <Attribute name="quantity" type = "int"/>
+        <Attribute name="quantity" type = "long"/>
         <Attribute name="side" type = "String"/>
         <Attribute name="ref" type = "String"/>
     </Message>
@@ -262,7 +262,7 @@
         <Attribute name="sid" type = "String"/>
         <Attribute name="action" type = "String"/> <!-- ADD, REMOVE, MODIFY -->
         <Attribute name="price" type = "long"/>
-        <Attribute name="quantity" type = "int"/>
+        <Attribute name="quantity" type = "long"/>
         <Attribute name="side" type = "String"/>
         <Attribute name="ref" type = "String"/>
         <Attribute name="obSeqNo" type = "long"/>
@@ -279,11 +279,11 @@
     <Message name="BdxTrade" implements="EngineBdxInterface"  rootMessage="true">
         <Attribute name="sid" type = "String"/>
         <Attribute name="last" type = "long"/>
-        <Attribute name="quantity" type = "int"/>
+        <Attribute name="quantity" type = "long"/>
         <Attribute name="open" type = "long"/>
         <Attribute name="low" type = "long"/>
         <Attribute name="high" type = "long"/>
-        <Attribute name="totQuantity" type = "int"/>
+        <Attribute name="totQuantity" type = "long"/>
         <code>
             public String getSubjectName() {
             SID tSID = new SID( this.getSid().get());
@@ -297,8 +297,8 @@
         <Attribute name="sid" type = "String"/>
         <Attribute name="bid" type = "long"/>
         <Attribute name="offer" type = "long"/>
-        <Attribute name="bidQty" type = "int"/>
-        <Attribute name="offerQty" type = "int"/>
+        <Attribute name="bidQty" type = "long"/>
+        <Attribute name="offerQty" type = "long"/>
         <code>
             public boolean same( BdxBBO bbo ) {
                 if (mBid != bbo.mBid)  {
@@ -327,7 +327,7 @@
 
     <Message name="PriceLevel">
         <Attribute name="price" type="long"/>
-        <Attribute name="quantity" type = "int"/>
+        <Attribute name="quantity" type = "long"/>
 
         <code>
             public boolean same( PriceLevel pl ) {
@@ -387,6 +387,7 @@
         <Attribute name="ref" type = "String"/>
         <Attribute name="coin" type="String" mandatory="true" />
         <Attribute name="accountId" type="String" />
+        <Attribute name="fromAddress" type="String" />
     </Message>
 
     <Message name="GetDepositEntryResponse" rootMessage="true" >
@@ -396,21 +397,21 @@
         <Attribute name="confirmationId" type="String"/>
     </Message>
 
-    <Message name="SetReDrawEntryRequest" implements="RequestMsgInterface" rootMessage="true" >
+    <Message name="SetRedrawEntryRequest" implements="RequestMsgInterface" rootMessage="true" >
         <Attribute name="ref" type = "String"/>
         <Attribute name="coin" type="String" mandatory="true" />
         <Attribute name="accountId" type="String" />
         <Attribute name="address" type="String" mandatory="true" />
     </Message>
 
-    <Message name="SetReDrawEntryResponse" rootMessage="true" >
+    <Message name="SetRedrawEntryResponse" rootMessage="true" >
         <Attribute name="ref" type = "String"/>
         <Attribute name="coin" type="String" mandatory="true" />
         <Attribute name="address" type="String" mandatory="true" />
-        <Attribute name="confirmationId" type="String" mandatory="true" />
+        <Attribute name="statusText" type="String" mandatory="true" />
     </Message>
 
-    <Message name="CryptoReDrawRequest" implements="RequestMsgInterface" rootMessage="true" >
+    <Message name="CryptoRedrawRequest" implements="RequestMsgInterface" rootMessage="true" >
         <Attribute name="ref" type = "String"/>
         <Attribute name="accountId" type="String"/>
         <Attribute name="coin" type="String" mandatory="true" />
@@ -418,9 +419,8 @@
         <Attribute name="amount" type="long" mandatory="true" />
     </Message>
 
-    <Message name="CryptoReDrawResponse" rootMessage="true" >
+    <Message name="CryptoRedrawResponse" rootMessage="true" >
         <Attribute name="ref" type = "String"/>
-        <Attribute name="coin" type="String" mandatory="true" />
         <Attribute name="remaingCoins" type="long" mandatory="true" />
         <Attribute name="txid" type="String" mandatory="true" />
     </Message>

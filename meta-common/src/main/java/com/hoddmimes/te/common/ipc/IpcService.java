@@ -21,6 +21,7 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.LocalIP4Address;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.common.transport.IpmgPublisher;
 import com.hoddmimes.te.common.transport.IpmgSubscriber;
 import com.hoddmimes.te.common.transport.IpmgSubscriberListenerInterface;
@@ -53,9 +54,9 @@ public class IpcService implements IpmgSubscriberListenerInterface {
 		public void ipcServiceRemoved( IpcComponentConfiguration pIpcComponentConfiguration);
 	}
 
-	private HashMap<String, IpcComponent> mRegisteredComponents;
+	private HashMap<TeService, IpcComponent> mRegisteredComponents;
 	private HashMap<String, TcpThread> mProxyConnections;
-	private ConcurrentHashMap<String, IpcComponentConfiguration> mProxyServices;
+	private ConcurrentHashMap<TeService, IpcComponentConfiguration> mProxyServices;
 	private List<IpcServiceListner> mServiceListeners;
 
 	private IpmgSubscriber mIpmgSubscriber;
@@ -106,10 +107,12 @@ public class IpcService implements IpmgSubscriberListenerInterface {
 		return mIpcConfiguration.get("groupPort").getAsInt();
 	}
 
-	public IpcComponentInterface registerComponent(String pComponentName, int pPort, IpcRequestCallbackInterface pDefaultCommandHandler)
+	public IpcComponentInterface registerComponent(TeService pService, int pPort, IpcRequestCallbackInterface pDefaultCommandHandler)
 	{
-		IpcComponent mci = new IpcComponent( pComponentName, mLocalIP4Address, pPort, pDefaultCommandHandler);
-		mRegisteredComponents.put( pComponentName, mci );
+		IpcComponent mci = new IpcComponent( pService, mLocalIP4Address, pPort, pDefaultCommandHandler);
+		synchronized (mRegisteredComponents ) {
+			mRegisteredComponents.put(pService, mci);
+		}
 		return null;
 	}
 
@@ -201,15 +204,19 @@ public class IpcService implements IpmgSubscriberListenerInterface {
 
 
 		for (IpcComponentConfiguration tBdxCompCfg : pCfgBdx.getComponents().get()) {
-			IpcComponentConfiguration tCompCfg = mProxyServices.get( tBdxCompCfg.getName().get());
-			if (tCompCfg == null) {
-				mProxyServices.put( tBdxCompCfg.getName().get(), tBdxCompCfg);
-				cLog.info("IPC proxy service \"" + tBdxCompCfg.toJson().toString() + "\" discovered");
-				notifyListeners( tBdxCompCfg, ServiceEvent.Add );
-			} else {
-				long t1 = tCompCfg.getLastTimeSeen().get();
-				tCompCfg.setLastTimeSeen( tNow );
-				//System.out.println("updcfg: " + tCompCfg.getName().get() + " tim-before: " + SDF.format( t1 ) + " tim-after: " + SDF.format( tCompCfg.getLastTimeSeen().get()) );
+			TeService tTeService = TeService.valueOf(tBdxCompCfg.getName().get());
+			if (tTeService != null) {
+				IpcComponentConfiguration tCompCfg = mProxyServices.get(tTeService);
+				if (tCompCfg == null) {
+					tBdxCompCfg.setLastTimeSeen( System.currentTimeMillis());
+					mProxyServices.put(tTeService, tBdxCompCfg);
+					cLog.info("IPC proxy service \"" + tBdxCompCfg.toJson().toString() + "\" discovered");
+					notifyListeners(tBdxCompCfg, ServiceEvent.Add);
+				} else {
+					long t1 = tCompCfg.getLastTimeSeen().get();
+					tCompCfg.setLastTimeSeen(tNow);
+					//System.out.println("updcfg: " + tCompCfg.getName().get() + " tim-before: " + SDF.format( t1 ) + " tim-after: " + SDF.format( tCompCfg.getLastTimeSeen().get()) );
+				}
 			}
 		}
 		synchronized ( mProxyServices ) {
@@ -261,9 +268,13 @@ public class IpcService implements IpmgSubscriberListenerInterface {
 					}
 				}
 				for (IpcComponentConfiguration tCompConfig : mServicesToRemove) {
+					SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
 					mProxyServices.remove(tCompConfig);
 					notifyListeners( tCompConfig, ServiceEvent.Remove );
-					cLog.info("IPC proxy service \"" + tCompConfig + "\" timed out");
+					String tLogStr = "IPC proxy service " + tCompConfig.getName().get() + " timed out\n" +
+										"    created: " + sdf.format(tCompConfig.getCretime().get()) + " last seen: " + sdf.format( tCompConfig.getLastTimeSeen().get()) +
+										" time-diff (ms): " + (System.currentTimeMillis() - tCompConfig.getLastTimeSeen().get());
+					cLog.info( tLogStr );
 				}
 		}
 

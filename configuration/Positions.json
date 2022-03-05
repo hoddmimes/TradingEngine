@@ -43,6 +43,13 @@
     { "market":1,  "symbol":"AMZN", "position":500 },
     { "market":1,  "symbol":"FB", "position":250 },
     { "market":1,  "symbol":"TSLA", "position":100 }]},
+  {"account":"USER02","cash":350000.00,"positions":
+    [ { "market":1,  "symbol":"APPL", "position":2000 },
+      { "market":1,  "symbol":"MSFT", "position":1500 },
+      { "market":1,  "symbol":"GOOGL", "position":1000 },
+      { "market":1,  "symbol":"AMZN", "position":500 },
+      { "market":1,  "symbol":"FB", "position":250 },
+      { "market":1,  "symbol":"TSLA", "position":100 }]},
   {"account":"HANNES","cash":300000.00,"positions":
   [ { "market":1,  "symbol":"APPL", "position":2000 },
     { "market":1,  "symbol":"MSFT", "position":1500 },

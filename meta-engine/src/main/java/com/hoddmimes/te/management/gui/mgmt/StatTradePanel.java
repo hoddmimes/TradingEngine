@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableModel;
@@ -103,7 +103,7 @@ public class StatTradePanel extends BasePanel {
 
 	public void refreshStatistics() {
 		MgmtQueryTradeRequest tReq = new MgmtQueryTradeRequest().setRef("qts");
-		MgmtQueryTradeResponse tResp = (MgmtQueryTradeResponse) mServiceInterface.transceive(TeIpcServices.TradeData, tReq );
+		MgmtQueryTradeResponse tResp = (MgmtQueryTradeResponse) mServiceInterface.transceive(TeService.TradeData.name(), tReq );
 
 		mMktTableModel.clear();
 		List<MgmtMarketTradeEntry> tMktList = tResp.getMarkets().get();

@@ -17,7 +17,7 @@
 
 package com.hoddmimes.te.management.gui.mgmt;
 
-import com.hoddmimes.te.common.interfaces.TeIpcServices;
+import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.management.gui.table.Table;
 import com.hoddmimes.te.management.gui.table.TableAttribute;
 import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
@@ -232,7 +232,7 @@ public class MsglogPanel extends JPanel implements TableCallbackInterface {
 		tRqst.setMaxLines( getMaxLines());
 
 		mLogTableModel.clear();
-		MgmtGetLogMessagesResponse tResponse = (MgmtGetLogMessagesResponse) mServiceInterface.transceive( TeIpcServices.SessionService, tRqst );
+		MgmtGetLogMessagesResponse tResponse = (MgmtGetLogMessagesResponse) mServiceInterface.transceive( TeService.SessionService.name(), tRqst );
 		if (tResponse != null) {
 			for( MsgLogEntry le : tResponse.getLogMessages().get()) {
 				mLogTableModel.addEntry( new LogEntry( le ));
@@ -304,7 +304,7 @@ public class MsglogPanel extends JPanel implements TableCallbackInterface {
 	public void loadAccountData() {
 		// Load market data if not already loaded
 		if (mAccountComboBox.getItemCount() == 0) {
-			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeIpcServices.Autheticator, new MgmtGetAccountsRequest().setRef("ga"));
+			MgmtGetAccountsResponse tAccountsResponse = (MgmtGetAccountsResponse) mServiceInterface.transceive(TeService.Autheticator.name(), new MgmtGetAccountsRequest().setRef("ga"));
 			if (tAccountsResponse == null) {
 				return;
 			}

@@ -47,7 +47,7 @@ public class TeFilter implements Filter
 	private static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
 	static final String TE_SESS_CNTX = "TE_SESS_CNTX";
 	private static final String LOGIN_URL = "/te-trading/logon";
-	private static final String CONFIRM_URL = "/te-confimation/";
+	private static final String CONFIRM_URL = "/te-confirmation/";
 	private static final String MARKETDATA_URL = "/te-marketdata";
 
 	private Logger mLog;

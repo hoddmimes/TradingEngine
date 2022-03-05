@@ -17,6 +17,7 @@
 
 package com.hoddmimes.te.trades;
 
+import com.hoddmimes.te.engine.InternalTrade;
 import com.hoddmimes.te.messages.generated.TradePrice;
 
 
@@ -26,26 +27,26 @@ public class TradePriceX extends TradePrice
 {
 	private static  SimpleDateFormat SDF_TIME = new SimpleDateFormat("HH:mm:ss.SSS");
 
-	public TradePriceX( TradeX pTrade ) {
+	public TradePriceX( InternalTrade pTrade ) {
 		super();
-		super.setQuantity( pTrade.getQuantity().get());
-		super.setSid( pTrade.getSid().get());
-		super.setTime( SDF_TIME.format( pTrade.getTradeTime().get()));
-		super.setLow( pTrade.getPrice().get());
-		super.setHigh( pTrade.getPrice().get());
-		super.setOpen( pTrade.getPrice().get());
-		super.setLast( pTrade.getPrice().get());
+		super.setQuantity( pTrade.getQuantity());
+		super.setSid( pTrade.getSid());
+		super.setTime( SDF_TIME.format( pTrade.getTradeTime()));
+		super.setLow( pTrade.getPrice());
+		super.setHigh( pTrade.getPrice());
+		super.setOpen( pTrade.getPrice());
+		super.setLast( pTrade.getPrice());
 	};
 
-	public void update( TradeX pTrade ) {
-		super.setQuantity( (super.getQuantity().get() + pTrade.getQuantity().get()));
-		super.setLast( pTrade.getPrice().get());
+	public void update( InternalTrade pTrade ) {
+		super.setQuantity( (super.getQuantity().get() + pTrade.getQuantity()));
+		super.setLast( pTrade.getPrice());
 		super.setTime( SDF_TIME.format( pTrade.getTradeTime()));
-		if (pTrade.getPrice().get() < super.getLow().get()) {
-			super.setLow(pTrade.getPrice().get());
+		if (pTrade.getPrice() < super.getLow().get()) {
+			super.setLow(pTrade.getPrice());
 		}
-		if (pTrade.getPrice().get() > super.getHigh().get()) {
-			super.setHigh(pTrade.getPrice().get());
+		if (pTrade.getPrice() > super.getHigh().get()) {
+			super.setHigh(pTrade.getPrice());
 		}
 	}
 }
