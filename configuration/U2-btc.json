@@ -6,6 +6,6 @@
       { "method" : "POST", "endpoint" :  "marketdata", "body":  {"command":"ADD", "topic" :  "/BdxOwnOrderbookChange/..."}},
       { "method" : "POST", "endpoint" :  "marketdata", "body":  {"command":"ADD", "topic" :  "/BdxOwnTrade/..."}},
 
-      { "method" : "POST", "endpoint" : "addOrder", "body" : {"sid":"2:BTC","price":49.00,"quantity": 11,"side":"SELL","ref" : "0011"}}
+      { "method" : "POST", "endpoint" : "addOrder", "body" : {"sid":"2:BTC","price":49.00,"quantity": 500,"side":"SELL","ref" : "0011"}}
   ]
 }

@@ -42,7 +42,7 @@ public class CryptoDepositUpdateEvent {
 		mSid = pSid;
 		mDeltaQuantityNormalized = pDeltaQuantityNormalized;
 		mTxid = pTxid;
-		mUpdateType = UpdateType.TeUpdate;
+		mUpdateType = UpdateType.NetworkUpdate;
 	}
 
 	public String getTxid() {

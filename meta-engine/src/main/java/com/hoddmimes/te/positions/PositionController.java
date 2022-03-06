@@ -42,10 +42,7 @@ import com.hoddmimes.te.messages.DbCryptoDeposit;
 import com.hoddmimes.te.messages.DbCryptoHolding;
 import com.hoddmimes.te.messages.SID;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
-import com.hoddmimes.te.messages.generated.CryptoRedrawRequest;
-import com.hoddmimes.te.messages.generated.CryptoRedrawResponse;
-import com.hoddmimes.te.messages.generated.MgmtGetAccountPositionsRequest;
-import com.hoddmimes.te.messages.generated.MgmtGetAccountPositionsResponse;
+import com.hoddmimes.te.messages.generated.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -123,7 +120,7 @@ public class PositionController extends TeCoreService
 
 	private void loadCryptoPositions() {
 		int tHoldinsCount = 0;
-		List<DbCryptoDeposit>  tCryptoDeposits = mCryptoDepository.getPositions();
+		List<DbCryptoDeposit>  tCryptoDeposits = mCryptoDepository.getCryptoPositions();
 		for( DbCryptoDeposit tDeposit : tCryptoDeposits) {
 			if (tDeposit.getHoldings().isPresent()) {
 
@@ -261,19 +258,25 @@ public class PositionController extends TeCoreService
 								  pTrade.getTeBuySeqno());
 
 		if (mInstrumentContainer.isCryptoMarket(pTrade.getSid())) {
-			mCryptoDepository.queueCryptoUpdate(new CryptoDepositUpdateEvent(pTrade.getBuyOrder().getAccountId(), pTrade.getSid(), pTrade.getQuantity(), pTrade.getTeBuySeqno()));
+			mCryptoDepository.queueCryptoUpdate(new CryptoDepositUpdateEvent( pTrade.getBuyOrder().getAccountId(),
+																			  pTrade.getSid(),
+																			  pTrade.getQuantity(),
+																			  pTrade.getTeBuySeqno()));
 		}
 
 		// Process Sell side
 		AccountPosition tSellAccountPos = getAccount(pTrade.getSellOrder().getAccountId());
-		tBuyAccountPos.execution(pTrade.getSid(),
+		tSellAccountPos.execution(pTrade.getSid(),
 								 Order.Side.SELL,
 				                 pTrade.getPrice(),
 				                 pTrade.getQuantity(),
 				                 pTrade.getTeSellSeqno());
 
 		if (mInstrumentContainer.isCryptoMarket(pTrade.getSid())) {
-			mCryptoDepository.queueCryptoUpdate(new CryptoDepositUpdateEvent(pTrade.getBuyOrder().getAccountId(), pTrade.getSid(), pTrade.getQuantity(), pTrade.getTeBuySeqno()));
+			mCryptoDepository.queueCryptoUpdate(new CryptoDepositUpdateEvent( pTrade.getSellOrder().getAccountId(),
+					                                                          pTrade.getSid(),
+																			  (-1L * pTrade.getQuantity()),
+					                                                          pTrade.getTeSellSeqno()));
 		}
 	}
 
@@ -312,7 +315,7 @@ public class PositionController extends TeCoreService
 		}
 
 		// Just a sanity check, the possition holdings should be the same as the crypto deposit holdings
-		long tCryptoDepositHolding = mCryptoDepository.getHolding(pRedrawRqst.getAccountId().get(), tCryptoInst.getSid().get());
+		long tCryptoDepositHolding = mCryptoDepository.getCryptoHolding(pRedrawRqst.getAccountId().get(), tCryptoInst.getSid().get());
 		long tAccountPositionHolding = getAccount(pRedrawRqst.getAccountId().get()).getHolding(tCryptoInst.getSid().get());
 		if (tCryptoDepositHolding != tAccountPositionHolding) {
 			mLog.warn("(redrawCrypto) account-holding (" + tAccountPositionHolding + ")  != crypto-deposit-holding (" + tCryptoDepositHolding + ")");
@@ -338,7 +341,7 @@ public class PositionController extends TeCoreService
 			directPositionAdjustment(pRedrawRqst.getAccountId().get(), tCryptoInst.getSid().get(), (-1L * (pRedrawRqst.getAmount().get() + tEstimatedTxFeeNA)));
 
 			CryptoRedrawResponse tResponse = new CryptoRedrawResponse().setRef(pRedrawRqst.getRef().get());
-			tResponse.setRemaingCoins(mCryptoDepository.getHolding(pRedrawRqst.getAccountId().get(), tCryptoInst.getSid().get()));
+			tResponse.setRemaingCoins(mCryptoDepository.getCryptoHolding(pRedrawRqst.getAccountId().get(), tCryptoInst.getSid().get()));
 			tResponse.setTxid(txid);
 
 			// The transaction has been sent to the crypto network and it's assumed to go through and be confirmed
@@ -362,8 +365,14 @@ public class PositionController extends TeCoreService
 	}
 
 
-	public List<DbCryptoDeposit> getCryptoDeposits() {
-		return mCryptoDepository.getPositions();
+
+	public List<DbCryptoDeposit> getCryptoPositions() {
+		return mCryptoDepository.getCryptoPositions();
+	}
+
+
+	public List<DbCryptoPayment> getCryptoPayments() {
+		return mCryptoDepository.getCryptoPayments();
 	}
 
 	@Override

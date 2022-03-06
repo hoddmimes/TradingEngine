@@ -21,6 +21,8 @@ import com.google.gson.JsonObject;
 import com.hoddmimes.te.common.db.CryptoDepositUpdateEvent;
 import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.messages.DbCryptoDeposit;
+import com.hoddmimes.te.messages.generated.DbCryptoPayment;
+import com.hoddmimes.te.messages.generated.DbCryptoPaymentEntry;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -83,19 +85,35 @@ public class CryptoDepository extends Thread implements CryptoDepositReadOnly
 	}
 
 	@Override
-	public synchronized List<DbCryptoDeposit> getPositions() {
+	public List<DbCryptoPaymentEntry> getCryptoCryptoPaymentEntries() {
+		return mDb.findAllDbCryptoPaymentEntry();
+	}
+
+	public List<DbCryptoPaymentEntry> getPaymentEntries(String pAccountId ) {
+		return mDb.findPaymentEntryByAccountId(pAccountId);
+	}
+
+	@Override
+	public synchronized List<DbCryptoDeposit> getCryptoPositions() {
 		return mDb.findAllDbCryptoDeposit();
 	}
 
 	@Override
-	public synchronized long getHolding( String pAccountId, String pSid ) {
+	public synchronized List<DbCryptoPayment> getCryptoPayments() {
+		return mDb.findAllDbCryptoPayment();
+	}
+
+	@Override
+	public synchronized long getCryptoHolding( String pAccountId, String pSid ) {
 		DbCryptoDeposit tDeposit = mDb.findDbCryptoDepositByAccountId( pAccountId );
 		return (tDeposit == null) ? 0L : tDeposit.getHolding( pSid );
 	}
 
+
+
 	@Override
 	 public boolean checkHoldingsForRedraw( String pAccountId, String pSid, long pQuantityNormalized) {
-		if (getHolding( pAccountId, pSid) < pQuantityNormalized) {
+		if (getCryptoHolding( pAccountId, pSid) < pQuantityNormalized) {
 			return false;
 		}
 		return true;

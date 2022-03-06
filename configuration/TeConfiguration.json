@@ -79,7 +79,7 @@
         "dataDir" : "./cryptogwy/ethereum"
       },
       "bitcoin" : {
-        "enable" : false,
+        "enable" : true,
         "txFeePerKb" : 50000,
         "verbose" : false,
         "network" : "REGTEST",

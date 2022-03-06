@@ -28,7 +28,7 @@ import com.hoddmimes.te.common.ipc.IpcService;
 import com.hoddmimes.te.messages.DbCryptoDeposit;
 import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.common.interfaces.TeService;
-import com.hoddmimes.te.common.ipc.IpcRequestCallbackInterface;
+
 
 import com.hoddmimes.te.instrumentctl.SymbolX;
 import com.hoddmimes.te.messages.DbCryptoHolding;
@@ -58,6 +58,7 @@ public class CryptoGateway extends TeCoreService {
 		super( pTeConfiguration, pIpcService);
 		mTeConfiguration = pTeConfiguration;
 		mCryptoGatewayConfig = AuxJson.navigateObject( pTeConfiguration,"TeConfiguration/cryptoGateway");
+		mDb = TeAppCntx.getDatabase();
 
 		if (isEnabled( Crypto.CoinType.BTC)) {
 			mBitcoinGwy = new BitcoinGwy(mTeConfiguration, mDb);
@@ -196,7 +197,7 @@ public class CryptoGateway extends TeCoreService {
 			MgmtGetCryptoDepositAccountsRequest tRequest = (MgmtGetCryptoDepositAccountsRequest) pIpcRequest;
 			MgmtGetCryptoDepositAccountsResponse tResponse = new MgmtGetCryptoDepositAccountsResponse().setRef(tRequest.getRef().get());
 
-			List<DbCryptoDeposit> tDbCryptoDepositList = TeAppCntx.getPositionController().getCryptoDeposits();
+			List<DbCryptoDeposit> tDbCryptoDepositList = TeAppCntx.getPositionController().getCryptoPositions();
 			for( DbCryptoDeposit cad : tDbCryptoDepositList) {
 				if (cad.getHoldings().isPresent()) {
 					// todo: go via CryptoDeposit
@@ -216,7 +217,7 @@ public class CryptoGateway extends TeCoreService {
 			MgmtGetCryptoAccountsAddressesRequest tRequest = (MgmtGetCryptoAccountsAddressesRequest) pIpcRequest;
 			MgmtGetCryptoAccountsAddressesResponse tResponse = new MgmtGetCryptoAccountsAddressesResponse().setRef(tRequest.getRef().get());
 			if (tRequest.getAccountId().isPresent()) {
-				tPaymentEntries = mDb.findPaymentEntryByAccountId(tRequest.getAccountId().get());
+				tPaymentEntries = TeAppCntx.getPositionController().getCryptoDeposit().getPaymentEntries(tRequest.getAccountId().get());
 			} else {
 				tPaymentEntries = mDb.findAllDbCryptoPaymentEntry();
 			}
@@ -226,7 +227,7 @@ public class CryptoGateway extends TeCoreService {
 		if (pIpcRequest instanceof MgmtGetCryptoPaymentsRequest) {
 			MgmtGetCryptoPaymentsRequest tRequest = (MgmtGetCryptoPaymentsRequest) pIpcRequest;
 			MgmtGetCryptoPaymentsResponse tResponse = new MgmtGetCryptoPaymentsResponse().setRef(tRequest.getRef().get());
-			List<DbCryptoPayment> tPayments = mDb.findDbCryptoPaymentByAccountId( tRequest.getAccountId().get());
+			List<DbCryptoPayment> tPayments = TeAppCntx.getPositionController().getCryptoPayments();
 			tResponse.addPayments( tPayments );
 			return tResponse;
 		}

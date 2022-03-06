@@ -18,13 +18,22 @@
 package com.hoddmimes.te.cryptogwy;
 
 import com.hoddmimes.te.messages.DbCryptoDeposit;
+import com.hoddmimes.te.messages.generated.DbCryptoPayment;
+import com.hoddmimes.te.messages.generated.DbCryptoPaymentEntry;
 
 import java.util.List;
 
 public interface CryptoDepositReadOnly
 {
-	public List<DbCryptoDeposit> getPositions();
-	public long getHolding( String pAccountId, String pSid );
+	public List<DbCryptoDeposit> getCryptoPositions();
+	public List<DbCryptoPayment> getCryptoPayments();
+
+	public List<DbCryptoPaymentEntry> getCryptoCryptoPaymentEntries();
+	public List<DbCryptoPaymentEntry> getPaymentEntries(String pAccountId );
+
+
+
+	public long getCryptoHolding( String pAccountId, String pSid );
 	public boolean checkHoldingsForRedraw( String pAccountId, String pSid, long pQuantityNormalized);
 
 }

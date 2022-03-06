@@ -256,40 +256,46 @@ public class TeRestMessageController
 
 
 	private ResponseEntity<String> addPaymentEntry(HttpSession pSession, String coin, String fromAddress) {
-		GetDepositEntryRequest tPayEntryRqst = new GetDepositEntryRequest();
-		tPayEntryRqst.setRef(String.valueOf(mInternalRef.getAndIncrement()));
+		try {
+			GetDepositEntryRequest tPayEntryRqst = new GetDepositEntryRequest();
+			tPayEntryRqst.setRef(String.valueOf(mInternalRef.getAndIncrement()));
 
-		if (coin == null) {
-			return buildResponse(StatusMessageBuilder.error("No crypto coin identifier was specified in the GET request", null));
-		}
-
-		Crypto.CoinType tCoinType = Crypto.CoinType.valueOf(coin);
-		if ( tCoinType == null) {
-			return buildResponse(StatusMessageBuilder.error("Unknown coin type specified", null));
-		}
-
-
-		if (fromAddress == null) {
-			if (coin.contentEquals(Crypto.CoinType.ETH.name())) {
-				return buildResponse(StatusMessageBuilder.error("For ETH a from address has to be specified", null));
+			if (coin == null) {
+				return buildResponse(StatusMessageBuilder.error("No crypto coin identifier was specified in the GET request", null));
 			}
-		} else {
-			if (coin.contentEquals(Crypto.CoinType.BTC.name())) {
-				return buildResponse(StatusMessageBuilder.error("For BTC a from address must not be specified", null));
+
+			Crypto.CoinType tCoinType = Crypto.CoinType.valueOf(coin);
+			if (tCoinType == null) {
+				return buildResponse(StatusMessageBuilder.error("Unknown coin type specified", null));
 			}
-			tPayEntryRqst.setFromAddress( fromAddress );
+
+
+			if (fromAddress == null) {
+				if (coin.contentEquals(Crypto.CoinType.ETH.name())) {
+					return buildResponse(StatusMessageBuilder.error("For ETH a from address has to be specified", null));
+				}
+			} else {
+				if (coin.contentEquals(Crypto.CoinType.BTC.name())) {
+					return buildResponse(StatusMessageBuilder.error("For BTC a from address must not be specified", null));
+				}
+				tPayEntryRqst.setFromAddress(fromAddress);
+			}
+
+			if (!TeAppCntx.getInstance().getCryptoGateway().isEnabled(tCoinType)) {
+				return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
+			}
+
+			tPayEntryRqst.setAccountId(mCallback.getSessionContext(pSession.getId()).getAccount());
+			tPayEntryRqst.setCoin(coin);
+
+
+			MessageInterface tResponse = TeAppCntx.getCryptoGateway().addDepositEntry(tPayEntryRqst);
+			return buildResponse(tResponse);
 		}
-
-		if (!TeAppCntx.getInstance().getCryptoGateway().isEnabled( tCoinType )) {
-			return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
+		catch( Throwable e) {
+			mLog.error("(addPaymentEntry) internal error", e);
+			return buildResponse( StatusMessageBuilder.error("(addPaymentEntry) internal error, reason: " + e.getMessage(), null));
 		}
-
-		tPayEntryRqst.setAccountId( mCallback.getSessionContext( pSession.getId()).getAccount());
-		tPayEntryRqst.setCoin( coin );
-
-
-		MessageInterface tResponse =  TeAppCntx.getInstance().getCryptoGateway().addDepositEntry( tPayEntryRqst );
-		return buildResponse( tResponse );
 	}
 
 	/**

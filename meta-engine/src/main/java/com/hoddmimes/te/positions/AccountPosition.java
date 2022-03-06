@@ -126,10 +126,11 @@ public class AccountPosition
 	{
 		long tQuantityChange = (pSide == Order.Side.BUY) ? pQuantity : (-1L * pQuantity);
 
-		mCash += (pSide == Order.Side.BUY) ? (-1L * pPrice * pQuantity) : (pPrice * pQuantity);
+
 		HoldingEntry tHolding = getHoldingPositionEntry( pSid );
 		if (tHolding.getTxNo() < pTeTradeTxid) {
-			tHolding.updateHolding(tQuantityChange, tHolding.getTxNo());
+			mCash += (pSide == Order.Side.BUY) ? (-1L * pPrice * pQuantity) : (pPrice * pQuantity);
+			tHolding.updateHolding(tQuantityChange, pTeTradeTxid );
 		}
 	}
 

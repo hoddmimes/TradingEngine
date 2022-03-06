@@ -60,6 +60,7 @@ public class TEDB extends MongoAux {
 		return super.findDbCryptoPaymentEntry(tKeyFilter);
 	}
 
+
 	public DbCryptoDeposit findDbCryptoDepositByAccountId( String pAccountId ) {
 		Bson tKeyFilter= Filters.and( Filters.eq("accountId", pAccountId ));
 		FindIterable<Document> tDocuments = this.mCryptoDepositCollection.find( tKeyFilter );
@@ -109,13 +110,14 @@ public class TEDB extends MongoAux {
 		Bson tFilter = Filters.eq("accountId", pAccountId);
 		return super.findDbCryptoPayment(tFilter);
 	}
-
 	public List<DbCryptoPaymentEntry> findPaymentEntryByAccountId(String pAccountId) {
 		List<DbCryptoPaymentEntry> tResult = new ArrayList<>();
 
 		Bson tKeyFilter = Filters.eq("accountId", pAccountId);
 		return super.findDbCryptoPaymentEntry(tKeyFilter);
 	}
+
+
 
 
 	public List<DbCryptoPaymentEntry> findPaymentEntryByAddressAndCoinType(String pAddress, Crypto.CoinType pCoinType) {

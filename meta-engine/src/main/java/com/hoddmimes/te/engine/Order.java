@@ -75,6 +75,9 @@ public class Order implements Comparable<Order>, MessageInterface
 		this.decode( tDecoder );
 	}
 
+	public Order() {
+	}
+
 
 	@Override
 	public String getMessageName() {

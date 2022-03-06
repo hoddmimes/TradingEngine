@@ -109,7 +109,7 @@ public class TradeContainer extends TeCoreService
 
 	}
 
-	private void toTrades( InternalTrade pTrade ) {
+	private void toTrades( InternalTrade pTrade, boolean pUpdatePosition ) {
 
 		// Update the position holdings
 		mPositionController.tradeExcution( pTrade );
@@ -149,8 +149,14 @@ public class TradeContainer extends TeCoreService
 				TxLoggerReplayEntry txEntry = tItr.next();
 				String jObjectString = new String(txEntry.getData());
 				InternalTrade trd = new InternalTrade(jObjectString);
-				toTrades( trd );
-				updateTradePrice(  trd );
+				/**
+				 * Note! Positions for crypto trades are maintained by the CryptoDepository which is also responsible
+				 * for setting the position in the position controller. Crpto trades should not be replayed and applied
+				 * on initial day positions as for 'equities'
+				 */
+				boolean tUpdatePosition = (!mInstrumentContainer.isCryptoMarket(trd.getSid())) ? true : false;
+				toTrades(trd, tUpdatePosition);
+				updateTradePrice(trd);
 				tCount++;
 			}
 			mLog.info("loaded (" + tCount + ") trades.");
@@ -164,7 +170,7 @@ public class TradeContainer extends TeCoreService
 
 	public BdxTrade addTrade(InternalTrade pInternalTrade) {
 		mTradeLogger.write(pInternalTrade.toJson().toString().getBytes(StandardCharsets.UTF_8));
-		toTrades( pInternalTrade );
+		toTrades( pInternalTrade, true );
 		updateTradePrice(  pInternalTrade );
 		return updateBdxTrade( pInternalTrade );
 	}
