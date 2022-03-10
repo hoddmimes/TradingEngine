@@ -484,6 +484,7 @@ public class Orderbook
 
         while( (tOrderItr.hasNext()) && (tLevel < pMaxLevels)) {
            Order tOrder = tOrderItr.next();
+
            if (tOrder.getPrice() == tPrice) {
                tQty += tOrder.getQuantity();
            } else {
@@ -495,6 +496,12 @@ public class Orderbook
                tLevel++;
            }
         }
+
+        if ((tQty > 0) && (tLevel < pMaxLevels)) {
+            PriceLevel pl = new PriceLevel().setPrice(tPrice).setQuantity(tQty);
+            tPriceLevelList.add(pl);
+        }
+
         return tPriceLevelList;
     }
 

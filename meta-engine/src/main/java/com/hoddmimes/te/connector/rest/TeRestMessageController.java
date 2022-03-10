@@ -27,6 +27,7 @@ import com.hoddmimes.te.common.interfaces.ConnectorInterface;
 import com.hoddmimes.te.common.interfaces.SessionCntxInterface;
 import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.common.ipc.IpcService;
+import com.hoddmimes.te.messages.SID;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
 import com.hoddmimes.te.sessionctl.SessionController;
@@ -179,6 +180,22 @@ public class TeRestMessageController
 		return buildResponse( tResponseMessage );
 	}
 
+
+	@GetMapping( path = "/queryPriceLevel/{sid}" )
+	ResponseEntity<?> queryPriceLevel(HttpSession pSession, @PathVariable String sid ) {
+		SID tSid = new SID( sid );
+		QueryPriceLevelsRequest tRqstMsg = new QueryPriceLevelsRequest();
+		tRqstMsg.setRef( String.valueOf( mInternalRef.getAndIncrement()));
+		tRqstMsg.setMarketId( tSid.getMarket() );
+		tRqstMsg.setSid( sid );
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), tRqstMsg.toJson().toString());
+
+		if (tResponseMessage instanceof QueryPriceLevelsResponse) {
+			((QueryPriceLevelsResponse) tResponseMessage).setRef(null);
+		}
+		return buildResponse(tResponseMessage);
+	}
+
 	@GetMapping( path = "/queryPriceLevels/{market}" )
 	ResponseEntity<?> queryPriceLevels(HttpSession pSession, @PathVariable Integer market ) {
 		QueryPriceLevelsRequest tRqstMsg = new QueryPriceLevelsRequest();
@@ -191,6 +208,19 @@ public class TeRestMessageController
 		}
 		return buildResponse(tResponseMessage);
 	}
+
+	@GetMapping( path = "/queryTrades/{sid}" )
+	ResponseEntity<?> QueryTrades(HttpSession pSession, @PathVariable String sid ) {
+		QueryTradesRequest tRqstMsg = new QueryTradesRequest();
+		tRqstMsg.setRef( String.valueOf( mInternalRef.getAndIncrement()));
+		tRqstMsg.setSid( sid );
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), tRqstMsg.toJson().toString());
+		if (tResponseMessage instanceof QueryOwnTradesResponse) {
+			((QueryTradesResponse) tResponseMessage).setRef(null);
+		}
+		return buildResponse(tResponseMessage);
+	}
+
 
 	@GetMapping( path = "/queryOwnTrades/{market}" )
 	ResponseEntity<?> QueryOwnTrades(HttpSession pSession, @PathVariable Integer market,  @RequestParam(required = false) String sid) {

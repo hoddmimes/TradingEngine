@@ -211,6 +211,30 @@ public class TradeContainer extends TeCoreService
 		return tRspMsg;
 	}
 
+	public synchronized QueryTradesResponse queryTrades( QueryTradesRequest pRequest,  RequestContext pRequestContext) {
+		QueryTradesResponse tRspMsg = new QueryTradesResponse().setRef( pRequest.getRef().get());
+		List<InternalTrade> tTrdLst = mTradesBySid.get( pRequest.getSid().get());
+		if (tTrdLst == null) {
+			tRspMsg.setTrades( new ArrayList<>());
+			return tRspMsg;
+		}
+
+		synchronized( tTrdLst ) {
+			for (InternalTrade tInternalTrade : tTrdLst) {
+				Trade trd = new Trade();
+				trd.setPrice(tInternalTrade.getPrice());
+				trd.setTime(tInternalTrade.getTradeTime());
+				trd.setSid(tInternalTrade.getSid());
+				trd.setTradeNo(tInternalTrade.getTradeNo());
+				trd.setQuantity(tInternalTrade.getQuantity());
+				trd.setBuyer(tInternalTrade.getBuyOrder().getAccountId());
+				trd.setSeller(tInternalTrade.getSellOrder().getAccountId());
+				tRspMsg.addTrades(trd);
+			}
+		}
+		return tRspMsg;
+	}
+
 	public synchronized QueryOwnTradesResponse queryOwnTrades( QueryOwnTradesRequest pRequest, RequestContext pRequestContext ) {
 		QueryOwnTradesResponse tRspMsg = new QueryOwnTradesResponse();
 		tRspMsg.setRef( pRequest.getRef().get());

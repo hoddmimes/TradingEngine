@@ -18,7 +18,7 @@
 package com.hoddmimes.te.management.gui.mgmt;
 
 import com.hoddmimes.te.common.interfaces.TeService;
-import com.hoddmimes.te.management.gui.table.*;
+import com.hoddmimes.te.common.table.*;
 import com.hoddmimes.te.messages.generated.Account;
 import com.hoddmimes.te.messages.generated.MgmtDeleteAccountRequest;
 import com.hoddmimes.te.messages.generated.MgmtDeleteAccountResponse;
@@ -37,8 +37,8 @@ public class RemoveUpdateAccountPanel extends BasePanel implements TableCallback
 
 	enum Action {Remove, Update};
 	JButton mActionBtn;
-	TableModel<AccountEntry>    mAccountTableModel;
-	Table                       mAccountTable;
+	TableModel<AccountEntry> mAccountTableModel;
+	Table mAccountTable;
 	Action                      mAction;
 	AccountEntry                mLatestSelectedAccount;
 	AccountsPanel               mAccountsPanel;

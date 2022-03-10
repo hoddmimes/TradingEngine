@@ -301,18 +301,20 @@ public class SessionController extends TeCoreService implements ConnectorInterfa
 			/*******
 			 * Other messages
 			 *******/
-			if (pRqstMsg instanceof QueryTradePricesRequest) {
-				tResponseMessage = ((TradeContainer)TeAppCntx.getInstance().getService(TeService.TradeData)).queryTradePrices((QueryTradePricesRequest) pRqstMsg, tRequestContext);
+			if (pRqstMsg instanceof QueryTradesRequest) {
+				tResponseMessage = TeAppCntx.getTradeContainer().queryTrades((QueryTradesRequest) pRqstMsg, tRequestContext);
+			} else if (pRqstMsg instanceof QueryTradePricesRequest) {
+				tResponseMessage = TeAppCntx.getTradeContainer().queryTradePrices((QueryTradePricesRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryPriceLevelsRequest) {
-				tResponseMessage = ((MarketDataInterface) TeAppCntx.getInstance().getService(TeService.MarketData)).queryPriceLevels((QueryPriceLevelsRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = TeAppCntx.getMarketDistributor().queryPriceLevels((QueryPriceLevelsRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryOwnTradesRequest) {
-				tResponseMessage = ((TradeContainer)TeAppCntx.getInstance().getService(TeService.TradeData)).queryOwnTrades((QueryOwnTradesRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = TeAppCntx.getTradeContainer().queryOwnTrades((QueryOwnTradesRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryOwnOrdersRequest) {
 				tResponseMessage = tMatchingEngine.executeQueryOwnOrders((QueryOwnOrdersRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QuerySymbolsRequest) {
-				tResponseMessage = ((InstrumentContainer) TeAppCntx.getInstance().getService(TeService.InstrumentData)).querySymbols((QuerySymbolsRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = TeAppCntx.getInstrumentContainer().querySymbols((QuerySymbolsRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryMarketsRequest) {
-				tResponseMessage = ((InstrumentContainer) TeAppCntx.getInstance().getService(TeService.InstrumentData)).queryMarkets((QueryMarketsRequest) pRqstMsg, tRequestContext);
+				tResponseMessage = TeAppCntx.getInstrumentContainer().queryMarkets((QueryMarketsRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryBBORequest) {
 				tResponseMessage = tMatchingEngine.executeQueryBBO((QueryBBORequest) pRqstMsg, tRequestContext);
 			}  else if (pRqstMsg instanceof CryptoRedrawRequest) {
@@ -323,7 +325,6 @@ public class SessionController extends TeCoreService implements ConnectorInterfa
 				tResponseMessage = StatusMessageBuilder.error(("No execute implementation for request \"" + pRqstMsg.getMessageName() + "\""), pRqstMsg.getRef().get());
 			}
 		}
-
 
 
 

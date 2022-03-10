@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  Hoddmimes Solution AB 2021.
+ * Copyright (c)  Hoddmimes Solution AB 2022.
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,19 +15,11 @@
  * limitations under the License.
  */
 
-package com.hoddmimes.te.management.gui.table;
+package com.hoddmimes.te.client;
 
-import java.lang.annotation.*;
+import com.hoddmimes.jsontransform.MessageInterface;
 
-@Inherited
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface TableAttribute
+public interface TeBroadcastListener
 {
-    int     column();
-    String  header();
-    int     width();
-    int     decimals() default 0;
-    boolean editable() default false;
-    int alignment() default -1;
+	public void onTeBdx(MessageInterface pTeBroadcast );
 }

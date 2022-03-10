@@ -23,10 +23,10 @@ import com.hoddmimes.jaux.txlogger.TxLoggerReplayEntry;
 import com.hoddmimes.jaux.txlogger.TxLoggerReplayInterface;
 import com.hoddmimes.jaux.txlogger.TxLoggerReplayIterator;
 import com.hoddmimes.te.engine.InternalTrade;
-import com.hoddmimes.te.management.gui.table.Table;
-import com.hoddmimes.te.management.gui.table.TableAttribute;
-import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
-import com.hoddmimes.te.management.gui.table.TableModel;
+import com.hoddmimes.te.common.table.Table;
+import com.hoddmimes.te.common.table.TableAttribute;
+import com.hoddmimes.te.common.table.TableCallbackInterface;
+import com.hoddmimes.te.common.table.TableModel;
 
 
 import javax.swing.*;

@@ -2,5 +2,5 @@ rootProject.name = 'TradingEngine'
 include 'meta-message'
 include 'meta-common'
 include 'meta-engine'
-
+include 'meta-client'
 

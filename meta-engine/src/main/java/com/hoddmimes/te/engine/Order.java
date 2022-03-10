@@ -228,6 +228,7 @@ public class Order implements Comparable<Order>, MessageInterface
 		oo.setRef( this.mUserRef );
 		oo.setQuantity( this.mQuantity);
 		oo.setSid( this.mSid );
+		oo.setCreateTime( this.mCreationTime );
 		return oo;
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  Hoddmimes Solution AB 2021.
+ * Copyright (c)  Hoddmimes Solution AB 2022.
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +15,19 @@
  * limitations under the License.
  */
 
-package com.hoddmimes.te.management.gui.table;
+package com.hoddmimes.te.common.table;
 
-import javax.swing.*;
+import java.lang.annotation.*;
 
-public interface ModelRenderCallback
+@Inherited
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface TableAttribute
 {
-    public void tableCellRendererComponent(JLabel pCellRenderObject, JTable pTable, Object pValue, int pRow, int pCol  );
+    int     column();
+    String  header();
+    int     width();
+    int     decimals() default 0;
+    boolean editable() default false;
+    int alignment() default -1;
 }

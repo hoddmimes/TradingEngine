@@ -66,13 +66,23 @@ public class MarketDataConsilidator extends Thread
 		QueryPriceLevelsResponse tRsp = new QueryPriceLevelsResponse();
 		tRsp.setRef( pQryRqst.getRef().get());
 
-		Iterator<BdxPriceLevel> tItr = mPriceLevels.values().iterator();
-		while( tItr.hasNext() ) {
-			BdxPriceLevel tBdx = tItr.next();
-			PriceLevelSymbol pls = new PriceLevelSymbol().setSid( tBdx.getSid().get());
-			pls.setBuySide( tBdx.getBuySide().get());
-			pls.setSellSide( tBdx.getSellSide().get());
-			tRsp.addOrderbooks( pls );
+		if (pQryRqst.getSid().isPresent()) {
+			BdxPriceLevel tBdx = mPriceLevels.get( pQryRqst.getSid().get());
+			if (tBdx != null) {
+				PriceLevelSymbol pls = new PriceLevelSymbol().setSid(tBdx.getSid().get());
+				pls.setBuySide(tBdx.getBuySide().get());
+				pls.setSellSide(tBdx.getSellSide().get());
+				tRsp.addOrderbooks(pls);
+			}
+		} else {
+			Iterator<BdxPriceLevel> tItr = mPriceLevels.values().iterator();
+			while (tItr.hasNext()) {
+				BdxPriceLevel tBdx = tItr.next();
+				PriceLevelSymbol pls = new PriceLevelSymbol().setSid(tBdx.getSid().get());
+				pls.setBuySide(tBdx.getBuySide().get());
+				pls.setSellSide(tBdx.getSellSide().get());
+				tRsp.addOrderbooks(pls);
+			}
 		}
 		return tRsp;
 	}

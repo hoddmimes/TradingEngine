@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  Hoddmimes Solution AB 2021.
+ * Copyright (c)  Hoddmimes Solution AB 2022.
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-package com.hoddmimes.te.management.gui.table;
+package com.hoddmimes.te.common.table;
 
-public interface TableCallbackInterface<E>
+import javax.swing.*;
+
+public interface ModelRenderCallback
 {
-    public void tableMouseButton2( E pObject, int pRow, int pCol );
-    public void tableMouseClick( E pObject, int pRow, int pCol );
-    public void tableMouseDoubleClick( E pObject, int pRow, int pCol );
+    public void tableCellRendererComponent(JLabel pCellRenderObject, JTable pTable, Object pValue, int pRow, int pCol  );
 }

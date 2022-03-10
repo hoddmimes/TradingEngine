@@ -19,10 +19,10 @@ package com.hoddmimes.te.management.gui;
 
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.db.TEDB;
-import com.hoddmimes.te.management.gui.table.Table;
-import com.hoddmimes.te.management.gui.table.TableAttribute;
-import com.hoddmimes.te.management.gui.table.TableCallbackInterface;
-import com.hoddmimes.te.management.gui.table.TableModel;
+import com.hoddmimes.te.common.table.Table;
+import com.hoddmimes.te.common.table.TableAttribute;
+import com.hoddmimes.te.common.table.TableCallbackInterface;
+import com.hoddmimes.te.common.table.TableModel;
 import com.hoddmimes.te.sessionctl.AccountX;
 import com.mongodb.client.result.UpdateResult;
 
@@ -34,7 +34,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

@@ -19,9 +19,9 @@ package com.hoddmimes.te.management.gui.mgmt;
 
 import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.common.interfaces.TeService;
-import com.hoddmimes.te.management.gui.table.Table;
-import com.hoddmimes.te.management.gui.table.TableAttribute;
-import com.hoddmimes.te.management.gui.table.TableModel;
+import com.hoddmimes.te.common.table.Table;
+import com.hoddmimes.te.common.table.TableAttribute;
+import com.hoddmimes.te.common.table.TableModel;
 import com.hoddmimes.te.messages.generated.*;
 
 import javax.swing.*;

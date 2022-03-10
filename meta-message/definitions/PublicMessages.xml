@@ -82,12 +82,46 @@
     <Message name="QueryPriceLevelsRequest" implements="RequestMsgInterface" rootMessage="true" >
         <Attribute name="ref" type = "String" mandatory="true" />
         <Attribute name="marketId" type = "int" mandatory="true" />
+        <Attribute name="sid" type = "String" />
     </Message>
 
     <Message name="PriceLevelSymbol">
         <Attribute name="sid" type="String"/>
         <Attribute name="buySide" type = "PriceLevel" list="array" />
         <Attribute name="sellSide" type = "PriceLevel" list="array" />
+        <code>
+            public PriceLevel getBuyPriceLevel( int pIndex  ) {
+                if ((mBuySide != null) &amp;&amp; (mBuySide.size() > pIndex)) {
+                    return mBuySide.get( pIndex );
+                }
+                return null;
+            }
+
+            public PriceLevel getSellPriceLevel( int pIndex  ) {
+                if ((mSellSide != null) &amp;&amp; (mSellSide.size() > pIndex)) {
+                    return mSellSide.get( pIndex );
+                }
+                return null;
+            }
+
+            public int getMaxLevels() {
+                int tBuyLevels = (mBuySide == null) ? 0 : mBuySide.size();
+                int tSellLevels = (mSellSide == null) ? 0 : mSellSide.size();
+                return Math.max( tBuyLevels, tSellLevels );
+            }
+
+            public static PriceLevelSymbol fromBdxPriceLevel( BdxPriceLevel pBdxPriceLevel) {
+                PriceLevelSymbol pls = new PriceLevelSymbol();
+                pls.setSid( pBdxPriceLevel.getSid().get());
+                if (pBdxPriceLevel.getBuySide().isPresent()) {
+                    pls.setBuySide(pBdxPriceLevel.getBuySide().get());
+                }
+                if (pBdxPriceLevel.getSellSide().isPresent()) {
+                    pls.setSellSide(pBdxPriceLevel.getSellSide().get());
+                }
+                return pls;
+            }
+        </code>
     </Message>
 
     <Message name="QueryPriceLevelsResponse" rootMessage="true" >
@@ -107,7 +141,50 @@
         <Attribute name="obSeqNo" type = "long"/>
         <Attribute name="buyOrders" type = "Order" list="array" />
         <Attribute name="sellOrders" type = "Order" list="array" />
+        <code>
+            public Order getBuyOrder( int pIndex  ) {
+            if ((mBuyOrders != null) &amp;&amp; (mBuyOrders.size() > pIndex)) {
+                return mBuyOrders.get( pIndex );
+            }
+            return null;
+            }
+
+            public Order getSellOrder( int pIndex  ) {
+            if ((mSellOrders != null) &amp;&amp; (mSellOrders.size() > pIndex)) {
+                return mSellOrders.get( pIndex );
+            }
+            return null;
+            }
+
+            public int getMaxLevels() {
+            int tBuyLevels = (mBuyOrders == null) ? 0 : mBuyOrders.size();
+            int tSellLevels = (mSellOrders == null) ? 0 : mSellOrders.size();
+            return Math.max( tBuyLevels, tSellLevels );
+            }
+        </code>
     </Message>
+
+    <Message name="Trade"  rootMessage="true">
+        <Attribute name="sid" type = "String"/>
+        <Attribute name="price" type="long" />
+        <Attribute name="quantity" type="long" />
+        <Attribute name="tradeNo" type="long" />
+        <Attribute name="time" type="long" />
+        <Attribute name="buyer" type="String" />
+        <Attribute name="seller" type="String" />
+    </Message>
+
+    <Message name="QueryTradesRequest" implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String" mandatory="true" />
+        <Attribute name="sid" type="String"/>
+    </Message>
+
+    <Message name="QueryTradesResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String" mandatory="true" />
+        <Attribute name="trades" type="Trade" list="array"/>
+    </Message>
+
+
 
     <Message name="QueryTradePricesRequest" implements="RequestMsgInterface" rootMessage="true" >
         <Attribute name="ref" type = "String" mandatory="true" />
@@ -115,7 +192,7 @@
         <Attribute name="sid" type="String"/>
     </Message>
 
-    <Message name="QueryTradePricesResponse" implements="RequestMsgInterface" rootMessage="true" >
+    <Message name="QueryTradePricesResponse"  rootMessage="true" >
         <Attribute name="ref" type = "String" mandatory="true" />
         <Attribute name="tradePrices" type="TradePrice" list="array"/>
     </Message>
@@ -255,6 +332,7 @@
         <Attribute name="quantity" type = "long"/>
         <Attribute name="side" type = "String"/>
         <Attribute name="ref" type = "String"/>
+        <Attribute name="createTime" type = "long"/>
     </Message>
 
     <Message name="BdxOwnOrderbookChange" implements="EngineBdxInterface" rootMessage="true">

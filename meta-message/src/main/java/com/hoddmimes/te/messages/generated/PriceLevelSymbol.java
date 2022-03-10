@@ -236,6 +236,38 @@ import com.google.gson.GsonBuilder;
              return  gsonPrinter.toJson( this.toJson());
         }
     
+            public PriceLevel getBuyPriceLevel( int pIndex  ) {
+                if ((mBuySide != null) && (mBuySide.size() > pIndex)) {
+                    return mBuySide.get( pIndex );
+                }
+                return null;
+            }
+
+            public PriceLevel getSellPriceLevel( int pIndex  ) {
+                if ((mSellSide != null) && (mSellSide.size() > pIndex)) {
+                    return mSellSide.get( pIndex );
+                }
+                return null;
+            }
+
+            public int getMaxLevels() {
+                int tBuyLevels = (mBuySide == null) ? 0 : mBuySide.size();
+                int tSellLevels = (mSellSide == null) ? 0 : mSellSide.size();
+                return Math.max( tBuyLevels, tSellLevels );
+            }
+
+            public static PriceLevelSymbol fromBdxPriceLevel( BdxPriceLevel pBdxPriceLevel) {
+                PriceLevelSymbol pls = new PriceLevelSymbol();
+                pls.setSid( pBdxPriceLevel.getSid().get());
+                if (pBdxPriceLevel.getBuySide().isPresent()) {
+                    pls.setBuySide(pBdxPriceLevel.getBuySide().get());
+                }
+                if (pBdxPriceLevel.getSellSide().isPresent()) {
+                    pls.setSellSide(pBdxPriceLevel.getSellSide().get());
+                }
+                return pls;
+            }
+        
 
         public static  Builder getPriceLevelSymbolBuilder() {
             return new PriceLevelSymbol.Builder();
