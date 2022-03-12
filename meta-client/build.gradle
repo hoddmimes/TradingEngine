@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+}
+
+group 'com.hoddmimes'
+version '1.1.0'
+
+repositories {
+    mavenCentral()
+}
+
+task buildFatJar (type: Jar ) {
+    archiveBaseName= 'teguitestapp'
+    destinationDirectory = file("./build/libs/")
+
+    from {
+        configurations.runtimeClasspath.collect{ it.isDirectory() ? it : zipTree(it) }
+    } with jar
+
+    exclude "META-INF/*.SF"
+    exclude "META-INF/*.DSA"
+    exclude "META-INF/*.RSA"
+
+    from('build/classes/java/main') {
+        include '**/*.class'
+
+    }
+
+    duplicatesStrategy = 'exclude'
+
+    manifest {
+        attributes 'Implementation-Title': 'TEGuiTestApp  Jar', 'Implementation-Version': project.version
+    }
+}
+
+
+build.finalizedBy(buildFatJar)
+
+
+
+dependencies {
+    implementation project(':meta-message')
+    implementation project(':meta-common')
+
+    implementation group: 'javax.websocket', name: 'javax.websocket-api', version: '1.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
+}
+
+test {
+    useJUnitPlatform()
+}
