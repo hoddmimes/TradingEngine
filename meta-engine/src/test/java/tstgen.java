@@ -59,13 +59,13 @@ public class tstgen
 		for (int i = 0; i < pOrderCount; i++)
 		{
 			int qty = (mRandom.nextInt(20) + 80);
-			long price = (((mRandom.nextLong(90) * 10) + 100) * -1) + 1000000L;
+			long price = (((mRandom.nextInt(90) * 10) + 100) * -1) + 1000000L;
 			System.out.println( order( pSymbol, "BUY", price, qty ));
 		}
 		for (int i = 0; i < pOrderCount; i++)
 		{
 			int qty = (mRandom.nextInt(20) + 80);
-			long price = (((mRandom.nextLong(90) * 10) + 100) * 1) + 1000000L;
+			long price = (((mRandom.nextInt(90) * 10) + 100) * 1) + 1000000L;
 			System.out.println( order( pSymbol, "SELL", price, qty ));
 		}
 	}

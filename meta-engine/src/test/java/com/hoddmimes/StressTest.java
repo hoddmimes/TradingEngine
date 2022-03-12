@@ -113,7 +113,7 @@ public class StressTest
 		JsonObject jBody = new JsonObject();
 		JsonObject jMsg = new JsonObject();
 
-		long tPrice =  ((!pMatch) && (pSide == Side.BUY)) ? (100_0000L - (1_0000 * (mRandom.nextLong(10 )))) : (100_0000L + (1_0000 * (mRandom.nextLong(10 ))));
+		long tPrice =  ((!pMatch) && (pSide == Side.BUY)) ? (100_0000L - (1_0000 * (mRandom.nextInt(10 )))) : (100_0000L + (1_0000 * (mRandom.nextInt(10 ))));
 		int tQuantity = 50 + mRandom.nextInt(50);
 
 		jBody.addProperty("sid", pSid);
