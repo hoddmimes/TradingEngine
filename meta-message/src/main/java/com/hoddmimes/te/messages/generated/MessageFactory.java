@@ -262,6 +262,20 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
+            case "QueryPositionRequest":
+            {
+            	QueryPositionRequest tMessage = new QueryPositionRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryPositionResponse":
+            {
+            	QueryPositionResponse tMessage = new QueryPositionResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
             case "SubscriptionRequest":
             {
             	SubscriptionRequest tMessage = new SubscriptionRequest();

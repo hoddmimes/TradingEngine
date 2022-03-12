@@ -26,7 +26,7 @@ import java.awt.event.ActionListener;
 
 public class MainFrame extends JFrame
 {
-	private JButton mBBOButton, mOrderBookButton, mTradesButton, mOwnOrdersButton, mPriceLevelButton;
+	private JButton mBBOButton, mOrderBookButton, mTradesButton, mOwnOrdersButton, mPriceLevelButton, mPositionButton;
 	private Connector mConnector;
 
 	MainFrame( Connector pConnector) {
@@ -87,6 +87,10 @@ public class MainFrame extends JFrame
 		mOwnOrdersButton = AuxClt.makebutton("Own Orders", 130);
 		tPanel.add(mOwnOrdersButton, gc);
 
+		gc.gridx++;
+		mPositionButton = AuxClt.makebutton("Positions", 130);
+		tPanel.add(mPositionButton, gc);
+
 
 		mBBOButton.addActionListener(new ActionListener() {
 			@Override
@@ -120,6 +124,13 @@ public class MainFrame extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				OwnOrderbookFrame tFrame = new OwnOrderbookFrame( mConnector);
+			}
+		});
+
+		mPositionButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				PositionFrame tFrame = new PositionFrame( mConnector);
 			}
 		});
 

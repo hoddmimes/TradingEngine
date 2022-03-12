@@ -396,7 +396,10 @@ public class MatchingEngine extends TeCoreService implements MatchingEngineInter
 		return tQueryOwnOrdersResponse;
 	}
 
-
+	public MessageInterface executeQueryPosition( QueryPositionRequest pRequest, RequestContextInterface pRequestContext) {
+		AccountPosition tAccountPosition = mPositionController.getAccount(pRequestContext.getAccountId());
+		return tAccountPosition.toQueryPositionResponse( pRequest.getRef().get());
+	}
 
 
 	MessageInterface processQueryOwnOrders( InternalOwnOrdersRequest pInternalOwnOrdersRequest, RequestContextInterface pRequestContext) {

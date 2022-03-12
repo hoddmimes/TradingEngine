@@ -317,6 +317,8 @@ public class SessionController extends TeCoreService implements ConnectorInterfa
 				tResponseMessage = TeAppCntx.getInstrumentContainer().queryMarkets((QueryMarketsRequest) pRqstMsg, tRequestContext);
 			} else if (pRqstMsg instanceof QueryBBORequest) {
 				tResponseMessage = tMatchingEngine.executeQueryBBO((QueryBBORequest) pRqstMsg, tRequestContext);
+			} else if (pRqstMsg instanceof QueryPositionRequest) {
+				tResponseMessage = tMatchingEngine.executeQueryPosition((QueryPositionRequest) pRqstMsg, tRequestContext);
 			}  else if (pRqstMsg instanceof CryptoRedrawRequest) {
 				tResponseMessage = tMatchingEngine.redrawCryptoRequest((CryptoRedrawRequest) pRqstMsg, tRequestContext);
 			}

@@ -301,6 +301,11 @@ public class Connector implements TeWebsocketClient.WssCallback
 			// Setup subscriptions for BdxOwnOrderbookChange
 			jSubscriptonRqst.addProperty("topic",  "/BdxOwnOrderbookChange/...");
 			mWssClient.sendMessage( jSubscriptonRqst.toString() );
+
+
+			// Setup subscriptions for BdxOwnOrderbookChange
+			jSubscriptonRqst.addProperty("topic",  "/BdxOwnTrade/...");
+			mWssClient.sendMessage( jSubscriptonRqst.toString() );
 		}
 
 

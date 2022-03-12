@@ -230,13 +230,14 @@ public class PositionController extends TeCoreService
 		}
 	}
 
-	 public AccountPosition getAccount( String pAccountId ) {
+	 public synchronized AccountPosition getAccount( String pAccountId ) {
+
 		AccountPosition tAccountPosition = mAccountMap.get( pAccountId );
 		if (tAccountPosition == null) {
 			tAccountPosition = new AccountPosition( pAccountId, 0L);
 			mAccountMap.put( pAccountId, tAccountPosition );
 		}
-		return tAccountPosition;
+		return tAccountPosition.clone();
 	}
 
 	/**

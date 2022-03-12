@@ -19,13 +19,15 @@ package com.hoddmimes.te.positions;
 
 import com.hoddmimes.te.engine.Order;
 import com.hoddmimes.te.messages.generated.MgmtPositionEntry;
+import com.hoddmimes.te.messages.generated.Position;
+import com.hoddmimes.te.messages.generated.QueryPositionResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
 
-public class AccountPosition
+public class AccountPosition implements Cloneable
 {
 	static Logger cLog = LogManager.getLogger("AccountPosition");
 
@@ -39,7 +41,19 @@ public class AccountPosition
 		mPosition = new HashMap<>();
 	}
 
-
+	@Override
+	public AccountPosition clone()
+	{
+		AccountPosition ap = new AccountPosition( this.mAccount, this.mCash );
+		if (mPosition != null) {
+			ap.mPosition = new HashMap<>();
+			for( HoldingEntry tHoldingEntry : mPosition.values()) {
+				HoldingEntry he = tHoldingEntry.clone();
+				ap.mPosition.put( he.getSid(), he);
+			}
+		}
+		return ap;
+	}
 
 
 	 void updateCashPosition( long pDeltaCash ) {
@@ -144,4 +158,19 @@ public class AccountPosition
 		 }
 		 return tPositions;
 	}
+
+	public QueryPositionResponse toQueryPositionResponse( String pRef ) {
+		 QueryPositionResponse tQryPosResp = new QueryPositionResponse().setRef( pRef );
+		 tQryPosResp.setCash( mCash );
+		 if (mPosition != null) {
+			 for (HoldingEntry tHoldingEntry : mPosition.values()) {
+				 tQryPosResp.addPositions(new Position().setSid(tHoldingEntry.getSid()).setPosition(tHoldingEntry.getHolding()));
+			 }
+		 } else {
+			 tQryPosResp.setPositions( new ArrayList<>());
+		 }
+		 return tQryPosResp;
+	}
+
+
 }

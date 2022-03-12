@@ -248,6 +248,20 @@
         <Attribute name="prices" type="BBO" list="array"/>
     </Message>
 
+    <Message name="QueryPositionRequest"  implements="RequestMsgInterface" rootMessage="true" >
+        <Attribute name="ref" type = "String"   mandatory="true"/>
+    </Message>
+
+    <Message name="Position" rootMessage="false" >
+        <Attribute name="sid" type = "String"/>
+        <Attribute name="position" type="long"/>
+    </Message>
+
+    <Message name="QueryPositionResponse" rootMessage="true" >
+        <Attribute name="ref" type = "String"  />
+        <Attribute name="cash" type="long"/>
+        <Attribute name="positions" type="Position" list="array"/>
+    </Message>
 
 
     <Message name="SubscriptionRequest" rootMessage="true" >

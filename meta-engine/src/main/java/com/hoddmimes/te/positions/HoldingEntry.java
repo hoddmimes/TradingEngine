@@ -19,9 +19,9 @@ package com.hoddmimes.te.positions;
 
 import java.text.SimpleDateFormat;
 
-public class HoldingEntry
+public class HoldingEntry implements Cloneable
 {
-	private final String  mSid;
+	private String  mSid;
 	private long    mHolding;
 	private long    mTxNo;
 	private long    mTime;
@@ -31,6 +31,21 @@ public class HoldingEntry
 		mHolding = pHolding;
 		mTxNo = pTxNo;
 		mTime = System.currentTimeMillis();
+	}
+
+	HoldingEntry() {
+
+	}
+
+
+	@Override
+	public HoldingEntry clone() {
+		 HoldingEntry he = new HoldingEntry();
+		 he.mSid = this.mSid;
+		 he.mTime = this.mTime;
+		 he.mHolding = this.mHolding;
+		 he.mTxNo = this.mTxNo;
+		 return he;
 	}
 
 	 String getSid() {

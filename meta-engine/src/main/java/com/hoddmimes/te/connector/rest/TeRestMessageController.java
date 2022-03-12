@@ -148,7 +148,13 @@ public class TeRestMessageController
 		return buildResponse( tResponseMessage );
 	}
 
-
+	@GetMapping( path = "/queryPosition" )
+	ResponseEntity<?> queryPosition(HttpSession pSession ) {
+		QueryPositionRequest tRequest = new QueryPositionRequest();
+		tRequest.setRef( String.valueOf( mInternalRef.getAndIncrement()));
+		MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(),  tRequest.toJson().toString() );
+		return buildResponse( tResponseMessage );
+	}
 
 
 	@GetMapping( path = "/queryTradePrices/{marketId}" )
