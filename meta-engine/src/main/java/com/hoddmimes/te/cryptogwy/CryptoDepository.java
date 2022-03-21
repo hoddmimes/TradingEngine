@@ -89,6 +89,7 @@ public class CryptoDepository extends Thread implements CryptoDepositReadOnly
 		return mDb.findAllDbCryptoPaymentEntry();
 	}
 
+	@Override
 	public List<DbCryptoPaymentEntry> getPaymentEntries(String pAccountId ) {
 		return mDb.findPaymentEntryByAccountId(pAccountId);
 	}

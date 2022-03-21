@@ -138,7 +138,7 @@ public class InstrumentContainer extends TeCoreService implements IpcRequestCall
 	   if (tNow.compareTo( tOpen ) > 0) {
 		   pMarket.setState( MarketStates.OPEN.name());
 
-		   tTimeToNextPhaseMs = getTimeDittFromNow( tClose );
+		   tTimeToNextPhaseMs = getTimeDittFromNow( tClose ); // ToDo: negative time efter midnight / close
 		   TradingPhaseEvent tEvent = new TradingPhaseEvent( pMarket.getId().get(), MarketStates.CLOSED);
 		   mTradingPhaseEvents.put( pMarket.getId().get(), tEvent );
 		   mPhaseTimer.schedule( tEvent, tTimeToNextPhaseMs );

@@ -9,9 +9,12 @@ cd %ETH_DATADIR%
 
 echo test>pwd.pwd
 geth --datadir %ETH_DATADIR%  account new --password .\pwd.pwd
+for /f "tokens=2 delims={}" %%a in ('geth --datadir .\ account list') do (set ACCOUNT1=%%a)
+geth --datadir %ETH_DATADIR%  account new --password .\pwd.pwd
+for /f "tokens=2 delims={}" %%a in ('geth --datadir .\ account list') do (set ACCOUNT2=%%a)
 
 
-for /f "tokens=2 delims={}" %%a in ('geth --datadir .\ account list') do (set ACCOUNT=%%a)
+
 
 echo { > genesis.json
 echo    ^"config^": { >> genesis.json
@@ -28,7 +31,8 @@ echo     }, >> genesis.json
 echo    ^"difficulty^": ^"200^", >> genesis.json
 echo    ^"gasLimit^": ^"9180211^", >> genesis.json
 echo    ^"alloc^": { >> genesis.json
-echo    ^"%ACCOUNT%^": { ^"balance^": ^"333300000000000000000^" } >> genesis.json
+echo    ^"%ACCOUNT1%^": { ^"balance^": ^"333300000000000000000^" }, >> genesis.json
+echo    ^"%ACCOUNT2%^": { ^"balance^": ^"000000000000000000000^" } >> genesis.json
 echo  } >> genesis.json
 echo } >> genesis.json
 

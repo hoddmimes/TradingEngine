@@ -1,0 +1,26 @@
+{"accounts": [
+    {"account": "JOSHUA", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "FROTZ", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "ELVIS", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "DONALD", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "HANNES", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "JOBS", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "TEST", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "FRANKLIN", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "GRACE", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "SNOPPY", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "ARTHUR", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "WINSTON", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "VINICI", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "USER01", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "USER02", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "USER03", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "USER04", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "USER05", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "USER06", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "USER07", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "USER08", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "USER09", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false},
+    {"account": "USER10", "mail": "test@foobar.com", "password": "test", "confirmed": true, "suspended": false}
+  ]
+}

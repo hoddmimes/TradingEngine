@@ -38,7 +38,9 @@ import com.hoddmimes.te.messages.generated.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bitcoinj.core.Coin;
+import org.web3j.utils.Convert;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -105,7 +107,7 @@ public class CryptoGateway extends TeCoreService {
 	}
 
 
-	private CoinGatewayInterface getCoinGateway( Crypto.CoinType pCoinType) throws TeException{
+	private CoinGatewayInterface getCoinGateway( Crypto.CoinType pCoinType ) throws TeException{
 
 		if (!isEnabled( pCoinType)) {
 			throw new TeException( StatusMessageBuilder.error("Coin gateway \"" +pCoinType.name() + "\" is not enabled", null));
@@ -127,7 +129,8 @@ public class CryptoGateway extends TeCoreService {
 		// Validate that the destination address has been defined as a destination for the user
 		// and that the PaymentEntry has been confirmed
 		Crypto.CoinType tCoinType = Crypto.CoinType.valueOf(pCryptoReDrawRequest.getCoin().get());
-		DbCryptoPaymentEntry tPaymentEntry = (DbCryptoPaymentEntry) TEDB.dbEntryFound(mDb.findPaymentEntryByAddressAndCoinType(pCryptoReDrawRequest.getAddress().get(), tCoinType));
+		DbCryptoPaymentEntry tPaymentEntry = (DbCryptoPaymentEntry) TEDB.dbEntryFound(
+				mDb.findPaymentEntryByAddressAndCoinTypeAndPaymentType(pCryptoReDrawRequest.getAddress().get(), tCoinType, Crypto.PaymentType.REDRAW));
 		if (tPaymentEntry == null) {
 			cLog.error("Payment entry not found redraw, account: " + pCryptoReDrawRequest.getAccountId() + " coin: " + pCryptoReDrawRequest.getCoin().get() + " address: " + pCryptoReDrawRequest.getAddress().get());
 			throw new TeException(StatusMessageBuilder.error("Redraw payment entry not found for address: " + pCryptoReDrawRequest.getAddress().get(), null));
@@ -150,8 +153,9 @@ public class CryptoGateway extends TeCoreService {
 
 	public MessageInterface addRedrawEntry( SetRedrawEntryRequest pSetRedrawEntryRequest ) {
 		try {
+			boolean tAutoConfirm = AuxJson.navigateBoolean( mTeConfiguration,"TeConfiguration/cryptoGateway/confirmRedrawEntries");
 			CoinGatewayInterface tCoinGwy = getCoinGateway(Crypto.CoinType.valueOf(pSetRedrawEntryRequest.getCoin().get()));
-			return tCoinGwy.addRedrawEntry(pSetRedrawEntryRequest);
+			return tCoinGwy.addRedrawEntry(pSetRedrawEntryRequest, tAutoConfirm);
 		} catch (TeException e) {
 			return e.getStatusMessage();
 		}
@@ -241,7 +245,12 @@ public class CryptoGateway extends TeCoreService {
 			Coin tCoin = Coin.valueOf(pAmount);
 			return tCoin.toFriendlyString();
 		}
-		throw new RuntimeException("coin friendly string not yet implemented for " + pSid );
+		if ( tSID.getSymbol().contentEquals(Crypto.CoinType.ETH.name())) {
+			BigDecimal bigdec = new BigDecimal( pAmount );
+			return Convert.fromWei(bigdec, Convert.Unit.ETHER ).toString() + " Eth";
+		}
+
+		throw  new RuntimeException("friendlyString is not implemented for " + pSid);
 	}
 
 	class ConfirmationCleanerThread extends Thread

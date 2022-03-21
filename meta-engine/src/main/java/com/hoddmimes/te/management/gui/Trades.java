@@ -22,6 +22,7 @@ import com.hoddmimes.jaux.txlogger.TxLoggerFactory;
 import com.hoddmimes.jaux.txlogger.TxLoggerReplayEntry;
 import com.hoddmimes.jaux.txlogger.TxLoggerReplayInterface;
 import com.hoddmimes.jaux.txlogger.TxLoggerReplayIterator;
+import com.hoddmimes.te.TeAppCntx;
 import com.hoddmimes.te.engine.InternalTrade;
 import com.hoddmimes.te.common.table.Table;
 import com.hoddmimes.te.common.table.TableAttribute;
@@ -61,6 +62,8 @@ public class Trades  extends JFrame implements TableCallbackInterface<Trades.Tra
 	private JButton mBrowseBtn;
 	private JLabel mTradeLogDirLbl;
 	private JComboBox<String> mDatesComboBox;
+	private JRadioButton mPriceTypeButton;
+
 
 	private JButton      mExportBtn;
 	private JTextField  mDestinationFileTxt;
@@ -152,6 +155,7 @@ public class Trades  extends JFrame implements TableCallbackInterface<Trades.Tra
 					JOptionPane.WARNING_MESSAGE);
 			return false;
 		}
+
 
 
 
@@ -376,6 +380,13 @@ public class Trades  extends JFrame implements TableCallbackInterface<Trades.Tra
 		cb.insets.left = 10;
 		tComponetPanel.add( mBrowseBtn, cb );
 
+
+		JPanel tOptionPanel = new JPanel( new GridBagLayout());
+		GridBagConstraints ocb = new GridBagConstraints();
+		ocb.anchor = GridBagConstraints.LINE_START;
+		ocb.gridx = ocb.gridy = 0;
+		ocb.insets = new Insets(10,30,5, 0);
+
 		mDatesComboBox = new JComboBox( mTxlDates.toArray( new String[0]));
 		mDatesComboBox.addActionListener(new ActionListener() {
 			@Override
@@ -384,10 +395,25 @@ public class Trades  extends JFrame implements TableCallbackInterface<Trades.Tra
 
 			}
 		});
-		cb.gridx = 0;
-		cb.gridy++;
-		cb.insets = new Insets(10,30,5, 8);
-		tComponetPanel.add( mDatesComboBox, cb );
+		tOptionPanel.add( mDatesComboBox, ocb );
+
+		mPriceTypeButton = new JRadioButton("Internal Price");
+		mPriceTypeButton.setSelected( false );
+		mPriceTypeButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				loadData();
+			}
+		});
+
+
+
+		ocb.gridx++;
+		tOptionPanel.add( mPriceTypeButton, ocb );
+
+		cb.gridy++; cb.gridx = 0;
+		tComponetPanel.add( tOptionPanel, cb );
+
 
 		tRoot.add( tComponetPanel, BorderLayout.CENTER);
 		return tRoot;
@@ -770,14 +796,19 @@ public class Trades  extends JFrame implements TableCallbackInterface<Trades.Tra
 			return mAccount;
 		}
 
-		@TableAttribute(header = "OrderId", column = 4, width = 85)
+		@TableAttribute(header = "OrderId", column = 4, width = 120)
 		public String getOrderId() {
 			return Long.toHexString(mOrderId);
 		}
 
-		@TableAttribute(header = "Price", column = 5, width = 45)
-		public String getPrice() {
-			return nfmt.format( mPrice );
+		@TableAttribute(header = "Price", column = 5, width = 72)
+		public String getPrice()
+		{
+			if (mPriceTypeButton.isSelected()) {
+				return nfmt.format(mPrice);
+			}
+			double tExternalPrice = mPrice  / (double) TeAppCntx.PRICE_MULTIPLER;
+			return nfmt.format(tExternalPrice);
 		}
 
 		@TableAttribute(header = "Quantity", column = 6, width = 65)
@@ -785,12 +816,12 @@ public class Trades  extends JFrame implements TableCallbackInterface<Trades.Tra
 			return String.valueOf( mQuantity );
 		}
 
-		@TableAttribute(header = "TradeId", column = 7, width = 85)
+		@TableAttribute(header = "TradeId", column = 7, width = 120)
 		public String getTradeId() {
 			return Long.toHexString(mTradeId);
 		}
 
-		@TableAttribute(header = "Time", column = 8, width = 85)
+		@TableAttribute(header = "Time", column = 8, width = 90)
 		public String getTime() {
 			SimpleDateFormat sdf = new SimpleDateFormat("HH:ss:mm.SSS");
 			return sdf.format( mTime );

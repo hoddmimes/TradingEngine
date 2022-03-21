@@ -2,6 +2,6 @@
   "baseWss": {"uri": "wss://localhost:8883/te-marketdata/"},
   "requests" : [
     { "method" : "POST", "endpoint" :  "logon", "body" : {"account":"USER01", "password":"test","ref" : "sr-71"}},
-    { "method" : "GET", "endpoint" : "addDepositEntry/BTC"}
+    { "method" : "GET", "endpoint" : "addBTCDepositEntry/BTC"}
   ]
 }

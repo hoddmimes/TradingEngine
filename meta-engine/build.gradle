@@ -109,6 +109,9 @@ task buildFatJar (type: Jar ) {
     manifest {
         attributes 'Implementation-Title': 'TE Fat Jar', 'Implementation-Version': project.version
     }
+    doLast {
+        println('Successfully build te TE FAT JAR !')
+    }
 }
 
 

@@ -20,9 +20,6 @@ package com.hoddmimes.te;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.hoddmimes.te.TradingEngine;
-import com.hoddmimes.te.common.AuxJson;
-import com.hoddmimes.te.common.TeException;
 import com.hoddmimes.te.common.transport.http.TeHttpClient;
 import com.hoddmimes.te.common.transport.http.TeRequestException;
 import com.hoddmimes.te.common.transport.http.TeWebsocketClient;
@@ -33,11 +30,8 @@ import javax.websocket.EndpointConfig;
 import javax.websocket.Session;
 
 import java.io.IOException;
-import java.sql.SQLOutput;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BooleanSupplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -128,7 +122,7 @@ public class TETest implements TeWebsocketClient.WssCallback {
 
 	@Test
 	@Order(3)
-	public void test_query_markets() throws IOException {
+	public void test_query_markets() throws IOException, TeRequestException {
 		// {"markets":[{"id":1,"name":"Equity","description":"US Equity blue chip market","marketPreOpen":"07:40","marketOpen":"07:00","marketClose":"23:30","minPricePctChg":20.0,"maxPricePctChg":20.0,"enabled":true,"state":"OPEN"},{"id":2,"name":"Crypto","description":"CryptoCurrency","marketPreOpen":"07:45","marketOpen":"07:00","marketClose":"23:30","minPricePctChg":40.0,"maxPricePctChg":40.0,"enabled":true,"state":"OPEN"}]}
 
 		JsonObject jRspMsg = mHttpClient.get( "queryMarkets");
@@ -140,7 +134,7 @@ public class TETest implements TeWebsocketClient.WssCallback {
 
 	@Test
 	@Order(4)
-	public void test_query_symbols() throws IOException {
+	public void test_query_symbols() throws IOException, TeRequestException {
 
 		JsonObject jRspMsg = mHttpClient.get( "querySymbols/1");
 

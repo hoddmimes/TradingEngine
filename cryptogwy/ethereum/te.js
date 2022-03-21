@@ -6,3 +6,8 @@ function transfer( pDestination, pAmount ) {
     console.log( eth.accounts[0] + "   wei: " + eth.getBalance( eth.accounts[0]) + " eth: " + web3.fromWei( eth.getBalance( eth.accounts[0]), 'ether'));
     console.log( pDestination + "   wei: " + eth.getBalance( pDestination ) + " eth: " + web3.fromWei( eth.getBalance( pDestination), 'ether'));
 }
+
+function wallet( walletIndex) {
+    console.log(  "  account wallet address : " + eth.accounts[ walletIndex ] );
+    console.log( "Balance wei: " + eth.getBalance( eth.accounts[ walletIndex ]) + " eth: " + web3.fromWei( eth.getBalance( eth.accounts[walletIndex]), 'ether'));
+}

@@ -28,7 +28,7 @@ import java.io.IOException;
 public interface CoinGatewayInterface
 {
 	public MessageInterface addDepositEntry(GetDepositEntryRequest pPaymentEntryRequest );
-	public MessageInterface addRedrawEntry(SetRedrawEntryRequest pPaymentEntryRequest );
+	public MessageInterface addRedrawEntry(SetRedrawEntryRequest pPaymentEntryRequest, boolean pAutoConfirm );
 	public String sendCoins( CryptoRedrawRequest pRedrawRqst ) throws TeException;
 	public long getEstimatedTxFeeNA();
 }

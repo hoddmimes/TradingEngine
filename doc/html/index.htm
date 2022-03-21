@@ -13,9 +13,19 @@
 <body>
 <p id="contentheader">About Trading Engine</p>
 <p><i>Trading Engine</i> also known as TE, is a pragmatic implementation of a marketplace.
- The TE is a market place solution that comes with instrument model, price / time matching and market data distribution. </br></br>
- The trading engine provides a REST / WEB Socket API allowing clients to connect to the trading engine.</br></br>
- The solution is provided as an open source code prodject under the Apache 2.0 licensing. Currently a version 1.1 is
+ The TE solution that comes with
+ <ul>
+ <li>instrument model</li>
+ <li>price / time matching</li>
+ <li>market data distribution</li>
+ <li>order pre-trade validation</li>
+ <li>crypto depository (exchange wallets) with gateways to crypto networks (Bitcoin and Ethereum).
+ <li>GUI for montitoring and controlling the solution.</li>
+</ul>
+ </br></br>
+<p>
+ The trading engine provides a REST / WEB Socket API allowing clients to connect to the marketplace.</br></br>
+ The solution is provided as an open source code project under the Apache 2.0 licensing. Currently, version 1.2 is
  released and further work is in progress. For future works see <a href="future.htm"><i>future plans</i></a>
 </p>
 <p><b>For Whom</b></br>
@@ -24,21 +34,26 @@ For any one that like to setup and run a market place or further develop the sol
 <b>Deploying Trading Engine</b>
 <ul>
  <li>TE is provided as a public <a href="https://github.com/hoddmimes/TradingEngine">GIT HUB project</a>.</li>
- <li>The project contains pre-configurations allowing the market place to run out of the box.</li>
- <li>There are scriptd for starting the components, adding users, and creating trade reports.</li>
+ <li>The project contains a pre-configuration allowing the market place to run out of the box.</li>
+ <li>There are scriptd for starting the components, monitoring and controlling the solution like adding users, managing order on behalf, view statistics etc..</li>
  <li>The TE has been developed with simplicity and performance in mind. Typically requests executes in sub milliseconds.
  If you are interested in the perfomance characteristics you will find futher information <a href="performance.htm">here.</a></li>
  <li>A more comprehensive description of the environment, setup and pre-configuration is found <a href="te-setup.htm">here</a>
 </ul>
 </p>
 <p>
-<b>API</b>
+ <b>API</b><br>
 As part of the solution the TE offers a REST and WEB Socket API allow clients to connect to the market place.
 Further descriptions of the API can be found below.
 <ul>
  <li><a href="./swagger/te-rest-api.htm">TE REST API</a></li>
  <li><a href="te-wss-api.htm"> TE WEB Socket API</a></li>
 </ul>
+<br>
+<p>
+<b>Crypto Gateways</b></br>
+The solution includes two crypto gateways allowing the TE to interact with Bitcoin and/or Etherreum. The solutions implements
+ exchange wallets allowing client to deposit coins for trading. </br>Further information about crypto trading in the  TE are found <a href="crypto.htm">here.</a></li>
 </p>
 <br>
 <p>

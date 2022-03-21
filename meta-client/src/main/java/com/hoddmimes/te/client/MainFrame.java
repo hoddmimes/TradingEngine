@@ -27,6 +27,7 @@ import java.awt.event.ActionListener;
 public class MainFrame extends JFrame
 {
 	private JButton mBBOButton, mOrderBookButton, mTradesButton, mOwnOrdersButton, mPriceLevelButton, mPositionButton;
+	private JButton mCryptoAddDepositButton, mCryptoAddRedrawnButton, mCryptoRedrawButton, mCryptoShowEntityAddresses;
 	private Connector mConnector;
 
 	MainFrame( Connector pConnector) {
@@ -36,6 +37,7 @@ public class MainFrame extends JFrame
 
 	private void init() {
 		JPanel tRootPanel = new JPanel( new GridBagLayout());
+		tRootPanel.setBackground( AuxClt.PANEL_BACKGROUND);
 		GridBagConstraints gc = new GridBagConstraints();
 		gc.gridx = gc.gridy = 0;
 		gc.anchor = GridBagConstraints.CENTER;
@@ -43,7 +45,8 @@ public class MainFrame extends JFrame
 		gc.fill = GridBagConstraints.HORIZONTAL;
 
 		JPanel tHeaderPanel = AuxClt.makeheaderpanel("TE Test Client");
-		tHeaderPanel.setBorder( new LineBorder( Color.black, 2));
+		tHeaderPanel.setBackground( AuxClt.PANEL_BACKGROUND);
+		tHeaderPanel.setBorder( new EtchedBorder( EtchedBorder.LOWERED));
 		tRootPanel.add( tHeaderPanel, gc );
 
 		gc.gridy++; gc.fill = GridBagConstraints.NONE;
@@ -59,7 +62,11 @@ public class MainFrame extends JFrame
 	}
 
 	private JPanel createMenue() {
-		JPanel tPanel = new JPanel( new GridBagLayout());
+		JPanel tPanel = new JPanel( new BorderLayout());
+		tPanel.setBackground( new Color( 0xcbd0d6));
+
+
+		JPanel p1 = new JPanel( new GridBagLayout());
 		GridBagConstraints gc = new GridBagConstraints();
 		gc.gridx = gc.gridy = 0;
 		gc.anchor = GridBagConstraints.CENTER;
@@ -68,28 +75,54 @@ public class MainFrame extends JFrame
 		tPanel.setBorder( new EtchedBorder( EtchedBorder.RAISED));
 
 		mBBOButton = AuxClt.makebutton("BBO", 85);
-		tPanel.add(mBBOButton, gc);
+		p1.add(mBBOButton, gc);
 
 		gc.gridx++; gc.insets.left = 3; gc.insets.right = 3; gc.fill = GridBagConstraints.NONE;
 
 		mPriceLevelButton = AuxClt.makebutton("PriceLevels", 130);
-		tPanel.add(mPriceLevelButton, gc);
+		p1.add(mPriceLevelButton, gc);
 
 		gc.gridx++;
 		mOrderBookButton = AuxClt.makebutton("OrderBook", 130);
-		tPanel.add(mOrderBookButton, gc);
+		p1.add(mOrderBookButton, gc);
 
 		gc.gridx++;
 		mTradesButton = AuxClt.makebutton("Trades", 130);
-		tPanel.add(mTradesButton, gc);
+		p1.add(mTradesButton, gc);
 
 		gc.gridx++;
 		mOwnOrdersButton = AuxClt.makebutton("Own Orders", 130);
-		tPanel.add(mOwnOrdersButton, gc);
+		p1.add(mOwnOrdersButton, gc);
 
 		gc.gridx++;
 		mPositionButton = AuxClt.makebutton("Positions", 130);
-		tPanel.add(mPositionButton, gc);
+		p1.add(mPositionButton, gc);
+		tPanel.add( p1, BorderLayout.NORTH);
+
+		JPanel p2 = new JPanel( new GridBagLayout());
+		gc = new GridBagConstraints();
+		gc.gridx = gc.gridy = 0;
+		gc.anchor = GridBagConstraints.CENTER;
+		gc.insets = new Insets( 5, 20, 5, 3);
+		gc.fill = GridBagConstraints.HORIZONTAL;
+
+		mCryptoAddDepositButton = AuxClt.makebutton("Get Crypto Deposit Entry", 222);
+		p2.add(mCryptoAddDepositButton, gc);
+
+		gc.gridx++; gc.insets.left = 3; gc.insets.right = 3; gc.fill = GridBagConstraints.NONE;
+
+		mCryptoAddRedrawnButton = AuxClt.makebutton("Add Crypto Redraw Entry", 222);
+		p2.add(mCryptoAddRedrawnButton, gc);
+
+		gc.gridx++;
+		mCryptoRedrawButton = AuxClt.makebutton("Crypto Redraw", 222);
+		p2.add(mCryptoRedrawButton, gc);
+
+		gc.gridx++;
+		mCryptoShowEntityAddresses = AuxClt.makebutton("Show Crypto Deposit/Redraw Entry", 300);
+		p2.add(mCryptoShowEntityAddresses, gc);
+
+		tPanel.add(p2, BorderLayout.SOUTH);
 
 
 		mBBOButton.addActionListener(new ActionListener() {
@@ -131,6 +164,34 @@ public class MainFrame extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				PositionFrame tFrame = new PositionFrame( mConnector);
+			}
+		});
+
+		mCryptoAddDepositButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				CryptoAddDepositEntryDialog tFrame = new CryptoAddDepositEntryDialog( mConnector );
+			}
+		});
+
+		mCryptoAddRedrawnButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				CryptoAddRedrawEntryDialog tFrame = new CryptoAddRedrawEntryDialog( mConnector );
+			}
+		});
+
+		mCryptoRedrawButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				CryptoRedrawDialog tFrame = new CryptoRedrawDialog( mConnector );
+			}
+		});
+
+		mCryptoShowEntityAddresses.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				CryptoShowDepositFrame tFrame = new CryptoShowDepositFrame( mConnector );
 			}
 		});
 

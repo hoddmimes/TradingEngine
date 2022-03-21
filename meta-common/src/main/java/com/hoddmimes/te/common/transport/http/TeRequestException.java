@@ -28,7 +28,7 @@ public class TeRequestException extends Exception {
 	int mStatusCode;
 
 	public TeRequestException(int pStatus, String pReasonPhrase, String pBodyResponse) {
-		super();
+		super(pReasonPhrase);
 		mStatusCode = pStatus;
 		mReasonPhrase = pReasonPhrase;
 		mBodyReason = pBodyResponse;

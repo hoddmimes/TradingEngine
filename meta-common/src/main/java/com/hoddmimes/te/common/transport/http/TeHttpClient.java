@@ -88,16 +88,18 @@ public class TeHttpClient
 
 
 
-	public JsonObject get( String pDestination ) throws IOException
+	public JsonObject get( String pDestination ) throws IOException, TeRequestException
 	{
 		HttpGet tGetRqst = new HttpGet( mBaseUrl + pDestination );
 		log("[get] destination: " + tGetRqst.toString());
 		CloseableHttpResponse tResponse = mHttpclient.execute(tGetRqst);
 
 		if (tResponse.getStatusLine().getStatusCode() != 200) {
-			log("[Receive-Error] \n   " + " status-code: "  + tResponse.getStatusLine().getStatusCode() +
-					" status: " + readResponse( tResponse ), true);
-			return null;
+			String rspmsg  = readResponse( tResponse );
+			String stsmsg = (getJsonStsMsg(rspmsg) != null) ? getJsonStsMsg(rspmsg) : tResponse.getStatusLine().getReasonPhrase();
+
+			log("[Receive-Error] \n   " + " status-code: "  + stsmsg + " status: " + rspmsg, true);
+			throw new TeRequestException( tResponse.getStatusLine().getStatusCode(), stsmsg, rspmsg  );
 		}
 
 		// Read response data from the response message
@@ -108,16 +110,18 @@ public class TeHttpClient
 		return tJsonRsp;
 	}
 
-	public JsonObject delete( String pDestination ) throws IOException
+	public JsonObject delete( String pDestination ) throws IOException,TeRequestException
 	{
 		HttpDelete tDelRqst = new HttpDelete( mBaseUrl + pDestination );
 		log("[delete] destination: " + tDelRqst.toString());
 		CloseableHttpResponse tResponse = mHttpclient.execute(tDelRqst);
 
 		if (tResponse.getStatusLine().getStatusCode() != 200) {
-			log("[Receive-Error] \n   " + " status-code: "  + tResponse.getStatusLine().getStatusCode() +
-					" status: " + readResponse( tResponse ), true);
-			return null;
+			String rspmsg  = readResponse( tResponse );
+			String stsmsg = (getJsonStsMsg(rspmsg) != null) ? getJsonStsMsg(rspmsg) : tResponse.getStatusLine().getReasonPhrase();
+
+			log("[Receive-Error] \n   " + " status-code: "  + stsmsg + " status: " + rspmsg, true);
+			throw new TeRequestException( tResponse.getStatusLine().getStatusCode(), stsmsg, rspmsg  );
 		}
 
 		// Read response data from the response message
@@ -149,9 +153,10 @@ public class TeHttpClient
 
 		if (tResponse.getStatusLine().getStatusCode() != 200) {
 			String rspmsg  = readResponse( tResponse );
-			log("[Receive-Error] \n   " + " status-code: "  + tResponse.getStatusLine().getStatusCode() +
-					" status: " + rspmsg, true);
-			throw new TeRequestException( tResponse.getStatusLine().getStatusCode(), tResponse.getStatusLine().getReasonPhrase(), rspmsg  );
+			String stsmsg = (getJsonStsMsg(rspmsg) != null) ? getJsonStsMsg(rspmsg) : tResponse.getStatusLine().getReasonPhrase();
+
+			log("[Receive-Error] \n   " + " status-code: "  + stsmsg + " status: " + rspmsg, true);
+			throw new TeRequestException( tResponse.getStatusLine().getStatusCode(), stsmsg, rspmsg  );
 		}
 
 		// Read response data from the response message
@@ -204,4 +209,20 @@ public class TeHttpClient
 				.build();
 	}
 
+	private String getJsonStsMsg( String pResponseMessage ) {
+		if (pResponseMessage == null) {
+			return null;
+		}
+
+		try {
+			JsonObject jObject = JsonParser.parseString( pResponseMessage ).getAsJsonObject();
+			if (jObject.has("statusMessage")) {
+				return jObject.get("statusMessage").getAsString();
+			}
+			return null;
+		}
+		catch( JsonSyntaxException e) {
+			return null;
+		}
+	}
 }

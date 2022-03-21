@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'com.hoddmimes'
-version '1.1.0'
+version '1.2.0'
 
 repositories {
     mavenCentral()
@@ -43,6 +43,9 @@ dependencies {
     implementation project(':meta-common')
 
     implementation group: 'javax.websocket', name: 'javax.websocket-api', version: '1.1'
+    implementation group: 'org.bitcoinj', name: 'bitcoinj-core', version: '0.16.1'
+    implementation group: 'org.web3j', name: 'crypto', version: '5.0.0'
+    implementation group: 'org.web3j', name: 'core', version: '5.0.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
 }

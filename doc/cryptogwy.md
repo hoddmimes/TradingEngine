@@ -6,8 +6,7 @@ as an gateway to a Bitcoon and/or Ethereum network and possibly other crypto coi
 that they will be able to trade on the exchange.
 
 
-Clients are able to deposit or redraw coins from the _exchange_. When doing so the GC is the components providing the 
-deposit logic and doing the interaction with the Bitcoi and Ethereum network.
+
 
 ## Overall Design.
 

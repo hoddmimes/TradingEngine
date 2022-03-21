@@ -397,7 +397,7 @@ public class MatchingEngine extends TeCoreService implements MatchingEngineInter
 	}
 
 	public MessageInterface executeQueryPosition( QueryPositionRequest pRequest, RequestContextInterface pRequestContext) {
-		AccountPosition tAccountPosition = mPositionController.getAccount(pRequestContext.getAccountId());
+		AccountPosition tAccountPosition = mPositionController.getAccountReadOnly(pRequestContext.getAccountId());
 		return tAccountPosition.toQueryPositionResponse( pRequest.getRef().get());
 	}
 

@@ -55,7 +55,6 @@ public class AuxClt {
 	}
 
 
-
 	static JLabel makelabel(String pText) {
 		return makelabel(pText, null);
 	}

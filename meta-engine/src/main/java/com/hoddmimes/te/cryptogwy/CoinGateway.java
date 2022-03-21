@@ -22,6 +22,7 @@ import com.hoddmimes.te.common.Crypto;
 import com.hoddmimes.te.common.TXIDFactory;
 import com.hoddmimes.te.common.db.TEDB;
 import com.hoddmimes.te.instrumentctl.SymbolX;
+import com.hoddmimes.te.messages.generated.DbCryptoPayment;
 
 import java.text.SimpleDateFormat;
 import java.util.UUID;
@@ -41,5 +42,21 @@ public abstract class CoinGateway implements CoinGatewayInterface
 
 	protected static String getConfirmationId() {
 		return  String.valueOf(TXIDFactory.getId()) + "-" + UUID.randomUUID().toString();
+	}
+
+	protected DbCryptoPayment dbCreatePaymentEntry(Crypto.CoinType pCoinType, String pAccountId, String pTxid, String pAddress, String pFriendlyAmount, Crypto.StateType pStateType, Crypto.PaymentType pPaymentType) {
+		DbCryptoPayment tPayment = new DbCryptoPayment();
+		if (pAccountId != null) {
+			tPayment.setAccountId(pAccountId);
+		}
+		tPayment.setCoinType(pCoinType.name());
+		tPayment.setPaymentType( pPaymentType.name() );
+		tPayment.setTxid( pTxid );
+		tPayment.setAddress( pAddress );
+		tPayment.setTime( SDF.format( System.currentTimeMillis()));
+		tPayment.setState( pStateType.name() );
+		tPayment.setAmount( pFriendlyAmount );
+		mDb.updateDbCryptoPayment( tPayment, true);
+		return tPayment;
 	}
 }

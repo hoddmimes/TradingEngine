@@ -120,9 +120,10 @@ public class TEDB extends MongoAux {
 
 
 
-	public List<DbCryptoPaymentEntry> findPaymentEntryByAddressAndCoinType(String pAddress, Crypto.CoinType pCoinType) {
+	public List<DbCryptoPaymentEntry> findPaymentEntryByAddressAndCoinTypeAndPaymentType(String pAddress, Crypto.CoinType pCoinType, Crypto.PaymentType pPaymentType ) {
 		Bson tFilter = Filters.and(Filters.eq("address", pAddress),
-				Filters.eq("coinType", pCoinType.name()));
+				Filters.eq("coinType", pCoinType.name()),
+				Filters.eq("paymentType", pPaymentType.name()));
 
 		return super.findDbCryptoPaymentEntry(tFilter);
 	}
@@ -194,7 +195,10 @@ public class TEDB extends MongoAux {
 	}
 
 
-
+	public List<DbCryptoPayment> findPaymentsByTxid( String pTxid ) {
+		Bson tFilter = Filters.eq("txid", pTxid);
+		return super.findDbCryptoPayment( tFilter );
+	}
 
 
 	public DbCryptoPayment findPaymentEntryByTxid(String pTxid) {

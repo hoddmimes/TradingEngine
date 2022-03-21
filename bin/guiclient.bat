@@ -5,12 +5,14 @@ set /p TE_VERSION="Enter TE version (x.y.z): "
 goto test
 
 :go
+@echo off
 rem -- get the bin location where this script is located
 set BINDIR="%~dp0"
 rem -- push current location
+
 pushd "%cd%"
 rem -- set default to the TE working dir
 cd %BINDIR%/..
-SET JAVA-SWITCHES=-Dlog4j.configurationFile=./configuration/log4j2-te.xml -Djava.net.preferIPv4Stack=true
-java %JAVA-SWITCHES% -cp ./meta-common/build/libs/teclient-%TE_VERSION%.jar  com.hoddmimes.te.testclient.TestClient configuration/ClientTestScript.json
+SET JAVA-SWITCHES=-Djava.net.preferIPv4Stack=true
+java %JAVA-SWITCHES% -cp ./meta-client/build/libs/teguitestapp-%TE_VERSION%.jar  com.hoddmimes.te.client.TeGuiTestApp -account TEST -password test
 popd

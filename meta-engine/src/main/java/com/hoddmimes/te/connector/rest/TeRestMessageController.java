@@ -216,7 +216,7 @@ public class TeRestMessageController
 	}
 
 	@GetMapping( path = "/queryTrades/{sid}" )
-	ResponseEntity<?> QueryTrades(HttpSession pSession, @PathVariable String sid ) {
+	ResponseEntity<?> queryTrades(HttpSession pSession, @PathVariable String sid ) {
 		QueryTradesRequest tRqstMsg = new QueryTradesRequest();
 		tRqstMsg.setRef( String.valueOf( mInternalRef.getAndIncrement()));
 		tRqstMsg.setSid( sid );
@@ -229,7 +229,7 @@ public class TeRestMessageController
 
 
 	@GetMapping( path = "/queryOwnTrades/{market}" )
-	ResponseEntity<?> QueryOwnTrades(HttpSession pSession, @PathVariable Integer market,  @RequestParam(required = false) String sid) {
+	ResponseEntity<?> queryOwnTrades(HttpSession pSession, @PathVariable Integer market,  @RequestParam(required = false) String sid) {
 		QueryOwnTradesRequest tRqstMsg = new QueryOwnTradesRequest();
 		tRqstMsg.setRef( String.valueOf( mInternalRef.getAndIncrement()));
 		tRqstMsg.setMarketId( market );
@@ -244,7 +244,7 @@ public class TeRestMessageController
 	}
 
 	@GetMapping( path = "/queryOwnOrders/{market}" )
-	ResponseEntity<?> QueryOwnOrders(HttpSession pSession, @PathVariable Integer market ) {
+	ResponseEntity<?> queryOwnOrders(HttpSession pSession, @PathVariable Integer market ) {
 		QueryOwnOrdersRequest tRqstMsg = new QueryOwnOrdersRequest();
 		tRqstMsg.setRef( String.valueOf( mInternalRef.getAndIncrement()));
 		tRqstMsg.setMarketId( market );
@@ -257,7 +257,7 @@ public class TeRestMessageController
 	}
 
 	@GetMapping( path = "/queryBBO/{market}" )
-	ResponseEntity<?> QueryBBO(HttpSession pSession, @PathVariable Integer market ) {
+	ResponseEntity<?> queryBBO(HttpSession pSession, @PathVariable Integer market ) {
 		QueryBBORequest tRqstMsg = new QueryBBORequest();
 		tRqstMsg.setRef( String.valueOf( mInternalRef.getAndIncrement()));
 		tRqstMsg.setMarketId( market );
@@ -280,14 +280,14 @@ public class TeRestMessageController
 	 * @return GetDepositEntryResponse
 	 */
 
-	@GetMapping( path = "/addDepositEntry/{coin}/{fromAddress}" )
-	ResponseEntity<String> getPaymentEntry(HttpSession pSession, @PathVariable String coin, @PathVariable String fromAddress) {
-		return addPaymentEntry(pSession, coin, fromAddress);
+	@GetMapping( path = "/addETHDepositEntry/{fromAddress}" )
+	ResponseEntity<String> getPaymentEntry(HttpSession pSession, @PathVariable String fromAddress) {
+		return addPaymentEntry(pSession, Crypto.CoinType.ETH.name(), fromAddress);
 	}
 
-	@GetMapping( path = "/addDepositEntry/{coin}" )
-	ResponseEntity<String> getPaymentEntry(HttpSession pSession, @PathVariable String coin) {
-		return addPaymentEntry(pSession, coin, null);
+	@GetMapping( path = "/addBTCDepositEntry" )
+	ResponseEntity<String> getPaymentEntry(HttpSession pSession) {
+		return addPaymentEntry(pSession, Crypto.CoinType.BTC.name(), null);
 	}
 
 
@@ -317,9 +317,9 @@ public class TeRestMessageController
 				tPayEntryRqst.setFromAddress(fromAddress);
 			}
 
-			if (!TeAppCntx.getInstance().getCryptoGateway().isEnabled(tCoinType)) {
-				return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
-			}
+			//if (!TeAppCntx.getInstance().getCryptoGateway().isEnabled(tCoinType)) {
+			//	return buildResponse(StatusMessageBuilder.error("Crypto functionality is not enabled", null));
+			//}
 
 			tPayEntryRqst.setAccountId(mCallback.getSessionContext(pSession.getId()).getAccount());
 			tPayEntryRqst.setCoin(coin);
@@ -401,7 +401,19 @@ public class TeRestMessageController
 		}
 	}
 
-
+	@GetMapping( path = "/queryCryptoAddressEntries" )
+	ResponseEntity<String> addRedrawEntry(HttpSession pSession) {
+		QueryAddressEntriesRequest tRequest = new QueryAddressEntriesRequest();
+		tRequest.setRef(String.valueOf(mInternalRef.getAndIncrement()));
+		try {
+			MessageInterface tResponseMessage = mCallback.connectorMessage(pSession.getId(), tRequest.toJson().toString());
+			return buildResponse(tResponseMessage);
+		}
+		catch (Throwable t) {
+			mLog.fatal("(queryCryptoAddressEntries) internal error", t);
+			throw t;
+		}
+	}
 
 
 

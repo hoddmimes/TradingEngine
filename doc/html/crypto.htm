@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <meta name="description" content="Trading Engine implementing a marketplace for trading" />
+    <meta name="keyworks" contents="trading marketplace / exchange  engine"/>
+    <title>Trading Engine, Crypto Integration</title>
+    <link rel="stylesheet" href="te.css"/>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+</head>
+<body>
+<p id="contentheader">TE Crypto Implementation, Setup and Testing</p>
+<p>
+    The following section is a description of the <i>crypto gateway</i>, herby called CG design. The overall aim with the gateway acting
+    as an gateway to a Bitcoin and/or Ethereum network and possibly other crypto coins. The CG will hold the clients Bitcoin and/or ETH deposits
+    that clients will be able to trade on the exchange.
+    </br><br>
+    Clients are able to deposit or redraw coins from the <i>marketplace</i>. When doing so the GC is the components providing the
+    deposit logic and doing the interaction with the Bitcoin and Ethereum network.
+    </br><br>
+    By default the crypto integration is deisabled in the TE configuration i.e <i>./configuration/TeConfiguration.json</i>. If you would like to try out the crypto
+    functionality you must setup and run (or use) a Bitcoin and/or Ethereum network client. For private Bitcoin and Ethereum network testing the
+    <a href="https://bitcoin.org/en/bitcoin-core/">Bitcoin core platform</a> and <a href="https://geth.ethereum.org/">Go Ethereum</a>, If you would like to test with <i>public</i> test networks.
+    you should start to visit <a href="https://infura.io/"> for Ethereum public testing</a> <i>and</i> <a href="https://developer.bitcoin.org/examples/testing.html"> for Bitcoin public testing</a>
+    </br></br>
+    But a <i>(strong)</i> advise is to start testing with a private network that you easily can wipeout a restart. There are a few scripts described below that will help you to get it running.
+</p>
+
+
+<p id="contentheader">Overall Design</p>
+
+<p>
+The CG will have one <i>omni</i> wallet per crypto coin that the clients have deposit to before trading crypto at the exchange.
+The <i>Position Controller</i> component is actually the component that holds the real-time position of the coins per client, the CG would just act as a
+depository.</br></br>
+
+The major reason for having a single <i>omni</i> wallet per crypto currency is;
+    <ul>
+    <li>to minimize the tranfer fees when moving coins to/from the marketplace.</li>
+    <li>to minimize the latency in the settlement process. When  exchange participants trade with each other we would <b><i>not</i></b> like settle i.e transfer coins between their wallet (if there had been individual wallets) due to the fee cost and the latecy
+in the Bitcoin and Ethereum networks.</li>
+    <li>Now the <i>Position Controller</i> will maintain the acctual position for each crypto curreny and account. When a client would like to redraw
+coins the amount is verified agains the <i>Position Controller</i></li>.
+    </ul>
+</p>
+<p>
+Each client that would like to trade crypto currencies will have an entry in the CG (Mongo) databade.
+In the database the current deposit amounts will be keept together with a transaction history of all deposit and re-draw
+transactions.
+</p>
+
+
+
+<p id="contentheader">Deposit Bitcoin, BTC</p>
+<ul>
+    <li>before a client can deposit any Bitcoins the client must apply for a deposit <i>(wallet)</i> address.
+Technically that will be handed out by generate a unique address being associated with the Bitcoin <i>omni</i> wallet. However
+        that does not prevent a user to send coins to the omni bitcoin wallet without having created an <i>deposit entry</i>. Such payment
+will of cause be received but be <i>unidentified</i>.</li>
+
+<li>a mail is sent to the client with the deposit address. An outstanding question is if a deposit address needs to be confirmed by the client? Currently
+    a deposit enrtry gets confirmed when being created. <i>(Who would deposit coins to someone elses account?)</i></li>
+
+<li>when the client deposit coins to the address being generate for client deposit the coins will show up in the Bitcoin <i>omni</i> wallet defined and used by the CG. </li>
+    <li><i>The CG controller</i> will identify the client by the deposit address generated. It will also update the Position Controller
+with the additional holdings.</li>
+</ul>
+
+
+<p id="contentheader">Deposit Etherreum, ETH</p>
+<ul>
+<li>before a client can deposit any ETH the client must register a <i>source</i>address i.e. the wallet address from where the ETH
+will be sent. The TE Ethereum wallet will have <b>one</b> unique credential address. Clients will by identified by its source address. This is not optimal since
+    any signed on client can register any address. Despite that ETH deposit addressed are added and accepted without any confirmation. <i>Possibly this should be changed?</i></li>
+
+<li>The <i>CG controller</i> will when receiving a payment identify the client by the source address. It will also update the Position Controller
+with the additional holdings.</li>
+</ul>
+
+<p id="contentheader">Redraw</p>
+<p>
+Before a client can request a redraw of any crypto coins from the TE solution, the client must register an address to where the coins can be sent.
+The request must be confirmed via mail before the redrawn can take place.
+</br></br>
+When the request should be executed, the amount will be checked against the client position held by the <i>Position Controller</i>. This implies also consider what
+is being exposed in the market. I.e current position - sum of all client active outstanding sell orders.
+</p>
+
+<p id="contentheader">TE Implementation</p>
+<p>
+A few words about the TE Position Controller, herby a.k.a PC. The PC is used when when pre-trading is enabled. Buy orders are validated against
+the client cash holding, minus the current buy exposure in the market when orders are submitted. Sell orders are validate against the current holdings, minus the sell exposure in the
+market when being submitted.
+    </br></br>
+
+
+How the pre-validation should work is likely subject for discussion and adaptation. Especially when the asset depository is not the TE System. If there is a dependency
+    to an external depository such a broker system etc. The question then is how how/when information about the position holdings are updated between the TE system and
+    any <i>external</i> deposit system. E.g are changes in the system exchanged once a day, periodically, in real-time, etc?
+</p>
+<p>
+A simple implemenation would be to update the client <i>holdings</i> once every 24 hrs. The client then trade within these holdings / limits for the next 24 hrs.
+This however a have a significant down side. The client is trading <i>blind</i> considering what is happenings outside the trading system. Even if many client depo system
+use to work in this way it is associated with some risks. Such approach may work if the asset are just trading at one venue. How with multilisting the approach may be
+    less optimal.
+</p>
+
+<p>
+A more optimal approach is of cause if the <i>true holder</i> (or the collateral system) updated the TE when there is a change.
+In practice the bank would updated the the TE (i.e. PC) when cash was deposit / redrawn or when equities was deposit in
+the TE depository. And when crypto was deposit / redrwan from the TE system.
+</p>
+
+<p>The current implementation have applied a sort of semi realtime approach;</p>
+
+<p><b>For Equities</b>, holdings are loaded from the file <i>./configuration/Positions.json</i> every time the system is started.
+Any trade during the current day will applied and update the (loaded) position. It is then assumed that any <i>external</i>
+    deposit change is is reflected in the position file and updated every 24 hrs or at any suiteable interval.</br>
+However the PC interface have methods for externaly updating the holdings in real-time.
+</p>
+
+<p><b>Crypto</b> will works a bit differently, it is more of a real-time approach due to the fact that we have implemented a Crypto Gateway.
+    <ul>
+    <li>The crypto gateway component will when starting, synch with the crypto network and get the current "wallet" positions.</li>
+    <li>The current crypto holdings are then updating the <i>Position Controller</i> as part of the startup.</li>
+    <li>Any deposit of crypto asset (updateing the CG) during the day will update PC in real-time.</li>
+    <li>Any redraw of crypto assets will be validated against the position in PC, considering active outstanding crypto selling orders. In case
+crypto is available the redrawn request will be accepted if not sufficient offering is available the request is rejected.</li>
+</ul>
+</p>
+
+<p><i>The rest is in the code. But as said the the whole pre-validation / position handling is subject for adaptation it all depends on the
+    surrounding echo systems</i></p>
+
+
+
+<p id="contentheader">Data Structures</p>
+
+<p>A few words about the some of the essential data structures used for controlling the cryto flows.</p>
+
+<p>
+<b><i>AccountPosition</i></b>, holds an account  real-time view of the asset inventory . Updated as execution takes place and crypto assests are deposit / redrawn.
+At startup the crypto gateway will after synchronisation with the crypto network update the crypto position in the Position Controller.
+For equities the position is loaded when the system is started by read/loading  the file <i>./configuration/Positions.json</i>.
+Any trades done in any previous session for same day will update the inventory also as part of the startup.
+</p>
+
+<p>Any deposit / redraw of crypto assets will update the <i>AccountPosition</i> as the happens.</p>
+<p>Any execution taking place in the TE will update the AccountPosition as they happen.</p>
+
+<p>
+<b><i>DBCryptoDepositEntry</i></b> is (Mongo) DB structure holding information about deposit / redrawn addresses being defined by clients.
+Clients will not benifit from deposits and cannot redraw coins unless there is a matching <i>DBCrytoDepositEntry</i> matching an incoming deposit transaction or
+redrawn request from the client.
+</p>
+
+
+<p><b><i>DBCryptoDeposit</i></b> holds the crypto inventory for a client/account.</br></p>
+<p>Updates when TE execution takes place.</p>
+<p>When the client deposit / redraw coins.</p>
+</p>
+
+<p><b><i>DBCryptoPayment</i></b>  used for logging incoming and outcoing crypto payments.</p>
+
+
+
+<p id="contentheader">Setting Up Test Environmemnts</p>
+
+<p>Currently private crypto network has been used for testing.
+The following section describes how to setup and run a private <i>Bitcoin</i> and <i>Etherreum</i> crypto network.
+<p>
+
+
+<p><b>Bitcoin</b></p>
+
+<p>Inorder setup and run a Bitcoin network the <a href="https://bitcoin.org/en/bitcoin-core/">Bitcoin core platform</a> is used.
+The <i>core</i> platform contains software to setup and run a one node network. You should download and install the core
+component</p> </br>
+
+<p>There are essentially two components in the core platform being of interest</p>
+<p>
+<ul>
+    <li>The <a href="https://river.com/learn/terms/b/bitcoin-qt/">bitcoin-qt</a> application. The application is a GUI app providing a
+      one node network and an interface for managing wallets. You have to have this application running for having a private test network.</br></li>
+
+    <li>Part of the <i>core</i> platform is also the <b><i>bitcoin-cli</i></b> application. This application is required when simulating mining in the network.
+        Via the command bitcoin-cli interface a <a href="https://linuxcommandlibrary.com/man/bitcoin-cli">lot of things can be done</a></li>
+</ul>
+</p>
+
+<p>The following steps are what is typically done to get the network up and allow the TE crypto gateway to connect to the network.</p>
+
+<p>
+<ul>
+<li>Some script are located in the directory <i>./cryptogwy/bitcoin</i> hopefully these script will make the setup easier.</li>
+<li>the file <i>regtest-qt.bat</i> (win) or <i>regtest-qt.sh</i> (linux) will run the <i>bitcoin-qt</i> application in private network mode. The script requires that executable bitcoin-qt is in the PATH.</li>
+</br></br>
+<li>Run the script <i>reqtest-qt.[sh|bat]</i></li>
+<li>In the bitcoin-qt application create three wallets: _default, USER01, USER02</li>
+    <li>Run the script <i>regtest-mine.[sh|bat]</i>. with the parameter <i>101</i> It will mine 101 blocks and the mining reward will be placed in the <i>default</i> wallet.</li>
+<li>Start the TE Trading Engine server application <i>./bin/te.[bat|sh]</i></li>
+<li>Run the TE management GUI application <i>./bin/management.[bat|sh]</i>. With this application you will be able to view
+wallet holdings, crypto deposit/redraw address entries and crypto payments.</li>
+</ul>
+</p>
+
+<p>
+You can from the <i>bitcoin-qt</i> application send bitcoins to a user account. The <i>default</i> wallet has some coins.
+The first thing  to do is to create a <i>deposit entry</i> by issue a TE API rest call <i>addBTCDepositEntry</i>.
+<i>bitcoin-qt</i> application to the address returned in the  response.
+</p>
+<p>
+Any deposit transaction issued in the <i>bitcoin-qt</i> application to the TE system must be confirmed by network partcipants i.e. <i>mined</i>. This is accomplished by mining a block, run the script
+    <i>regtest-mine.[sh|bat]</i> with  the parameter <b>1</b> i.e. it will mine one block and the deposit is <i>confirmed</i> in the bitcoin network.
+</p>
+
+<p>
+At somepoint you likely would reset everything (i.e. nuke the setup) and start all over again. There is a script <i>./bin/nuke.[bat|sh]</i> that will reset the TE environment.
+Before you run the script you should terminate all TE application i.e the TradingEngine, the bitcoin-qt and the ETH client daemon.
+</br>
+</p>
+
+<p>The applican <i>TeGuiTestClient</i> that can be started via the script <i>./bin/guiclient.[bat|sh]</i> provides functionality for request
+deposit / redraw address entries. Via the GUI it is also possible to redraw coins and monitor holdings.
+</p>
+
+
+
+<p><b>Ethereum</b></p>
+
+<p>The general approach for accessing a Ethereum networks is via a <i>Ethereum client</i>. The TE Ethereum component <i>(EthereumGwy.java)</i> is utilizing the
+<a href="https://geth.ethereum.org/">Go Ethereum</a> platform. The software contain two essential components for proving and controlling a private test network.
+    <ul>
+    <li>The <b><i>Geth</i></b> component which basically is the <i>Ethereum Client</i>. The <i>client</i> could operate in two modes; either it runs and provedes an isolated test network or it act as
+    a client and connects to a public Ethereum test network like <i>Rickeby,Ropsten, etc.</i></li></br>
+    <li>The Geth platform also contain a Javascript interface allowing Geth (javascript) commands to be executed. Some of these java commands are also available via the <a href="https://geth.ethereum.org/docs/interface/command-line-options">Geth CLI.</a> </li>
+</ul>
+</p>
+<p>
+The script <i>./cryptogateway/etherreum/daemon.[bat|sh]</i> will define and run a instanse of a <i>GETH client</i> that will act Ethereum client and at the same time provide a private test network.
+In addition the <i>GETH client</i> will:
+<ul>
+    <li>create a <i>wallet</i> or creditial address loaded with some coins. This will allow you to deposit ETH from this created wallet to the TE system.</li>
+    <li>in the background run a mining process eliminating a specific need for mining Ethereum transaction.</li>
+</ul>
+<p>
+
+<p>
+    After the <i>GETH client</i> has been started you should add a <i>deposit entry</i> allowing ETH to be deposit to an
+    account in the TE system.</br></br>
+
+The applican <i>TeGuiTestClient</i>  will provide a interface allowing you to performe the most
+    essential functions for testing the Etherrum functionality. The application  can be started via the script <i>./bin/guiclient.[bat|sh]</i> provides functionality for request
+    deposit / redraw address entries. Via the GUI it is also possible to redraw coins and monitor holdings.
+
+</p>
+
+
+<p>
+    To execute commands you shouldattach to the GETH javascript environment. This is done with the command</br>
+    $ geth attach http://127.0.0.1:8545/</br></br>
+
+    After attached you should load the convient methods defined in the javascript file. This is done with the javascript command</br>
+    <i>loadScript("te.js")</i></br></br>
+</p>
+<p>
+To find out the address of the <i>wallet</i> credential create in the network you should now be able to execute the javascript method; </br>
+<i>wallet(&lt;wallet-number&gt;);</i></br></br>
+The script daemon will setup two wallets and the parameter <i>wallet-number</i> (1|2) will tell which one of the two wallets details will be shown.
+</p>
+
+<p>Now knowing the address from where ETH will be sent you can add a Ethereum destination for a user by issue a TE API rest call <i>addETHDepositEntry</i></br>
+The response will give you the address to the TE <i>omni</i> Ethereum wallet to which the deposit should be done.</br>
+You can allso se the the TE <i>omni</i> Ethereum wallet address in the TE management application under the Crypto Menu.</p>
+
+<p>To deposit ETH from the <i>wallet</i> in the ETH client you should execute the method <i>transfer( destination amount);</i>
+in the GETH javascript environment. The destination is the address of the TE <i>omni</i> Ethereum wallet. The <i>amount</i> is the ETH being transfered.
+Now mining is requeried for Ethereum since that is taking place in the background.</p>
+
+<p>Redraw of ether is following the same pattern. You first have to setup a destnation address by issue a TE Rest request <i>addRedrawEntry</i></br></br>
+    <b>Note!</b> these entries are created with the attribute <i>confirmed</i> false and need to be changed to true before any redraw transaction is accepted.
+    Normally a mail should be sent out to the client as a result of the client adding a redraw entry (currently implementation missing). You can edit the entry
+    in the Mongo database to set <i>confirmed</i> true. <i>(I use <a href="https://www.mongodb.com/try/download/compass">Mongo Compas</a> to browse and edit in the Mongo DB)</i>
+</p>
+
+<p>
+    At somepoint you likely would reset everything (i.e. nuke the setup) and start all over again. There is a script <i>./bin/nuke.[bat|sh]</i> that will reset the TE environment.
+    Before you run the script you should terminate all TE application i.e the TradingEngine, the bitcoin-qt and the ETH client daemon.
+    </br>
+</p>
+
+
+
+
+
+
+
+
+</body>
+</html>

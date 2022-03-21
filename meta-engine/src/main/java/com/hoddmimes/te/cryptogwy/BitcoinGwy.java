@@ -172,12 +172,11 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 
 	private DbCryptoPaymentEntry findCryptoPaymentEntry( Transaction tx ) {
 		String tDestAddress = getToAddressFromTx( tx );
-		return  (DbCryptoPaymentEntry) TEDB.dbEntryFound(mDb.findPaymentEntryByAddressAndCoinType(tDestAddress , Crypto.CoinType.BTC));
+		return  (DbCryptoPaymentEntry) TEDB.dbEntryFound(mDb.findPaymentEntryByAddressAndCoinTypeAndPaymentType(tDestAddress , Crypto.CoinType.BTC, Crypto.PaymentType.DEPOSIT));
 	}
 
 	@Override
 	public void onCoinsReceived(Wallet pWallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-		tx.setMemo( Crypto.PaymentType.DEPOSIT.name());
 		DbCryptoPaymentEntry tCryptoPaymentEntry = findCryptoPaymentEntry( tx );
 		EventBitcoinOnCoinsReceived tEvent = eventOnCoinsReceived( pWallet, tx, prevBalance, newBalance );
 
@@ -214,7 +213,6 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 	public void onCoinsSent(Wallet pWallet, Transaction tx, Coin prevBalance, Coin newBalance) {
 		EventBitcoinOnCoinsSent tEvent = eventOnCoinsSent( pWallet, tx, prevBalance, newBalance);
 		mLog.info( prettyJson( tEvent.toJson() ));
-		bitcoinOnCoinsSentToDB( tEvent );
 		saveWallet();
 	}
 
@@ -457,30 +455,7 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 				"\n   tx: " + t.toString());
 	}
 
-	private void bitcoinOnCoinsSentToDB(EventBitcoinOnCoinsSent pEvent ) {
-		List<DbCryptoPaymentEntry> tCryptoPaymentEntries = mDb.findPaymentEntryByAddressAndCoinType( pEvent.getEventData().get().getToAddress().get(), Crypto.CoinType.BTC);
-		String  tAccountId = (tCryptoPaymentEntries.size() == 1) ? tCryptoPaymentEntries.get(0).getAccountId().get() : null;
 
-
-		DbCryptoPayment tPayment = new DbCryptoPayment();
-		tPayment.setCoinType( Crypto.CoinType.BTC.name());
-		tPayment.setTxid( pEvent.getTxid().get());
-		tPayment.setPaymentType( Crypto.PaymentType.REDRAW.name());
-		tPayment.setAddress( pEvent.getEventData().get().getToAddress().get());
-		tPayment.setTime( SDF.format( System.currentTimeMillis()));
-		tPayment.setState(Crypto.StateType.CONFIRM.name());
-
-
-		if (tAccountId == null) {
-			// This should  never happen. Someone redraw bitcoins without having a payment entry defined
-			tPayment.setAccountId("null");
-		} else {
-			tPayment.setAccountId(tAccountId);
-		}
-
-		// Insert entry into database
-		mDb.insertDbCryptoPayment(tPayment);
-	}
 
 	private void setHoldingsAfterBitcoinChainSync() {
 		mDepositSettingInitialized = true;
@@ -489,7 +464,10 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 
 	private void bitcoinOnCoinsReceivedToDB(EventBitcoinOnCoinsReceived pEvent ) {
 
-			DbCryptoPaymentEntry tCryptoPaymentEntry = (DbCryptoPaymentEntry) TEDB.dbEntryFound(mDb.findPaymentEntryByAddressAndCoinType(pEvent.getEventData().get().getToAddress().get() , Crypto.CoinType.BTC));
+			DbCryptoPaymentEntry tCryptoPaymentEntry = (DbCryptoPaymentEntry) TEDB.dbEntryFound(
+					mDb.findPaymentEntryByAddressAndCoinTypeAndPaymentType(pEvent.getEventData().get().getToAddress().get() ,
+																			Crypto.CoinType.BTC, Crypto.PaymentType.DEPOSIT));
+
 			String  tAccountId = (tCryptoPaymentEntry != null) ? tCryptoPaymentEntry.getAccountId().get() : null;
 
 
@@ -498,7 +476,8 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 				mLog.error("Failed to locate bitcoin payment entry (address: " + pEvent.getEventData().get().getToAddress().get() + ") coin: " + Crypto.CoinType.BTC.name());
 			}
 			// Insert entry into database
-			dbCreatePaymentEntry( tAccountId,
+			dbCreatePaymentEntry( Crypto.CoinType.BTC,
+									tAccountId,
 									pEvent.getTxid().get(),
 					                pEvent.getEventData().get().getToAddress().get(),
 								    pEvent.getEventData().get().getAmount().get(),
@@ -506,51 +485,33 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 									Crypto.PaymentType.DEPOSIT );
 	}
 
-	private void bitcoinOnReceivedConfirmation(EventBitcoinOnCoinsConfirm pEvent ) {
+	private void bitcoinOnReceivedConfirmation( EventBitcoinOnCoinsConfirm tConfirmationEvent) {
+		SymbolX tSymbol = TeAppCntx.getInstance().getInstrumentContainer().getCryptoInstrument( Crypto.CoinType.BTC.name());
+		long tTeInternalAmount = tSymbol.scaleFromOutsideNotation( tConfirmationEvent.getAmount().get() );
+		TeAppCntx.getMatchingEngine().updateCryptoPosition( tConfirmationEvent.getAccountId().get(),  tSymbol.getSid().get(), tTeInternalAmount, tConfirmationEvent.getTxid().get());
 
-		DbCryptoPaymentEntry tCryptoPaymentEntry = (DbCryptoPaymentEntry) TEDB.dbEntryFound(mDb.findPaymentEntryByAddressAndCoinType( pEvent.getAddress().get() , Crypto.CoinType.BTC));
-
-		String  tAccountId = (tCryptoPaymentEntry != null) ? tCryptoPaymentEntry.getAccountId().get() : null;
-
-		if (tAccountId == null) {
-			// This should  never happen. Someone sent us bitcoins without having a payment entry defined
-			mLog.error("(bitcoinOnReceivedConfirmation) Failed to locate payment-entry amount: " + pEvent.getAmountFriendly().get() +
-					" address: " + pEvent.getAddress().get() + " (txid: " + pEvent.getTxid().get() + " )");
-		}
-
-		// Update Account Position
-		if ((tAccountId != null) && (tCryptoPaymentEntry.getPaymentType().get().contentEquals( Crypto.PaymentType.DEPOSIT.name()))) {
-			SymbolX tSymbol = TeAppCntx.getInstance().getInstrumentContainer().getCryptoInstrument( Crypto.CoinType.BTC.name());
-			long tTeInternalAmount = tSymbol.scaleFromOutsideNotation( pEvent.getAmount().get() );
-			TeAppCntx.getMatchingEngine().updateCryptoPosition( tAccountId,  tSymbol.getSid().get(), tTeInternalAmount, pEvent.getTxid().get());
-		}
-
-		// Log payment entry
-		dbCreatePaymentEntry( tAccountId,
-				              pEvent.getTxid().get(),
-							  pEvent.getAddress().get(),
-				              pEvent.getAmountFriendly().get(),
-				              Crypto.StateType.CONFIRM,
-							  Crypto.PaymentType.valueOf(pEvent.getPaymentType().get()) );
+		// Log deposit payment entry
+		dbCreatePaymentEntry( Crypto.CoinType.BTC,
+				tConfirmationEvent.getAccountId().get(),
+				tConfirmationEvent.getTxid().get(),
+				tConfirmationEvent.getAddress().get().trim(),
+				tConfirmationEvent.getAmountFriendly().get(),
+				Crypto.StateType.CONFIRM,
+				Crypto.PaymentType.DEPOSIT );
 	}
 
 
-
-	private DbCryptoPayment dbCreatePaymentEntry(String pAccountId, String pTxid, String pAddress, String pFriendlyAmount, Crypto.StateType pStateType, Crypto.PaymentType pPaymentType) {
-		DbCryptoPayment tPayment = new DbCryptoPayment();
-		if (pAccountId != null) {
-			tPayment.setAccountId(pAccountId);
-		}
-		tPayment.setCoinType(Crypto.CoinType.BTC.name());
-		tPayment.setPaymentType( pPaymentType.name() );
-		tPayment.setTxid( pTxid );
-		tPayment.setAddress( pAddress );
-		tPayment.setTime( SDF.format( System.currentTimeMillis()));
-		tPayment.setState( pStateType.name() );
-		tPayment.setAmount( pFriendlyAmount );
-		mDb.updateDbCryptoPayment( tPayment, true);
-		return tPayment;
+	private void bitcoinOnSentConfirmation( EventBitcoinOnCoinsConfirm tConfirmationEvent ) {
+		// Log deposit payment entry
+		dbCreatePaymentEntry( Crypto.CoinType.BTC,
+				tConfirmationEvent.getAccountId().get(),
+				tConfirmationEvent.getTxid().get(),
+				tConfirmationEvent.getAddress().get().trim(),
+				tConfirmationEvent.getAmountFriendly().get(),
+				Crypto.StateType.CONFIRM,
+				Crypto.PaymentType.REDRAW );
 	}
+
 
 	public String sendCoins(CryptoRedrawRequest pCryptoRedrawRequest) throws TeException {
 
@@ -558,7 +519,7 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 		SendRequest xtaTx;
 		Transaction tTransaction = null;
 
-		Address tDstAddr = Address.fromString(mNetParams, pCryptoRedrawRequest.getAddress().get());
+		Address tDstAddr = Address.fromString(mNetParams, pCryptoRedrawRequest.getAddress().get().trim());
 
 		xtaTx = SendRequest.to(tDstAddr, tCoins);
 		xtaTx.recipientsPayFees = true;
@@ -576,7 +537,8 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 		}
 		saveWallet();
 
-		DbCryptoPayment tPayment = dbCreatePaymentEntry( pCryptoRedrawRequest.getAccountId().orElse(null),
+		DbCryptoPayment tPayment = dbCreatePaymentEntry( Crypto.CoinType.BTC,
+										   pCryptoRedrawRequest.getAccountId().get(),
 				                           tTransaction.getTxId().toString(),
 										   tDstAddr.toString(),
 										   tCoins.toFriendlyString(),
@@ -586,11 +548,9 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 		mLog.info( "[sendCoins] \n" + prettyJson( tPayment.toJson() ));
 
 		// Wait for  the TX to appear in at least one block i.e. confirmed
-		tTransaction.setMemo(Crypto.PaymentType.REDRAW.name());
 		OnCoinConfirmationListner tOnCoinReceivedConfirmationListner = new OnCoinConfirmationListner(mWallet, tTransaction );
 		ListenableFuture<TransactionConfidence> tFuture = tTransaction.getConfidence().getDepthFuture(1);
 		tFuture.addListener(tOnCoinReceivedConfirmationListner, tOnCoinReceivedConfirmationListner);
-
 		return tTransaction.getTxId().toString();
 	}
 
@@ -616,15 +576,15 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 		return tResponse;
 	}
 
-	public SetRedrawEntryResponse addRedrawEntry( SetRedrawEntryRequest pEntryRequest)  {
+	public SetRedrawEntryResponse addRedrawEntry( SetRedrawEntryRequest pEntryRequest, boolean pConfirmEntry)  {
 
 		DbCryptoPaymentEntry cpe = new DbCryptoPaymentEntry();
 		cpe.setAccountId( pEntryRequest.getAccountId().get() );
 		cpe.setPaymentType(Crypto.PaymentType.REDRAW.name());
 		cpe.setCoinType( pEntryRequest.getCoin().get() );
-		cpe.setAddress( pEntryRequest.getAddress().get() );
+		cpe.setAddress( pEntryRequest.getAddress().get().trim() );
 		cpe.setConfirmationId( getConfirmationId() );
-		cpe.setConfirmed( false );
+		cpe.setConfirmed( pConfirmEntry );
 		mDb.insertDbCryptoPaymentEntry( cpe );
 
 		long tNow = System.currentTimeMillis();
@@ -639,7 +599,7 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 
 		//Todo: send mail to user
 		SetRedrawEntryResponse tResponse = new SetRedrawEntryResponse();
-		tResponse.setAddress( pEntryRequest.getAddress().get() );
+		tResponse.setAddress( pEntryRequest.getAddress().get().trim() );
 		tResponse.setStatusText( "confirmation link will be mailed to your mail account");
 		tResponse.setCoin( pEntryRequest.getCoin().get() );
 		return tResponse;
@@ -686,14 +646,15 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 		return tEvent;
 	}
 
-	EventBitcoinOnCoinsConfirm eventOnCoinsConfirmed( Wallet pWallet, Transaction pTx ) {
+	EventBitcoinOnCoinsConfirm eventOnCoinsConfirmed( Wallet pWallet, Transaction pTx, DbCryptoPayment pPreviousDbCryptoPayment ) {
 		EventBitcoinOnCoinsConfirm tEvent = new EventBitcoinOnCoinsConfirm();
+		tEvent.setAccountId( pPreviousDbCryptoPayment.getAccountId().get());
 		tEvent.setCoin( Crypto.CoinType.BTC.name());
 		tEvent.setTxid( pTx.getTxId().toString());
 		tEvent.setAddress( getToAddressFromTx(pTx));
 		tEvent.setAmount( pTx.getValueSentToMe( pWallet ).getValue());
 		tEvent.setAmountFriendly(  pTx.getValueSentToMe( pWallet ).toFriendlyString());
-		tEvent.setPaymentType(pTx.getMemo());
+		tEvent.setPaymentType( pPreviousDbCryptoPayment.getPaymentType().get() );
 		return tEvent;
 	}
 
@@ -740,21 +701,70 @@ public class BitcoinGwy extends CoinGateway implements  PeerDataEventListener,
 	 */
 	class OnCoinConfirmationListner implements Executor, Runnable
 	{
-		enum ConfirmationType {Receive,Send};
 		Transaction mTx;
 		Wallet      mWallet;
 
-		public OnCoinConfirmationListner(Wallet pWallet, Transaction pTx )
+		public OnCoinConfirmationListner(Wallet pWallet, Transaction pTx  )
 		{
 			mWallet = pWallet;
 			mTx = pTx;
 		}
+
+		private boolean stateIsPending( List<DbCryptoPayment> pCryptoPayments ) {
+			if (pCryptoPayments == null) {
+				return false;
+			}
+			if ((pCryptoPayments.size() == 1) && (pCryptoPayments.get(0).getState().get().contentEquals(Crypto.StateType.PENDING.name()))) {
+				return true;
+			}
+			for (DbCryptoPayment tPayment : pCryptoPayments) {
+				if (!tPayment.getState().get().contentEquals(Crypto.StateType.PENDING.name()))
+					return false;
+			}
+			return true;
+		}
+
+		private boolean stateIsConfirmed( List<DbCryptoPayment> pCryptoPayments ) {
+			if (pCryptoPayments == null) {
+				return false;
+			}
+			for (DbCryptoPayment tPayment : pCryptoPayments) {
+				if (tPayment.getState().get().contentEquals(Crypto.StateType.CONFIRM.name()))
+					return true;
+			}
+			return false;
+		}
+
 		@Override
 		public void run() {
+			// If we get here it's the result of of a pending transaction being confirmed
+			// There should be a DBCrypto payment entry in the DB with status "PENDING"
+			// Based on that entry we will know whetever this is a confirmation for a DEPOSIT or REDRAW
+			List<DbCryptoPayment> tDbCryptoPayments = mDb.findPaymentsByTxid( mTx.getTxId().toString());
+
+			if ((tDbCryptoPayments == null) || (tDbCryptoPayments.size() == 0)) {
+				// Wow no entry found
+				mLog.warn("[OnCoinConfirmationListner] no previous payment entry found for tx:" + mTx.toString());
+				return;
+			}
+
+			if (stateIsConfirmed(tDbCryptoPayments)) {
+				// Wow transaction already confirmed how did we end up here multiple times ?
+				mLog.warn("[OnCoinConfirmationListner] transaction already being confirmed tx:" + mTx.toString());
+				return;
+			}
+
+			DbCryptoPayment tPreviousDbCryptoPayment = tDbCryptoPayments.get(0);
+			Crypto.PaymentType tPaymentType = Crypto.PaymentType.valueOf(tDbCryptoPayments.get(0).getPaymentType().get());
+
 			try {
-				EventBitcoinOnCoinsConfirm tEvent = eventOnCoinsConfirmed(mWallet, mTx);
+				EventBitcoinOnCoinsConfirm tEvent = eventOnCoinsConfirmed(mWallet, mTx, tPreviousDbCryptoPayment );
 				mLog.info(prettyJson(tEvent.toJson()));
-				bitcoinOnReceivedConfirmation(tEvent);
+				if (tPaymentType == Crypto.PaymentType.DEPOSIT) {
+					bitcoinOnReceivedConfirmation( tEvent );
+				} else {
+					bitcoinOnSentConfirmation(tEvent);
+				}
 				saveWallet();
 			}
 			catch( Throwable t) {

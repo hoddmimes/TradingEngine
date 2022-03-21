@@ -6,7 +6,7 @@
     "contact": {
       "email": "par.bertilsson@yahoo.com"
     },
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "externalDocs": {
     "description": "TE WEB Socket Interface (description of the unsolicited broadcast flow published by the TE)",
@@ -14,7 +14,7 @@
   },
   "servers": [
     {
-      "url": "https://www.hoddmimes.com:8383/te"
+      "url": "https://www.hoddmimes.com:8383/te-trading"
     }
   ],
   "paths": {
@@ -388,6 +388,91 @@
         }
       }
     },
+    "/queryPosition": {
+      "get": {
+        "tags": [
+          "te"
+        ],
+        "summary": "query positions / holdings ",
+        "description": "query the actual position / holding for tha account under which the session is logged in.",
+        "operationId": "QueryPosition",
+        "responses": {
+          "200": {
+            "description": "account positions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryPositionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/queryTradePrice/{sid}": {
+      "get": {
+        "tags": [
+          "te"
+        ],
+        "summary": "query trade price",
+        "description": "query trade price for a specific symbols in a market segment.",
+        "operationId": "QueryTradePricese",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "description": "ID of the symbol for wich trade prices should be returned",
+            "required": true,
+            "schema": {
+              "type": "String"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "trade prices for the symbols. Only one element is returned i.e. the requested trade price for the specific sid specified. ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryTradePricesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Invalid input, bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/queryTradePrices/{marketId}": {
       "get": {
         "tags": [
@@ -710,8 +795,288 @@
           }
         }
       }
+    },
+    "/addEthDepositEntry/{coin}/{fromAddress}": {
+      "get": {
+        "tags": [
+          "te"
+        ],
+        "summary": "add a crypto coin (ETH) deposit address.",
+        "description": "add an Ethereum  crypto coin address from which a client will be able to deposit ETH coins from and tradeon the TE marketplace.",
+        "operationId": "AddDepositEntry",
+        "parameters": [
+          {
+            "name": "coin",
+            "in": "path",
+            "description": "Id of the coin type i.e ETH. Currently only applicable for Ether",
+            "required": true,
+            "schema": {
+              "type": "String",
+              "enum": ["ETH"]
+            }
+          },
+          {
+            "name": "fromAddress",
+            "in": "path",
+            "description": "The from address as HEX string i.e the ETH source address from where coins will be sent.",
+            "required": true,
+            "schema": {
+              "type": "String"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "a confirmation that the address has been registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositEntryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Invalid input, bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/addBTCDepositEntry/{coin}/": {
+      "get": {
+        "tags": [
+          "te"
+        ],
+        "summary": "Get a crypto coin (Bitcoin) deposit address.",
+        "description": "Get an Bitcoin crypto coin address from from the TE which a client will be able to deposit ETH coins to and trade on in  the TE marketplace.",
+        "operationId": "AddDepositEntry",
+        "parameters": [
+          {
+            "name": "coin",
+            "in": "path",
+            "description": "Id of the coin type i.e BTC. Currently only applicable for Bitcoin",
+            "required": true,
+            "schema": {
+              "type": "String",
+              "enum": ["BTC"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "a confirmation and the address to which deposit can be done.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositEntryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Invalid input, bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/queryCryptoAddressEntries": {
+      "get": {
+        "tags": [
+          "te"
+        ],
+        "summary": "Get deposit / redraw address entries defined.",
+        "description": "Get Bitcoin / Ethereum deposit / redraw addressess that the the client can deposit / drawn coins to/from.",
+        "operationId": "QueryDepositEntry",
+        "responses": {
+          "200": {
+            "description": "a list with the deposit / redraw addresses being defined.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryDepositEntryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Invalid input, bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+
+
+    "/addRedrawEntry/{coin}/{toAddress}": {
+      "get": {
+        "tags": [
+          "te"
+        ],
+        "summary": "Define / add an coin address to which the client can redraw coins to",
+        "description": "Define / add an coin address to which the client can redraw coins to. On a successfull compleation the TE will send a mail to the mail address configured for the user. The mail will contain a confirmation link. The user must i addition to define redraw address also confirm the defined address before a redraw request can be accepted.",
+        "operationId": "AddRedrawEntry",
+        "parameters": [
+          {
+            "name": "coin",
+            "in": "path",
+            "description": "Id of the coin type.",
+            "required": true,
+            "schema": {
+              "type": "String",
+              "enum": ["BTC","ETH"]
+            }
+          },
+          {
+            "name": "toAddress",
+            "in": "path",
+            "description": "The destination address, as HEX string to which coins will be sent.",
+            "required": true,
+            "schema": {
+              "type": "String"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "a confirmation and the address to which deposit can be done.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedrawEntryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Invalid input, bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/redrawCrypto": {
+      "post": {
+        "tags": [
+          "te"
+        ],
+        "summary": "Request to redraw coins from the TE marketplace",
+        "operationId": "RedrawCrypto",
+        "x-codegen-request-body-name": "body",
+        "requestBody": {
+          "description": "Redraw request being sent o the TE. Inorder for the TE to accept the redraw request the client must first have added a redraw address and furthermore confirmed the address.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedrawCryptoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "request successfully processed and coin transfer transaction sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedrawCryptoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input, bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
+
   "components": {
     "schemas": {
       "StatusMessage": {
@@ -989,6 +1354,31 @@
           ]
         }
       },
+      "QueryPositionsResponse" : {
+        "type": "object",
+        "properties": {
+          "cach": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sid": {
+                  "type": "string"
+                },
+                "position": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
+          }
+        }
+    },
+
       "QuerySymbolsResponse": {
         "type": "array",
         "items": {
@@ -1037,6 +1427,33 @@
           ]
         }
       },
+      "QueryDepositEntryResponse": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "coin": {
+              "type": "string", "enum": [
+                "BTC",
+                "ETH"
+              ]
+            },
+            "address": {
+              "type": "String",
+              "description": "BTC or ETH address to that coins can be deposit / redrawn to/from"
+            },
+            "paymentType": {
+              "type": "string",
+              "enum": ["BTC", "ETH"]
+            },
+            "confirmed": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+
+
       "QueryTradePricesResponse": {
         "type": "array",
         "items": {
@@ -1261,7 +1678,71 @@
             }
           }
         }
+      },
+      "DepositEntryResponse": {
+        "type": "object",
+        "properties": {
+          "coin": {
+            "type": "string",
+            "enum": ["ETH","BTC"]
+          },
+          "address": {
+            "type": "string"
+          },
+          "confirmationId": {
+            "type": "string"
+          }
+        }
+      },
+      "RedrawEntryResponse": {
+        "type": "object",
+        "properties": {
+          "coin": {
+            "type": "string",
+            "enum": ["ETH","BTC"]
+          },
+          "address": {
+            "type": "string"
+          },
+          "statusText": {
+            "type": "string"
+          }
+        }
+      },
+      "RedrawCryptoRequest": {
+        "type": "object",
+        "properties": {
+          "coin": {
+            "type": "string",
+            "enum": ["ETH","BTC"]
+          },
+          "address": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64",
+            "description" : "the amount / quantity of coins to be redrwan. Using the coin scalinging factor used for the coin type usedin the TE."
+          }
+        }
+      },
+      "RedrawCryptoResponse": {
+        "type": "object",
+        "properties": {
+          "remainingCoins": {
+            "type": "integer",
+            "format": " int64",
+            "description" : "the amount / quantity of coins to remaining after the redraw. Using the coin scalinging factor used for the coin type usedin the TE."
+          },
+          "txid": {
+            "type": "string",
+            "description" : "the (Bitcoin/Etherreum) transaction identity of the send redraw transaction in the specific crypto network."
+          }
+        }
       }
+
+
+
     }
   }
 }

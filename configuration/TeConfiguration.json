@@ -1,5 +1,6 @@
 {
   "TeConfiguration": {
+    "loadAccounts": "configuration/Accounts.json",
     "dbConfiguration" : {
       "dbHost" : "localhost",
       "dbPort" : "27017",
@@ -69,8 +70,9 @@
     },
     "cryptoGateway" : {
       "enable" : true,
+      "confirmRedrawEntries" : true,
       "ethereum" : {
-        "enable" : false,
+        "enable" : true,
         "verbose" : false,
         "gasPrice" : 3,
         "gasLimit" : 21000,

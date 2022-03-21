@@ -321,6 +321,8 @@ public class SessionController extends TeCoreService implements ConnectorInterfa
 				tResponseMessage = tMatchingEngine.executeQueryPosition((QueryPositionRequest) pRqstMsg, tRequestContext);
 			}  else if (pRqstMsg instanceof CryptoRedrawRequest) {
 				tResponseMessage = tMatchingEngine.redrawCryptoRequest((CryptoRedrawRequest) pRqstMsg, tRequestContext);
+			} else if (pRqstMsg instanceof QueryAddressEntriesRequest) {
+				tResponseMessage = TeAppCntx.getPositionController().queryAddressEntries( (QueryAddressEntriesRequest) pRqstMsg, tRequestContext );
 			}
 			else {
 				mLog.fatal("No execute implementation for request \"" + pRqstMsg.getMessageName() + "\"");

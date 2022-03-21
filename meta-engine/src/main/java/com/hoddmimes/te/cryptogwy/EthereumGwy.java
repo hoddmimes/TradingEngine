@@ -73,9 +73,16 @@ public class EthereumGwy extends CoinGateway
 		cpe.setAccountId( pEntryRequest.getAccountId().get() );
 		cpe.setPaymentType(Crypto.PaymentType.DEPOSIT.name());
 		cpe.setCoinType( pEntryRequest.getCoin().get() );
-		cpe.setAddress( pEntryRequest.getFromAddress().get() );
 		cpe.setConfirmationId( getConfirmationId() );
 		cpe.setConfirmed( true );
+
+		String tAddr = (pEntryRequest.getFromAddress().get().startsWith("0x"))
+							? pEntryRequest.getFromAddress().get().trim()
+							: ("0x" + pEntryRequest.getFromAddress().get().trim());
+
+		cpe.setAddress(  tAddr );
+
+
 
 		mDb.insertDbCryptoPaymentEntry( cpe );
 
@@ -87,7 +94,7 @@ public class EthereumGwy extends CoinGateway
 	}
 
 
-	public SetRedrawEntryResponse addRedrawEntry( SetRedrawEntryRequest pEntryRequest)  {
+	public SetRedrawEntryResponse addRedrawEntry( SetRedrawEntryRequest pEntryRequest, boolean pConfirmEntry )  {
 
 		DbCryptoPaymentEntry cpe = new DbCryptoPaymentEntry();
 		cpe.setAccountId( pEntryRequest.getAccountId().get() );
@@ -95,7 +102,14 @@ public class EthereumGwy extends CoinGateway
 		cpe.setCoinType( pEntryRequest.getCoin().get() );
 		cpe.setAddress( pEntryRequest.getAddress().get() );
 		cpe.setConfirmationId( getConfirmationId() );
-		cpe.setConfirmed( false );
+		cpe.setConfirmed( pConfirmEntry );
+
+		String tAddr = (pEntryRequest.getAddress().get().startsWith("0x"))
+				? pEntryRequest.getAddress().get().trim()
+				: ("0x" + pEntryRequest.getAddress().get().trim());
+
+		cpe.setAddress(  tAddr );
+
 		mDb.insertDbCryptoPaymentEntry( cpe );
 
 		long tNow = System.currentTimeMillis();
@@ -202,10 +216,9 @@ public class EthereumGwy extends CoinGateway
 			DbCryptoPayment tPayment = mDb.findPaymentEntryByTxid( tx.getHash().toString());
 			tPayment.setTime(SDF.format(System.currentTimeMillis()));
 			tPayment.setState(Crypto.StateType.CONFIRM.name());
-			mDb.updateDbCryptoPayment(tPayment, false);
+			mDb.updateDbCryptoPayment(tPayment, true);
 
 			// The position and deposit is updated when the payment tx is issued
-
 			long tGasUsed = tEthSymbol.scaleFromOutsideNotation( tTxReceipt.getGasUsed().longValue() * GAZ_WEI_MULTIPLIER) ; // to get in wei
 			long tWeiGasedUsed = (tTxReceipt.getGasUsed().longValue() * GAZ_WEI_MULTIPLIER);
 			long tCorrectAmountWei = getEstimatedGasCost() - tWeiGasedUsed;
@@ -307,24 +320,20 @@ public class EthereumGwy extends CoinGateway
 		// If everything is in order there should be a deposit payment entry defined. If not someone sent us coins
 		// blindly, should not really happen but coins are received and logged
 
-		DbCryptoPaymentEntry tPaymentEntry = (DbCryptoPaymentEntry) TEDB.dbEntryFound(mDb.findPaymentEntryByAddressdPaymentTypeCoinType(tx.getFrom(), Crypto.PaymentType.DEPOSIT, Crypto.CoinType.ETH));
+		DbCryptoPaymentEntry tPaymentEntry = (DbCryptoPaymentEntry) TEDB.dbEntryFound(mDb.findPaymentEntryByAddressdPaymentTypeCoinType(tx.getFrom().toString(), Crypto.PaymentType.DEPOSIT, Crypto.CoinType.ETH));
 		String tAccountId = (tPaymentEntry == null) ? null : tPaymentEntry.getAccountId().get();
 
-		mLog.info("[walletPaymentIn] account: " + tAccountId + " address: " + tx.toString() +
-				" amout: " + weiToFriendlyString(tx.getValue()) + " txid: " + tx.getHash());
+		mLog.info("[walletPaymentIn] account: " + tAccountId + " from address: " + tx.getFrom().toString() +
+				" amout: " + weiToFriendlyString(tx.getValue()) + " txid: " + tx.getHash().toString());
 
 		// Always log the crypto payment
 		long tNow = System.currentTimeMillis();
-		DbCryptoPayment tPayment = new DbCryptoPayment();
-		tPayment.setPaymentType(Crypto.PaymentType.DEPOSIT.name());
-		tPayment.setTxid(tx.getHash());
-		tPayment.setTime(SDF.format(tNow));
-		tPayment.setState(Crypto.StateType.CONFIRM.name());
-		tPayment.setAddress(tx.getFrom()); // for ETH we identify the account / payment entry where the payment comes from
-		tPayment.setCoinType(Crypto.CoinType.ETH.name());
-		tPayment.setAmount(weiToFriendlyString(tx.getValue()));
-		tPayment.setAccountId(((tAccountId == null) ? "<null>" : tAccountId));
-		mDb.insertDbCryptoPayment(tPayment);
+
+
+
+
+		DbCryptoPayment tPayment = dbCreatePaymentEntry(tAccountId, tx.getHash(), tx.getFrom(), weiToFriendlyString(tx.getValue()),
+				Crypto.StateType.CONFIRM, Crypto.PaymentType.DEPOSIT);
 
 		// Update DbCryptoDeposit and Position Holdings
 		SymbolX tSymbol = TeAppCntx.getInstance().getInstrumentContainer().getCryptoInstrument(Crypto.CoinType.ETH.name());
@@ -395,6 +404,23 @@ public class EthereumGwy extends CoinGateway
 		}
 		return null;
 	}
+
+	private DbCryptoPayment dbCreatePaymentEntry(String pAccountId, String pTxid, String pAddress, String pFriendlyAmount, Crypto.StateType pStateType, Crypto.PaymentType pPaymentType) {
+		DbCryptoPayment tPayment = new DbCryptoPayment();
+		if (pAccountId != null) {
+			tPayment.setAccountId(pAccountId);
+		}
+		tPayment.setCoinType(Crypto.CoinType.ETH.name());
+		tPayment.setPaymentType( pPaymentType.name() );
+		tPayment.setTxid( pTxid );
+		tPayment.setAddress( pAddress );
+		tPayment.setTime( SDF.format( System.currentTimeMillis()));
+		tPayment.setState( pStateType.name() );
+		tPayment.setAmount( pFriendlyAmount );
+		mDb.updateDbCryptoPayment( tPayment, true);
+		return tPayment;
+	}
+
 
 	String getWalletPassword() {
 		return "testtest"; // todo: fix amore secure mechaism.

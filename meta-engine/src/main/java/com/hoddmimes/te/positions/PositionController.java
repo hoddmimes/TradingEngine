@@ -43,6 +43,7 @@ import com.hoddmimes.te.messages.DbCryptoHolding;
 import com.hoddmimes.te.messages.SID;
 import com.hoddmimes.te.messages.StatusMessageBuilder;
 import com.hoddmimes.te.messages.generated.*;
+import com.hoddmimes.te.sessionctl.RequestContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -173,6 +174,21 @@ public class PositionController extends TeCoreService
 		}
 	}
 
+
+	public synchronized MessageInterface queryAddressEntries( QueryAddressEntriesRequest pRqstMsg, RequestContext tRequestContext ) {
+		List<DbCryptoPaymentEntry> tPaymentEntries = mCryptoDepository.getPaymentEntries(tRequestContext.getAccountId());
+
+		QueryAddressEntriesResponse tResponse = new QueryAddressEntriesResponse().setRef( pRqstMsg.getRef().get());
+		if (tPaymentEntries != null) {
+			for( DbCryptoPaymentEntry cpe : tPaymentEntries) {
+				AddressEntry ae = new AddressEntry().setAddress( cpe.getAddress().get()).setCoin( cpe.getCoinType().get())
+						.setPaymentType( cpe.getPaymentType().get()).setConfirmed(cpe.getConfirmed().get());
+				tResponse.addAddressEntries( ae );
+			}
+		}
+		return tResponse;
+	}
+
 	/**
 	 * Any time the holdings change for an account this is the method to be invoked.
 	 * No other code must change the position for the account, nor the real-time position or
@@ -230,14 +246,21 @@ public class PositionController extends TeCoreService
 		}
 	}
 
-	 public synchronized AccountPosition getAccount( String pAccountId ) {
+	public synchronized AccountPosition getAccountReadOnly( String pAccountId ) {
+		return getAccount( pAccountId, true );
+	}
 
+	private synchronized AccountPosition getAccount( String pAccountId ) {
+		return getAccount( pAccountId, false );
+	}
+
+	 private  AccountPosition getAccount( String pAccountId, boolean pClone  ) {
 		AccountPosition tAccountPosition = mAccountMap.get( pAccountId );
 		if (tAccountPosition == null) {
 			tAccountPosition = new AccountPosition( pAccountId, 0L);
 			mAccountMap.put( pAccountId, tAccountPosition );
 		}
-		return tAccountPosition.clone();
+		return (pClone) ? tAccountPosition.clone() : tAccountPosition;
 	}
 
 	/**

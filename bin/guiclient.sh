@@ -14,4 +14,4 @@ pushd ./
 cd $DIR/..
 pwd
 JAVA_SWITCHES="-Djava.net.preferIPv4Stack=true"
-$_java $JAVA_SWITCHES -cp $DIR/../meta-client/build/libs/teguitestapp-1.1.0.jar  com.hoddmimes.te.client.TeGuiTestApp -account TEST -password test
+$_java $JAVA_SWITCHES -cp $DIR/../meta-client/build/libs/teguitestapp-$TE_VERSION.jar  com.hoddmimes.te.client.TeGuiTestApp -account TEST -password test

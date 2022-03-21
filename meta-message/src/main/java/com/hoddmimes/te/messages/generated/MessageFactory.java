@@ -346,6 +346,20 @@ public class MessageFactory implements MessageFactoryInterface
             	return tMessage;
             }
 			
+            case "QueryAddressEntriesRequest":
+            {
+            	QueryAddressEntriesRequest tMessage = new QueryAddressEntriesRequest();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
+            case "QueryAddressEntriesResponse":
+            {
+            	QueryAddressEntriesResponse tMessage = new QueryAddressEntriesResponse();
+            	tMessage.decode( new JsonDecoder(pJsonMessageString));
+            	return tMessage;
+            }
+			
             case "GetDepositEntryRequest":
             {
             	GetDepositEntryRequest tMessage = new GetDepositEntryRequest();

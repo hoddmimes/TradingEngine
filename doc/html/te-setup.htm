@@ -7,23 +7,28 @@
         <meta http-equiv="Pragma" content="no-cache" />
         <meta http-equiv="Expires" content="0" />
     </head>
-    <title>TO BE DESCRIBED</title>
+    <title>TE Setup</title>
 
 </head>
 <body>
 <p id="contentheader">TE Essential Configuration and Setup</p>
 <p>
-The following describe the TE environment as it is organized in GIT HUB.</br>
+The following section describe the TE environment as it is organized in GIT HUB.</br>
 The project contains files that should allow to run the components out of the box after a successfull build.
 </p>
 <p><b>Development</b></p>
-<p>The TE is a 100% Java implementation. Java version 16 has used. There a couple of places Java <i>records</i> has been used.
+<p>The TE is a 100% Java implementation. Java version 16 has used. There are a couple of places where Java <i>records</i> has been used.
 Besides that the code should be java 1.8 complaint.</br></br>
-IntelliJ (2021.2.3) has been used ISE when developing the code. The building tool used has been Gradle 7.3.3</br></br>
+IntelliJ (2021.2.3) has been used as IDE when developing the code. The building tool used has been Gradle 7.3.3</br></br>
 And obviously, GIT HUB is used as source repository.
 </br></br>
-There are no dependencies to any third party products. However I have included a couple of Auxillary libraries that I frequently uses.
-These are found under the <i>libs</i> directory in the project (they should be public and found under the Hoddmimes GIT HUB).</br></br>
+There are <i>almost</i> no dependencies to any third party products, besides Mongo DB.
+    After trying to avoid a dependency to a datatabses I fell for the preasure and have now starting to use Mongo DB so that is now required to be installed and running.
+    The database is used for persist user/account definitions and for persisting crypto wallets and crypto transactions.</br>
+    I also have included a couple of Auxillary libraries that I frequently uses.
+These are found under the <i>libs</i> directory in the project (they should be public and found under the Hoddmimes GIT HUB).
+    </br></br>
+
 </p>
 <p><b>Building</b></p>
 <p>
@@ -41,25 +46,35 @@ i.e under <i>TradingEngine</i>. You may also build the project from a console wi
 <ul>
     <li><b>Trading Engine</b> the accual market market place.</li>
     <li><b>Management</b> a GUI application for monitoring and controlling the TE</li>
-    <li><b>Trading Client</b> simple application for testing / excersing the TE REST and WEB socket API</li>
-    <li><b>Trade Reports</b> application for creating trade reports..</li>
+    <li><b>Trading Script Client</b> simple console application for testing / excersing the TE REST and WEB socket API</li>
+    <li><b>TE GUI Test Client</b> simple GUI for running add hook test </li>
+    <li><b>Trade Reports</b> application for creating trade reports.</li>
 </ul>
 </p>
 <p><b>TradingEngine</b></p>
 <p>The script file in the directory <i>./bin</i> te.sh (Linux) or te.bat (Windows)  will start the TE using the configuration
 in the file <i>./configuration/TeConfiguration.json</i></br>
 The TE application will load market and instrument definitions from the file <i>./configuration/InstrumentDefinitions.json</i></br>
-Account / User definitions are loaded from the file <i>./configuration/AccountDefinitions.json</i></br></br>
-
+</br></br>
+Initially there will be no accounts/user defined in the system. However the component looks for the entry <i>TEConfiguration/loadAccounts</i> in the configuration file
+    <i>./configuration/TeConfiguration.json</i>. If defined it should point at a Json file containing the user accounts that should be loaded if no accounts are found in the TE DB.</br>
+You may also run the script <i>./bin/create-accounts.[sh.bat]</i> should be run once after a successfull build and reset for defining users/account.
+</br></br>
 Logfiles, default the TE is configured to create a logfile under the <i>./logs</i> directory i.e. <i>./logs/TradingEngine.log</i> (appended).
 The TE used Log4J for logging and the logging configuration is controlled by the LOG4J confuturation file "./configuration/log4j2.xml
     </br></br>
     The TE also log all incomming <i>request</i> and <i>responses</i> to a seprate log file, <i>./logs/TeMessagesLog-&lt;yyyy_MM_dd_HHmmss&gt.json</i>
     </br></br>
-    Furthermore all execution i.e. trades are written to a separate trade logfile, configured to <i>./logs/trades-&lt;yyMMdd-HHmmssSSS&gt;.txl</i>
+    All execution i.e. trades are written to a separate trade logfile, configured to <i>./logs/trades-&lt;yyMMdd-HHmmssSSS&gt;.txl</i>
     Persistence of trade excutions are most importance since they will result in a monetarily settlement. Therefor trade records are written synchronosly
     and on (disk) block boundary with records start / end markers to guarantee a all or nothing execution.<br>
-    With the application <i>TE tradee broser</i> trades can be extracted from <i>txl</i> logfiles and be written to a more readable format i.e. Excel,Json or HTML.
+    With the application <i>TE trade browser</i> trades can be extracted from <i>txl</i> logfiles and be written to a more readable format i.e. Excel,Json or HTML.
+    </br></br>
+    The TE has a <i>crypto</i> module that handles the interaction with a Bitcoin and/or Ethereum network. The interaction is are real-time connections allowing users to deposit / redraw
+    coins to/from the TE in real-time. By default the interaction with the crypto networks are disabled in the TE configuration i.e. <i>./configuration/TeConfiguration.json</i>
+    However it can easily be enabled but then you should provide crypto client gateways for the Bitcoin / Etherreum network you are targeting. There are a few things to consider when testing
+    the crypto functionality. You can read more about the crypto functionality, implementation and testing <a href="crypto.htm">here.</a>
+
 </p>
 <p><b>Management</b></p>
 <p>Is a basic Swing application for administrating and monitoring the TE setup.
@@ -81,10 +96,12 @@ The application provides interfaces for:
 
     <li><i><b>Ordes</b></i>, display active orders in the market, per account. In this view it is possible (on behalf) to delete a specific or or all orders for an account.</li>
 
-    <li><i>Positions</i></li>, display current positions for accounts, cash holdings and asset holdings. When pre-trading is enabled new orders are validated agains the holdings.
-                               Buy orders are validated against the cash holdings and the current exposure in the market. Sell order against the inventory and the expoure in the market.
+    <li><i><b>Positions</b></i>, display current positions for accounts, cash holdings and asset holdings. When pre-trading is enabled new orders are validated agains the holdings.
+                               Buy orders are validated against the cash holdings and the current exposure in the market. Sell order against the inventory and the expoure in the market.</li>
 
     <li><i><b>Trades</b></i>, display trades done, per account. In this view it's also possible to <i>revert</i> a trade. Reverting a trade will create a counter trade to neutralize the position.</li>
+
+    <li><i><b>Crypto</b></i>, display information about crypto deposits / redraw addresses for client, wallets, crypto deposit positions, crypto deposit / redraw transactions. .</li>
 
     <li><i><b>MsgLog</b></i>, the TE will by default log all request and responses to a message log. In this view it is possible to view the message interaction with the clients. The view
         also provides an interface for searching in the message logs. Search crietrias are:
@@ -105,20 +122,24 @@ The application provides interfaces for:
     </ul>
     </li>
 </ul>
-
-
-The script file in <i>./bin/management.sh</i> (Linux) and <i>./bin/management.bat</i> will start the <i>management</i> application.
+<p>
+The script file in <i>./bin/management.sh</i> (Linux) and <i>./bin/management.bat</i> (Win) will start the <i>management</i> application.
 </p>
 </br></br>
-<p><b>Trading Client</b></p>
+<p><b>Trading Test Client</b></p>
 <p>
 Is basic console application connecting to the trading engine. The application reads a <i>command file</i> with
 requests to be sent to the TE. The command file configured to be used is <i>./configuration/ClientTestScript.json</i>.</br>
-The script file in <i>./bin/client.sh</i> (Linux) and <i>./bin/client.bat</i> will start the <i>Test</i> Client application.
+The script file in <i>./bin/client.sh</i> (Linux) and <i>./bin/client.bat</i> (Windows) will start the <i>Test</i> Client application.
 </br></br>
 </p>
+<p><b>Trading GUI Test Client</b></br></br>
+Using the script client is convient when you would like to test a series of transactions repeatly but is a bit cumbersome if you would like to
+run add hook tests. With <i>GUI client</i> you are able to enter orders/delete orders, view ordersbooks, trades etc.</br>
+The script file in <i>./bin/guiclient.sh</i> (Linux) and <i>./bin/guiclient.bat</i> (Windows) will start the <i>Test</i> GUI Client application.
+</p></br>
 
-<p><b>Trade Reports</b></p>
+<p><b>Trade Reports</b>
 <p>Is basic Swing application application for viewing and extracting trades from <i>txl</i> logfiles.
 Besides viewing trades they can be extracted to readable files i.e. HTML, Excel and Json formatted.</br>
 The script file in <i>./bin/trades.sh</i> (Linux) and <i>./bin/trades.bat</i> will start the <i>Trade</i> viewer application.

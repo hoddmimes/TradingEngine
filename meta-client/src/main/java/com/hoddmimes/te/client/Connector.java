@@ -162,7 +162,7 @@ public class Connector implements TeWebsocketClient.WssCallback
 			}
 			Collections.sort( mInstruments, new InstrumentSort());
 			System.out.println("loaded " +mInstruments.size() + " instruments");
-		} catch (IOException e) {
+		} catch (IOException | TeRequestException e) {
 			JOptionPane.showMessageDialog(null,
 					"Load markets failure, reason: " + e.getMessage(),
 					"Load Data Failure",

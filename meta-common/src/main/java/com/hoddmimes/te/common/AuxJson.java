@@ -105,9 +105,6 @@ public class AuxJson
 
 	public static String navigateString( JsonObject pObject, String pPath, String pDefaultValue ) {
 		JsonElement tElement = navigate( pObject, pPath);
-		if ((tElement == null) && (pDefaultValue == null)) {
-			throw new RuntimeException("json path \"" +pPath+"\" not found");
-		}
 		return (tElement == null) ?  pDefaultValue : tElement.getAsString();
 	}
 
