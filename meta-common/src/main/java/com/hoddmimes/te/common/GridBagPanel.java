@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.hoddmimes.te.client;
+package com.hoddmimes.te.common;
 
 import javax.swing.*;
 import java.awt.*;

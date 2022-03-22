@@ -10,6 +10,12 @@ else
     echo "java not found in execution path and JAVA_HOME not set"
     exit
 fi
+
+if  [ -z $TE_VERSION ]; then
+  read -p "TE version (x.y.z) : " TE_VERSION
+fi
+
+
 pushd ./
 cd $DIR/..
 pwd

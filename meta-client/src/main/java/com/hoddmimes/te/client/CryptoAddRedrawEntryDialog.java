@@ -19,6 +19,7 @@ package com.hoddmimes.te.client;
 
 import com.google.gson.JsonObject;
 import com.hoddmimes.te.common.Crypto;
+import com.hoddmimes.te.common.GridBagPanel;
 import com.hoddmimes.te.common.transport.http.TeRequestException;
 
 import javax.swing.*;
@@ -26,8 +27,6 @@ import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.io.IOException;
 
 public class CryptoAddRedrawEntryDialog extends JFrame

@@ -20,14 +20,11 @@ package com.hoddmimes.te.client;
 import com.google.gson.JsonObject;
 import com.hoddmimes.te.common.AuxJson;
 import com.hoddmimes.te.common.Crypto;
+import com.hoddmimes.te.common.GridBagPanel;
 import com.hoddmimes.te.common.transport.http.TeRequestException;
 import com.hoddmimes.te.messages.SID;
 import com.hoddmimes.te.messages.generated.*;
-import org.bitcoinj.core.Coin;
-import org.web3j.utils.Convert;
 
-import java.math.BigDecimal;
-import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import java.awt.*;

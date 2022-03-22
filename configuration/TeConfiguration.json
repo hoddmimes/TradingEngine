@@ -64,7 +64,7 @@
 
     },
     "ipc" : {
-      "localAddress" : "192.168.42.100",
+      "localAddress" : "127.0.0.1",
       "groupPort" : 3939,
       "groupAddress" : "224.20.20.20"
     },

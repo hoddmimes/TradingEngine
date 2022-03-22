@@ -22,6 +22,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.hoddmimes.te.common.Crypto;
+import com.hoddmimes.te.common.GridBagPanel;
 import com.hoddmimes.te.common.interfaces.TeService;
 import com.hoddmimes.te.messages.generated.MgmtGetWalletRequest;
 import com.hoddmimes.te.messages.generated.MgmtGetWalletResponse;
@@ -63,22 +64,17 @@ public class CryptoWalletPanel extends JPanel
 
 		if ((mWalletMsg == null) || (!mWalletMsg.getWalletData().isPresent()) || (mWalletMsg.getWalletData().isEmpty())) {
 			tData = "no wallet data is available";
-		} else {
+		}
+		else {
 			Gson gson = new GsonBuilder().setPrettyPrinting().create();
 			JsonObject jObject = JsonParser.parseString(mWalletMsg.getWalletData().get()).getAsJsonObject();
 			tData = gson.toJson(jObject);
 		}
+
 		mWalletText.setText( tData );
 		mWalletText.revalidate();
 		mWalletText.repaint();
 	}
-
-
-
-
-
-
-
 
 
 	private JPanel createTopPanel() {
@@ -110,25 +106,22 @@ public class CryptoWalletPanel extends JPanel
 
 	private JPanel createWalletPanel() {
 		String tData = null;
-		JPanel tRootPanel = new JPanel(new GridBagLayout());
+		GridBagPanel tRootPanel = new GridBagPanel( GridBagConstraints.CENTER);
 		tRootPanel.setBackground( Management.PANEL_BACKGROUND );
 		tRootPanel.setBorder(new EtchedBorder(2));
-
-		mWalletText = new JTextArea("");
-		mWalletText.setFont(new Font("Arial", 0, 12));
-		mWalletText.setMargin( new Insets(10,10,0,0));
+		tRootPanel.insets( new Insets(5,0,5,0));
+		mWalletText = new JTextArea("kalle");
+		mWalletText.setFont(new Font("Arial", Font.PLAIN, 12));
+		mWalletText.setMargin( new Insets(20,20,20,20));
 		mWalletText.setBackground(Color.white);
 
+		/*
 		JScrollPane tScrollPane = new JScrollPane( mWalletText );
 		tScrollPane.setVerticalScrollBarPolicy( ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		tScrollPane.setPreferredSize(new Dimension(600,442));
+		*/
 
-		GridBagConstraints gc = new GridBagConstraints();
-		gc.insets = new Insets(10, 20, 10, 20);
-		gc.anchor = GridBagConstraints.NORTHWEST;
-		gc.gridx = gc.gridy = 0;
-
-		tRootPanel.add(tScrollPane, gc);
+		tRootPanel.add(mWalletText);
 		return tRootPanel;
 	}
 

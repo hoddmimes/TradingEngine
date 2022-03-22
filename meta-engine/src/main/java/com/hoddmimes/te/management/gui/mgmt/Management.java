@@ -85,6 +85,7 @@ public class Management extends JFrame implements  ServiceInterface
 		m.init();
 		m.pack();
 		m.setVisible( true );
+
 	}
 
 	private void parseArguments( String[] args ) {
@@ -287,6 +288,7 @@ public class Management extends JFrame implements  ServiceInterface
 				if (c instanceof CryptoPanel) {
 					((CryptoPanel) c).loadData();
 				}
+				System.out.println("Switch to: " + c.getClass().getSimpleName());
 				tabPane.setSelectedComponent(c);
 			}
 		});
