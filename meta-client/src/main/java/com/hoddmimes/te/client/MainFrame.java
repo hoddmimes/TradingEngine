@@ -26,7 +26,7 @@ import java.awt.event.ActionListener;
 
 public class MainFrame extends JFrame
 {
-	private JButton mBBOButton, mOrderBookButton, mTradesButton, mOwnOrdersButton, mPriceLevelButton, mPositionButton;
+	private JButton mBBOButton, mOrderBookButton, mTradesButton, mOwnOrdersButton, mPriceLevelButton, mPositionButton, mEnterOrderButton;
 	private JButton mCryptoAddDepositButton, mCryptoAddRedrawnButton, mCryptoRedrawButton, mCryptoShowEntityAddresses;
 	private Connector mConnector;
 
@@ -97,7 +97,14 @@ public class MainFrame extends JFrame
 		gc.gridx++;
 		mPositionButton = AuxClt.makebutton("Positions", 130);
 		p1.add(mPositionButton, gc);
+
+
+		gc.gridx++;
+		mEnterOrderButton = AuxClt.makebutton("Enter Order", 130);
+		p1.add(mEnterOrderButton, gc);
+
 		tPanel.add( p1, BorderLayout.NORTH);
+
 
 		JPanel p2 = new JPanel( new GridBagLayout());
 		gc = new GridBagConstraints();
@@ -164,6 +171,13 @@ public class MainFrame extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				PositionFrame tFrame = new PositionFrame( mConnector);
+			}
+		});
+
+		mEnterOrderButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				EnterOrderDialog tFrame = new EnterOrderDialog( mConnector );
 			}
 		});
 

@@ -69,10 +69,10 @@
       "groupAddress" : "224.20.20.20"
     },
     "cryptoGateway" : {
-      "enable" : true,
+      "enable" : false,
       "confirmRedrawEntries" : true,
       "ethereum" : {
-        "enable" : true,
+        "enable" : false,
         "verbose" : false,
         "gasPrice" : 3,
         "gasLimit" : 21000,
@@ -81,7 +81,7 @@
         "dataDir" : "./cryptogwy/ethereum"
       },
       "bitcoin" : {
-        "enable" : true,
+        "enable" : false,
         "txFeePerKb" : 50000,
         "verbose" : false,
         "network" : "REGTEST",
