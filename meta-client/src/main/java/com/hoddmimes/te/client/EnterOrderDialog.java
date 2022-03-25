@@ -31,6 +31,7 @@ import com.hoddmimes.te.messages.generated.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -75,8 +76,9 @@ public class EnterOrderDialog extends JFrame implements TableCallbackInterface<E
 		tRootPanel.add( AuxClt.makeheaderpanel("Enter Order"));
 
 		tRootPanel.incy().add( createSelectionPanel() );
-		tRootPanel.incy().add( createTablePanel() );
-		tRootPanel.incy().top(18).bottom(25).add( createEnterOrderPanel() );
+		tRootPanel.incy().add( createEnterOrderPanel() );
+		tRootPanel.incy().bottom(20).add( createTablePanel() );
+
 
 		this.setContentPane( tRootPanel );
 	}
@@ -105,14 +107,15 @@ public class EnterOrderDialog extends JFrame implements TableCallbackInterface<E
 	}
 
 	JPanel createEnterOrderPanel() {
+		Color tPanelColor = new Color( 0xb5baad);
 		GridBagPanel tOrderPanel = new GridBagPanel( GridBagConstraints.CENTER );
-		tOrderPanel.setBackground( AuxClt.PANEL_BACKGROUND);
-		tOrderPanel.setBorder( new EtchedBorder( EtchedBorder.RAISED));
+		tOrderPanel.setBackground( tPanelColor);
+		tOrderPanel.setBorder( new LineBorder( Color.DARK_GRAY, 2));
 
 		// Row one
 		GridBagPanel tRowOnePanel = new GridBagPanel( GridBagConstraints.CENTER );
 		tRowOnePanel.insets(new Insets( 10,16, 0, 0));
-		tRowOnePanel.setBackground( AuxClt.PANEL_BACKGROUND);
+		tRowOnePanel.setBackground( tPanelColor);
 
 		tRowOnePanel.add(AuxClt.makelabel("SID"));
 		mSidTxtFld = AuxClt.maketxtfld( "", 85 );
@@ -123,7 +126,7 @@ public class EnterOrderDialog extends JFrame implements TableCallbackInterface<E
 		tOrderPanel.add( tRowOnePanel);
 
 		GridBagPanel tRowTwoPanel = new GridBagPanel( GridBagConstraints.CENTER );
-		tRowTwoPanel.setBackground( AuxClt.PANEL_BACKGROUND);
+		tRowTwoPanel.setBackground( tPanelColor);
 		tRowTwoPanel.insets( new Insets(10,10, 0, 0 ));
 		tRowTwoPanel.add(AuxClt.makelabel("Price"));
 
@@ -138,7 +141,7 @@ public class EnterOrderDialog extends JFrame implements TableCallbackInterface<E
 
 		String tSides[] = {"BUY","SELL"};
 		mSideComboBox = new JComboBox( tSides );
-		mSideComboBox.setFont( AuxClt.DEFAULT_FONT_BOLD);
+		mSideComboBox.setFont( AuxClt.DEFAULT_FONT);
 		mSideComboBox.setPreferredSize( new Dimension(72, 22));
 		mSideComboBox.setBackground( AuxClt.TXTFLD_BACKGROUND );
 		tRowTwoPanel.incx().left(30).add( mSideComboBox );
@@ -152,7 +155,7 @@ public class EnterOrderDialog extends JFrame implements TableCallbackInterface<E
 
 		// Row Three (  CANCEL ADD-ORDER )
 		GridBagPanel tRowThreePanel = new GridBagPanel( GridBagConstraints.CENTER );
-		tRowThreePanel.setBackground( AuxClt.PANEL_BACKGROUND);
+		tRowThreePanel.setBackground( tPanelColor );
 		tRowThreePanel.insets( new Insets(18,0, 10, 0 ));
 
 
