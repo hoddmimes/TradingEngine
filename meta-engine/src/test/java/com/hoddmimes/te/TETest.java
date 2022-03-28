@@ -53,7 +53,7 @@ public class TETest implements TeWebsocketClient.WssCallback {
 
 	@BeforeAll
 	public void TeSetup() {
-		System.out.println("TesSetup");
+		System.out.println("TestSetup");
 
 		System.setProperty("org.springframework.boot.logging.LoggingSystem", "none");
 		System.setProperty("java.util.logging.SimpleFormatter.format", "");

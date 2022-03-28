@@ -19,11 +19,8 @@ package com.hoddmimes.te.client;
 
 import com.google.gson.JsonObject;
 import com.hoddmimes.jsontransform.MessageInterface;
-import com.hoddmimes.te.common.AuxJson;
-import com.hoddmimes.te.common.table.Table;
-import com.hoddmimes.te.common.table.TableAttribute;
-import com.hoddmimes.te.common.table.TableCallbackInterface;
-import com.hoddmimes.te.common.table.TableModel;
+import com.hoddmimes.te.common.*;
+import com.hoddmimes.te.common.table.*;
 import com.hoddmimes.te.common.transport.http.TeRequestException;
 import com.hoddmimes.te.messages.generated.*;
 

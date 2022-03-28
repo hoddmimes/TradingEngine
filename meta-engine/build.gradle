@@ -57,6 +57,10 @@ dependencies {
 
 }
 
+test {
+    jvmArgs  = ['-Djava.net.preferIPv4Stack=true']
+}
+
 task createTEVersion() {
 
     File dfh = new File( projectDir, versionFile )

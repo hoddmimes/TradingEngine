@@ -75,17 +75,7 @@ public class Management extends JFrame implements  ServiceInterface
 
 
 	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
-		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-		}
-		Management m = new Management();
-		m.parseArguments( args );
-		m.init();
-		m.pack();
-		m.setVisible( true );
-
+		
 	}
 
 	private void parseArguments( String[] args ) {
