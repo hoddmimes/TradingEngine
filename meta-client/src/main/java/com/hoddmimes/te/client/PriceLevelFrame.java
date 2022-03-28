@@ -58,6 +58,7 @@ public class PriceLevelFrame extends JFrame implements TeBroadcastListener, Tabl
 		this.pack();
 		AuxClt.centeredFrame(this);
 		this.setVisible(true);
+		loadData( (String) mSidComboBox.getSelectedItem());
 	}
 
 	private void loadSids() {

@@ -62,6 +62,7 @@ public class TradesFrame extends JFrame implements TeBroadcastListener, TableCal
 		this.pack();
 		AuxClt.centeredFrame(this);
 		this.setVisible(true);
+		loadData( (String) mSidComboBox.getSelectedItem());
 	}
 
 	private void loadSids() {

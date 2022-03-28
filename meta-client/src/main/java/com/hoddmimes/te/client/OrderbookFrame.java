@@ -58,6 +58,7 @@ public class OrderbookFrame extends JFrame implements TeBroadcastListener, Table
 		this.pack();
 		AuxClt.centeredFrame(this);
 		this.setVisible(true);
+		loadData( (String) mSidComboBox.getSelectedItem());
 	}
 
 	private void loadSids() {
@@ -141,7 +142,7 @@ public class OrderbookFrame extends JFrame implements TeBroadcastListener, Table
 		mTableModel.fireTableDataChanged();
 		try {
 			JsonObject jResp = mConnector.get("queryOrderbook/" + pSid);
-			MessageInterface tResp = mMessageFactory.getMessageInstance(AuxJson.tagMessageBody(QueryPriceLevelsResponse.NAME, jResp));
+			MessageInterface tResp = mMessageFactory.getMessageInstance(AuxJson.tagMessageBody(QueryOrderbookResponse.NAME, jResp));
 			if (tResp instanceof QueryOrderbookResponse) {
 					loadData((QueryOrderbookResponse) tResp);
 			} else {
@@ -164,10 +165,27 @@ public class OrderbookFrame extends JFrame implements TeBroadcastListener, Table
 
 	@Override
 	public void onTeBdx(MessageInterface pTeBroadcast) {
+		if (pTeBroadcast instanceof BdxTrade) {
+			BdxTrade tBdx = (BdxTrade) pTeBroadcast;
+			if (tBdx.getSid().get().contentEquals( (String) mSidComboBox.getSelectedItem())) {
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						loadData( tBdx.getSid().get() );
+					}
+				});
+			}
+		}
 		if (pTeBroadcast instanceof BdxOrderbookChange) {
-			BdxOrderbookChange obBdx = (BdxOrderbookChange) pTeBroadcast;
-			if (obBdx.getSid().get().contentEquals((String) mSidComboBox.getSelectedItem())) {
-				loadData(obBdx.getSid().get());
+			BdxOrderbookChange tBdx = (BdxOrderbookChange) pTeBroadcast;
+
+			if (tBdx.getSid().get().contentEquals( (String) mSidComboBox.getSelectedItem())) {
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						loadData( tBdx.getSid().get() );
+					}
+				});
 			}
 		}
 	}
