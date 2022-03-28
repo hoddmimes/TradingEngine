@@ -30,6 +30,7 @@ import javax.websocket.EndpointConfig;
 import javax.websocket.Session;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -451,7 +452,8 @@ public class TETest implements TeWebsocketClient.WssCallback {
 		}
 
 		public void run() {
-			String args[] = {"file:///Users/Bertilsson/source/TradingEngine/configuration/TeConfiguration.json"};
+			String tWorkingDir = currentWorkingDirURI();
+			String args[] = { tWorkingDir + "configuration/TeConfiguration.json"};
 
 			//Start the TE engine
 			TradingEngine te = new TradingEngine();
@@ -473,6 +475,9 @@ public class TETest implements TeWebsocketClient.WssCallback {
 				}
 				catch( InterruptedException e) {};
 			}
+		}
+		private String currentWorkingDirURI() {
+			return FileSystems.getDefault().getPath("").toAbsolutePath().toUri().toString();
 		}
 
 		public void waitForTeToStart() {

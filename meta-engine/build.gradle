@@ -57,9 +57,6 @@ dependencies {
 
 }
 
-test {
-    jvmArgs  = ['-Djava.net.preferIPv4Stack=true']
-}
 
 task createTEVersion() {
 
@@ -86,7 +83,6 @@ task createTEVersion() {
         println "Create Version file"
     }
 }
-
 
 
 task buildFatJar (type: Jar ) {
@@ -135,7 +131,7 @@ test {
         logger.lifecycle("Running test: " + descriptor)
     }
 
-    jvmArgs "-Djava.net.preferIPv4Stack=true"
+    jvmArgs  = ['-Djava.net.preferIPv4Stack=true','-Dlog4j.configurationFile=./configuration/log4j2-te.xml']
     workingDir = "../"
 
 }
