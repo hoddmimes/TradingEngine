@@ -11,13 +11,14 @@ else
     exit
 fi
 
+pushd ./
+cd $DIR/..
+. ./bin/version.sh
+
 if  [ -z $TE_VERSION ]; then
   read -p "TE version (x.y.z) : " TE_VERSION
 fi
 
-
-pushd ./
-cd $DIR/..
 pwd
 JAVA_SWITCHES="-Dlog4j.configurationFile=$DIR/../configuration/log4j2-te.xml -Djava.net.preferIPv4Stack=true"
 $_java $JAVA_SWITCHES -cp $DIR/../meta-engine/build/libs/te-$TE_VERSION.jar  com.hoddmimes.te.management.gui.mgmt.Management -grpAddr 224.20.20.20 -grpPort 3939

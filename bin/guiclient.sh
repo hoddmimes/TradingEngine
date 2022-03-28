@@ -11,13 +11,14 @@ else
     exit
 fi
 
+pushd ./
+cd $DIR/..
+. ./bin/version.sh
+
 if  [ -z $TE_VERSION ]; then
   read -p "TE version (x.y.z) : " TE_VERSION
 fi
 
-
-pushd ./
-cd $DIR/..
 pwd
 JAVA_SWITCHES="-Djava.net.preferIPv4Stack=true"
 $_java $JAVA_SWITCHES -cp $DIR/../meta-client/build/libs/teguitestapp-$TE_VERSION.jar  com.hoddmimes.te.client.TeGuiTestApp -account TEST -password test

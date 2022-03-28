@@ -11,15 +11,24 @@ else
     exit
 fi
 
+pushd ./
+cd $DIR/..
+
+pwd
+.  ./bin/version.sh
+echo $TE_VERSION
+
 if  [ -z $TE_VERSION ]; then
   read -p "TE version (x.y.z) : " TE_VERSION
 fi
 
 
 
-pushd ./
-cd $DIR/..
 
+
+if [ ! -d ./logs ]; then
+  mkdir ./logs;
+fi
 
 if [ ! -d ./cryptogwy/bitcoin/regtest ]; then
   mkdir ./cryptogwy/bitcoin/regtest;
