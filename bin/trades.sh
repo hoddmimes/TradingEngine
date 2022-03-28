@@ -15,10 +15,6 @@ pushd ./
 cd $DIR/..
 . ./bin/version.sh
 
-if  [ -z $TE_VERSION ]; then
-  read -p "TE version (x.y.z) : " TE_VERSION
-fi
-
 
 
 pwd

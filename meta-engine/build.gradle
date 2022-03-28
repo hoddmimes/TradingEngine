@@ -18,6 +18,8 @@ plugins {
 
 group 'com.hoddmimes'
 def versionFile = "src/main/java/com/hoddmimes/te/Version.java"
+def winVersionFile = "../bin/version.bat"
+def linuxVersionFile = "../bin/version.sh"
 
 
 repositories {
@@ -55,6 +57,34 @@ dependencies {
 
     testImplementation('org.junit.jupiter:junit-jupiter:5.8.2')
 
+}
+
+task createWinVersion() {
+
+    File dfh = new File( projectDir, winVersionFile )
+    dfh.delete()
+
+
+    File fh = new File( projectDir, winVersionFile )
+    fh << "set TE_VERSION=" + project.version + "\n";
+
+    doLast {
+        println "Create Win Version file"
+    }
+}
+
+task createLinuxVersion() {
+
+    File dfh = new File( projectDir, linuxVersionFile )
+    dfh.delete()
+
+    File fh = new File( projectDir, linuxVersionFile )
+    fh << "#!/bin/bash\n";
+    fh << "export TE_VERSION=" + project.version + "\n";
+
+    doLast {
+        println "Create Linux Version file"
+    }
 }
 
 
@@ -116,6 +146,9 @@ task buildFatJar (type: Jar ) {
 
 
 compileJava.dependsOn( createTEVersion )
+compileJava.dependsOn( createWinVersion )
+compileJava.dependsOn( createLinuxVersion )
+
 build.finalizedBy(buildFatJar)
 
 configurations {

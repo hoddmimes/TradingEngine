@@ -1,12 +1,8 @@
 @echo off
-:test
-if "%TE_VERSION%" NEQ "" (goto go)
-set /p TE_VERSION="Enter TE version (x.y.z): "
-goto test
 
-:go
-rem -- get the bin location where this script is located
 set BINDIR="%~dp0"
+call %BINDIR%/version.bat
+
 rem -- push current location
 pushd "%cd%"
 rem -- set default to the TE working dir

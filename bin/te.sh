@@ -16,15 +16,6 @@ cd $DIR/..
 
 pwd
 .  ./bin/version.sh
-echo $TE_VERSION
-
-if  [ -z $TE_VERSION ]; then
-  read -p "TE version (x.y.z) : " TE_VERSION
-fi
-
-
-
-
 
 if [ ! -d ./logs ]; then
   mkdir ./logs;

@@ -5,6 +5,9 @@ plugins {
 group 'com.hoddmimes'
 
 
+
+
+
 repositories {
     mavenCentral()
 }
@@ -12,7 +15,7 @@ repositories {
 
 allprojects {
     group = 'com.hoddmimes'
-    version = '1.2.1'
+    version = '1.2.0'
 }
 
 
@@ -30,6 +33,8 @@ subprojects  {
         testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
     }
 }
+
+
 
 test {
     useJUnitPlatform()

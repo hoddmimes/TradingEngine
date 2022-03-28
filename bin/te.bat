@@ -1,13 +1,9 @@
 @echo off
-:test
-if "%TE_VERSION%" NEQ "" (goto go)
-set /p TE_VERSION="Enter TE version (x.y.z): "
-goto test
 
-:go
-rem -- get the bin location where this script is located
 set BINDIR="%~dp0"
-rem -- push current location
+call %BINDIR%/version.bat
+
+
 pushd "%cd%"
 rem -- set default to the Modum working dir
 cd %BINDIR%/..
