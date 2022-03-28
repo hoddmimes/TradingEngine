@@ -464,6 +464,8 @@ public class TETest implements TeWebsocketClient.WssCallback {
 				te.initialize();
 
 				synchronized (mTeStarted) {
+					try {Thread.sleep(5000L);}
+					catch( InterruptedException e) {}
 					mTeStarted.notifyAll();
 				}
 			}
