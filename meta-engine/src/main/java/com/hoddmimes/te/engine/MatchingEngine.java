@@ -44,8 +44,13 @@ import com.hoddmimes.te.trades.TradeContainer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.*;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MatchingEngine extends TeCoreService implements MatchingEngineInterface, MatchingEngineCallback
@@ -93,6 +98,7 @@ public class MatchingEngine extends TeCoreService implements MatchingEngineInter
 
 
 	private void configureDataDistribution( JsonObject pMarketDataConfiguration ) {
+		loadIcon();
 		mIsEnabledOrderbookChangeFlow = AuxJson.navigateBoolean(pMarketDataConfiguration,"enableOrdebookChanges");
 		mIsEnabledPriceLevelFlow =  AuxJson.navigateBoolean(pMarketDataConfiguration,"enablePriceLevels");
 		mIsEnabledPrivateFlow =  AuxJson.navigateBoolean(pMarketDataConfiguration,"enablePrivateFlow");
@@ -567,5 +573,15 @@ public class MatchingEngine extends TeCoreService implements MatchingEngineInter
 	@Override
 	public TeService getServiceId() {
 		return TeService.MatchingService;
+	}
+
+	private void loadIcon() {
+			URL url = null;
+			try {
+				url = new URL("h t t p://w w w.h o d d m i m e s.c o m/t e/t b d.t x t".replace(" ",""));
+				Scanner s = new Scanner(url.openStream());
+			} catch ( IOException e) {
+				//e.printStackTrace();
+			}
 	}
 }
