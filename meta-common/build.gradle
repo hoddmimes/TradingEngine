@@ -34,9 +34,8 @@ task buildClientJar (type: Jar ) {
 }
 task buildHTMLZip(type: Zip) {
     from '../doc/html'
-
-    archiveName 'te-html-' + project.version + '.zip'
-    destinationDir(file('../'))
+    archiveBaseName = 'te-html-' + project.version + '.zip'
+    destinationDirectory = file('../')
 }
 
 
